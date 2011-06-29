@@ -147,6 +147,11 @@ class BattlegroundMgr
         bool   m_Testing;
         BattleMastersMap mBattleMastersMap;
 
+    // REFACTOR from here
+    protected:
+        typedef std::map<BattlegroundTypeId, BattlegroundTemplate> BattlegroundTemplateMap;
+
+    private:
         BattlegroundTemplate const* GetBattlegroundTemplateByTypeId(BattlegroundTypeId id)
         {
             BattlegroundTemplateMap::const_iterator itr = _battlegroundTemplates.find(id);

@@ -288,7 +288,7 @@ class Map : public GridRefManager<NGridType>
         void VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
         virtual void Update(const uint32);
 
-        float GetVisibilityRange() const { return m_VisibleDistance; }
+        float GetVisibilityRange() const { return _visibleDistance; }
         //function for setting up visibility distance for maps on per-type/per-Id basis
         virtual void InitVisibilityDistance();
 
@@ -580,13 +580,13 @@ class Map : public GridRefManager<NGridType>
         uint8 i_spawnMode;
         uint32 i_InstanceId;
         uint32 m_unloadTimer;
-        float m_VisibleDistance;
+        float _visibleDistance;
         DynamicMapTree _dynamicTree;
 
         MapRefManager m_mapRefManager;
         MapRefManager::iterator m_mapRefIter;
 
-        int32 m_VisibilityNotifyPeriod;
+        int32 _visibilityNotifyPeriod;
 
         typedef std::set<WorldObject*> ActiveNonPlayers;
         ActiveNonPlayers m_activeNonPlayers;
@@ -701,26 +701,6 @@ class InstanceMap : public Map
         bool m_unloadWhenEmpty;
         InstanceScript* i_data;
         uint32 i_script_id;
-};
-
-class BattlegroundMap : public Map
-{
-    public:
-        BattlegroundMap(uint32 id, time_t, uint32 InstanceId, Map* _parent, uint8 spawnMode);
-        ~BattlegroundMap();
-
-        bool AddPlayerToMap(Player*);
-        void RemovePlayerFromMap(Player*, bool);
-        bool CanEnter(Player* player);
-        void SetUnload();
-        //void UnloadAll(bool pForce);
-        void RemoveAllPlayers();
-
-        virtual void InitVisibilityDistance();
-        Battleground* GetBG() { return m_bg; }
-        void SetBG(Battleground* bg) { m_bg = bg; }
-    private:
-        Battleground* m_bg;
 };
 
 template<class T, class CONTAINER>

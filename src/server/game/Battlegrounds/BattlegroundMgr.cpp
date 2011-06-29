@@ -23,6 +23,7 @@
 #include "WorldPacket.h"
 
 #include "ArenaTeam.h"
+#include "BattlegroundTemplate.h"
 #include "BattlegroundMgr.h"
 #include "BattlegroundAV.h"
 #include "BattlegroundAB.h"
@@ -592,9 +593,6 @@ void BattlegroundMgr::LoadBattlegroundTemplates()
                 continue;
             }
         }
-
-        if (!CreateBattleground(&bgTemplate))
-            continue;
 
         _battlegroundTemplates[bgTypeId] = bgTemplate;
 

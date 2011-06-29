@@ -63,8 +63,8 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     InstanceTemplate const* mInstance = sObjectMgr->GetInstanceTemplate(loc.GetMapId());
 
     // reset instance validity, except if going to an instance inside an instance
-    if (GetPlayer()->m_InstanceValid == false && !mInstance)
-        GetPlayer()->m_InstanceValid = true;
+    if (GetPlayer()->InstanceValid == false && !mInstance)
+        GetPlayer()->InstanceValid = true;
 
     Map* oldMap = GetPlayer()->GetMap();
     Map* newMap = sMapMgr->CreateMap(loc.GetMapId(), GetPlayer());

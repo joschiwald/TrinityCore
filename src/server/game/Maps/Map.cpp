@@ -221,14 +221,14 @@ void Map::DeleteStateMachine()
     delete si_GridStates[GRID_STATE_REMOVAL];
 }
 
-Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _parent):
-_creatureToMoveLock(false), _gameObjectsToMoveLock(false), _dynamicObjectsToMoveLock(false),
-i_mapEntry(sMapStore.LookupEntry(id)), i_spawnMode(SpawnMode), i_InstanceId(InstanceId),
-m_unloadTimer(0), m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE),
-m_VisibilityNotifyPeriod(DEFAULT_VISIBILITY_NOTIFY_PERIOD),
-m_activeNonPlayersIter(m_activeNonPlayers.end()), _transportsUpdateIter(_transports.end()),
-i_gridExpiry(expiry),
-i_scriptLock(false), _defaultLight(GetDefaultMapLight(id))
+Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode, Map* _parent) :
+    _creatureToMoveLock(false), _gameObjectsToMoveLock(false), _dynamicObjectsToMoveLock(false),
+    i_mapEntry(sMapStore.LookupEntry(id)), i_spawnMode(SpawnMode), i_InstanceId(InstanceId),
+    m_unloadTimer(0), _visibleDistance(DEFAULT_VISIBILITY_DISTANCE),
+    _visibilityNotifyPeriod(DEFAULT_VISIBILITY_NOTIFY_PERIOD),
+    m_activeNonPlayersIter(m_activeNonPlayers.end()), _transportsUpdateIter(_transports.end()),
+    i_gridExpiry(expiry),
+    i_scriptLock(false), _defaultLight(GetDefaultMapLight(id))
 {
     m_parentMap = (_parent ? _parent : this);
     for (unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
@@ -242,7 +242,7 @@ i_scriptLock(false), _defaultLight(GetDefaultMapLight(id))
     }
 
     //lets initialize visibility distance for map
-    Map::InitVisibilityDistance();
+    InitVisibilityDistance();
 
     sScriptMgr->OnCreateMap(this);
 }
@@ -250,8 +250,8 @@ i_scriptLock(false), _defaultLight(GetDefaultMapLight(id))
 void Map::InitVisibilityDistance()
 {
     //init visibility for continents
-    m_VisibleDistance = World::GetMaxVisibleDistanceOnContinents();
-    m_VisibilityNotifyPeriod = World::GetVisibilityNotifyPeriodOnContinents();
+    _visibleDistance = World::GetMaxVisibleDistanceOnContinents();
+    _visibilityNotifyPeriod = World::GetVisibilityNotifyPeriodOnContinents();
 }
 
 // Template specialization of utility methods
@@ -775,7 +775,7 @@ void Map::ProcessRelocationNotifies(const uint32 diff)
         if (!grid->getGridInfoRef()->getRelocationTimer().TPassed())
             continue;
 
-        grid->getGridInfoRef()->getRelocationTimer().TReset(diff, m_VisibilityNotifyPeriod);
+        grid->getGridInfoRef()->getRelocationTimer().TReset(diff, _visibilityNotifyPeriod);
 
         uint32 gx = grid->getX(), gy = grid->getY();
 
@@ -2816,8 +2816,8 @@ InstanceMap::~InstanceMap()
 void InstanceMap::InitVisibilityDistance()
 {
     //init visibility distance for instances
-    m_VisibleDistance = World::GetMaxVisibleDistanceInInstances();
-    m_VisibilityNotifyPeriod = World::GetVisibilityNotifyPeriodInInstances();
+    _visibleDistance = World::GetMaxVisibleDistanceInInstances();
+    _visibilityNotifyPeriod = World::GetVisibilityNotifyPeriodInInstances();
 }
 
 /*
@@ -3081,7 +3081,7 @@ bool InstanceMap::Reset(uint8 method)
             if (method == INSTANCE_RESET_GLOBAL)
                 // set the homebind timer for players inside (1 minute)
                 for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-                    itr->GetSource()->m_InstanceValid = false;
+                    itr->GetSource()->InstanceValid = false;
 
             // the unload timer is not started
             // instead the map will unload immediately after the players have left
@@ -3184,82 +3184,6 @@ uint32 InstanceMap::GetMaxResetDelay() const
 {
     MapDifficulty const* mapDiff = GetMapDifficulty();
     return mapDiff ? mapDiff->resetTime : 0;
-}
-
-/* ******* Battleground Instance Maps ******* */
-
-BattlegroundMap::BattlegroundMap(uint32 id, time_t expiry, uint32 InstanceId, Map* _parent, uint8 spawnMode)
-  : Map(id, expiry, InstanceId, spawnMode, _parent), m_bg(NULL)
-{
-    //lets initialize visibility distance for BG/Arenas
-    BattlegroundMap::InitVisibilityDistance();
-}
-
-BattlegroundMap::~BattlegroundMap()
-{
-    if (m_bg)
-    {
-        //unlink to prevent crash, always unlink all pointer reference before destruction
-        m_bg->SetBgMap(NULL);
-        m_bg = NULL;
-    }
-}
-
-void BattlegroundMap::InitVisibilityDistance()
-{
-    //init visibility distance for BG/Arenas
-    m_VisibleDistance = World::GetMaxVisibleDistanceInBGArenas();
-    m_VisibilityNotifyPeriod = World::GetVisibilityNotifyPeriodInBGArenas();
-}
-
-bool BattlegroundMap::CanEnter(Player* player)
-{
-    if (player->GetMapRef().getTarget() == this)
-    {
-        TC_LOG_ERROR("maps", "BGMap::CanEnter - player %u is already in map!", player->GetGUIDLow());
-        ASSERT(false);
-        return false;
-    }
-
-    if (player->GetBattlegroundId() != GetInstanceId())
-        return false;
-
-    // player number limit is checked in bgmgr, no need to do it here
-
-    return Map::CanEnter(player);
-}
-
-bool BattlegroundMap::AddPlayerToMap(Player* player)
-{
-    {
-        TRINITY_GUARD(ACE_Thread_Mutex, Lock);
-        //Check moved to void WorldSession::HandleMoveWorldportAckOpcode()
-        //if (!CanEnter(player))
-            //return false;
-        // reset instance validity, battleground maps do not homebind
-        player->m_InstanceValid = true;
-    }
-    return Map::AddPlayerToMap(player);
-}
-
-void BattlegroundMap::RemovePlayerFromMap(Player* player, bool remove)
-{
-    TC_LOG_INFO("maps", "MAP: Removing player '%s' from bg '%u' of map '%s' before relocating to another map", player->GetName().c_str(), GetInstanceId(), GetMapName());
-    Map::RemovePlayerFromMap(player, remove);
-}
-
-void BattlegroundMap::SetUnload()
-{
-    m_unloadTimer = MIN_UNLOAD_DELAY;
-}
-
-void BattlegroundMap::RemoveAllPlayers()
-{
-    if (HavePlayers())
-        for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-            if (Player* player = itr->GetSource())
-                if (!player->IsBeingTeleportedFar())
-                    player->TeleportTo(player->GetBattlegroundEntryPoint());
 }
 
 Creature* Map::GetCreature(uint64 guid)

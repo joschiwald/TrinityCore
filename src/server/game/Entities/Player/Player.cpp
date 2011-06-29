@@ -796,7 +796,7 @@ Player::Player(WorldSession* session): Unit(true)
     /////////////////// Instance System /////////////////////
 
     m_HomebindTimer = 0;
-    m_InstanceValid = true;
+    InstanceValid = true;
     m_dungeonDifficulty = DUNGEON_DIFFICULTY_NORMAL;
     m_raidDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
     m_raidMapDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
@@ -21830,7 +21830,7 @@ uint32 Player::GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot) const
 void Player::UpdateHomebindTime(uint32 time)
 {
     // GMs never get homebind timer online
-    if (m_InstanceValid || IsGameMaster())
+    if (InstanceValid || IsGameMaster())
     {
         if (m_HomebindTimer)                                 // instance valid, but timer not reset
         {
