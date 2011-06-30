@@ -355,9 +355,9 @@ void BattlegroundEY::UpdatePointsIcons(uint32 Team, uint32 Point)
     }
 }
 
-void BattlegroundEY::AddPlayer(Player* player)
+void BattlegroundEY::OnPlayerJoin(Player* player)
 {
-    Battleground::AddPlayer(player);
+    Battleground::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundEYScore(player->GetGUID());
 
     m_PlayersNearPoint[EY_POINTS_MAX].push_back(player->GetGUID());
@@ -715,7 +715,7 @@ void BattlegroundEY::EventTeamLostPoint(Player* player, uint32 Point)
 
     //remove bonus honor aura trigger creature when node is lost
      if (Point < EY_POINTS_MAX)
-         DelCreature(Point + 6);//NULL checks are in DelCreature! 0-5 spirit guides
+         DeleteCreature(Point + 6);//NULL checks are in DeleteCreature! 0-5 spirit guides
 }
 
 void BattlegroundEY::EventTeamCapturedPoint(Player* player, uint32 Point)

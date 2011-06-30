@@ -141,9 +141,9 @@ void BattlegroundDS::StartingEventOpenDoors()
                 player->RemoveAurasDueToSpell(48018);
 }
 
-void BattlegroundDS::AddPlayer(Player* player)
+void BattlegroundDS::OnPlayerJoin(Player* player)
 {
-    Battleground::AddPlayer(player);
+    Battleground::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new ArenaScore(player->GetGUID(), player->GetBGTeam());
     UpdateArenaWorldState();
 }

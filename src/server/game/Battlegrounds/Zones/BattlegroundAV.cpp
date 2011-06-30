@@ -17,6 +17,7 @@
  */
 
 #include "BattlegroundAV.h"
+#include "BattlegroundMap.h"
 
 #include "ObjectMgr.h"
 #include "WorldPacket.h"
@@ -86,7 +87,7 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
         RewardReputationToTeam(729, BG_AV_REP_BOSS, HORDE);
         RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_BOSS), HORDE);
         EndBattleground(HORDE);
-        DelCreature(AV_CPLACE_TRIGGER17);
+        DeleteCreature(AV_CPLACE_TRIGGER17);
     }
     else if (entry == BG_AV_CreatureInfo[AV_NPC_H_BOSS][0])
     {
@@ -94,7 +95,7 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
         RewardReputationToTeam(730, BG_AV_REP_BOSS, ALLIANCE);
         RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_BOSS), ALLIANCE);
         EndBattleground(ALLIANCE);
-        DelCreature(AV_CPLACE_TRIGGER19);
+        DeleteCreature(AV_CPLACE_TRIGGER19);
     }
     else if (entry == BG_AV_CreatureInfo[AV_NPC_A_CAPTAIN][0])
     {
@@ -113,7 +114,7 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
         Creature* creature = GetBGCreature(AV_CPLACE_HERALD);
         if (creature)
             YellToAll(creature, GetTrinityString(LANG_BG_AV_A_CAPTAIN_DEAD), LANG_UNIVERSAL);
-        DelCreature(AV_CPLACE_TRIGGER16);
+        DeleteCreature(AV_CPLACE_TRIGGER16);
     }
     else if (entry == BG_AV_CreatureInfo[AV_NPC_H_CAPTAIN][0])
     {
@@ -132,7 +133,7 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
         Creature* creature = GetBGCreature(AV_CPLACE_HERALD);
         if (creature)
             YellToAll(creature, GetTrinityString(LANG_BG_AV_H_CAPTAIN_DEAD), LANG_UNIVERSAL);
-        DelCreature(AV_CPLACE_TRIGGER18);
+        DeleteCreature(AV_CPLACE_TRIGGER18);
     }
     else if (entry == BG_AV_CreatureInfo[AV_NPC_N_MINE_N_4][0] || entry == BG_AV_CreatureInfo[AV_NPC_N_MINE_A_4][0] || entry == BG_AV_CreatureInfo[AV_NPC_N_MINE_H_4][0])
         ChangeMineOwner(AV_NORTH_MINE, killer->GetTeam());
@@ -430,9 +431,9 @@ void BattlegroundAV::StartingEventOpenDoors()
     StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, BG_AV_EVENT_START_BATTLE);
 }
 
-void BattlegroundAV::AddPlayer(Player* player)
+void BattlegroundAV::OnPlayerJoin(Player* player)
 {
-    Battleground::AddPlayer(player);
+    BattlegroundMap::OnPlayerJoin(plr);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundAVScore(player->GetGUID());
 }
 
@@ -753,7 +754,7 @@ void BattlegroundAV::PopulateNode(BG_AV_Nodes node)
     {
         if (owner != ALLIANCE && owner != HORDE)//node can be neutral, remove trigger
         {
-            DelCreature(node + 302);
+            DeleteCreature(node + 302);
             return;
         }
         trigger->setFaction(owner == ALLIANCE ? 84 : 83);
@@ -772,7 +773,7 @@ void BattlegroundAV::DePopulateNode(BG_AV_Nodes node)
 
     //remove bonus honor aura trigger creature when node is lost
     if (node < BG_AV_NODES_MAX)//fail safe
-        DelCreature(node + 302);//NULL checks are in DelCreature! 0-302 spirit guides
+        DeleteCreature(node + 302);//NULL checks are in DeleteCreature! 0-302 spirit guides
 }
 
 BG_AV_Nodes BattlegroundAV::GetNodeThroughObject(uint32 object)

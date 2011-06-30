@@ -52,9 +52,9 @@ void BattlegroundBE::StartingEventOpenDoors()
         SpawnBGObject(i, 60);
 }
 
-void BattlegroundBE::AddPlayer(Player* player)
+void BattlegroundBE::OnPlayerJoin(Player* player)
 {
-    Battleground::AddPlayer(player);
+    Battleground::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new ArenaScore(player->GetGUID(), player->GetBGTeam());
     UpdateArenaWorldState();
 }

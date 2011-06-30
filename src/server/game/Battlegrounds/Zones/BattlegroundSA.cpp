@@ -16,6 +16,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "BattlegroundMap.h"
+#include "BattlegroundScore.h"
 #include "BattlegroundSA.h"
 #include "GameObject.h"
 #include "Language.h"
@@ -27,8 +29,6 @@
 
 BattlegroundSA::BattlegroundSA()
 {
-    BgObjects.resize(BG_SA_MAXOBJ);
-    BgCreatures.resize(BG_SA_MAXNPC + BG_SA_MAX_GY);
     TimerEnabled = false;
     UpdateWaitTimer = 0;
     SignaledRoundTwo = false;
@@ -87,13 +87,13 @@ bool BattlegroundSA::ResetObjs()
     uint32 defF = BG_SA_Factions[Attackers ? TEAM_ALLIANCE : TEAM_HORDE];
 
     for (uint8 i = 0; i < BG_SA_MAXOBJ; i++)
-        DelObject(i);
+        DeleteObject(i);
 
     for (uint8 i = 0; i < BG_SA_MAXNPC; i++)
-        DelCreature(i);
+        DeleteCreature(i);
 
     for (uint8 i = BG_SA_MAXNPC; i < BG_SA_MAXNPC + BG_SA_MAX_GY; i++)
-        DelCreature(i);
+        DeleteCreature(i);
 
     for (uint8 i = 0; i < 6; i++)
         GateStatus[i] = BG_SA_GATE_OK;
@@ -446,9 +446,9 @@ void BattlegroundSA::FillInitialWorldStates(WorldPacket& data)
     data << uint32(BG_SA_LEFT_ATT_TOKEN_ALL) <<  uint32(allyAttacks);
 }
 
-void BattlegroundSA::AddPlayer(Player* player)
+void BattlegroundSA::OnPlayerJoin(Player* player)
 {
-    Battleground::AddPlayer(player);
+    Battleground::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundSAScore(player->GetGUID());
 
     SendTransportInit(player);
@@ -739,7 +739,7 @@ void BattlegroundSA::CaptureGraveyard(BG_SA_Graveyards i, Player* Source)
     if (GraveyardStatus[i] == Attackers)
         return;
 
-    DelCreature(BG_SA_MAXNPC + i);
+    DeleteCreature(BG_SA_MAXNPC + i);
     GraveyardStatus[i] = Source->GetTeamId();
     WorldSafeLocsEntry const* sg = sWorldSafeLocsStore.LookupEntry(BG_SA_GYEntries[i]);
     if (!sg)
@@ -756,7 +756,7 @@ void BattlegroundSA::CaptureGraveyard(BG_SA_Graveyards i, Player* Source)
     {
         case BG_SA_LEFT_CAPTURABLE_GY:
             flag = BG_SA_LEFT_FLAG;
-            DelObject(flag);
+            DeleteObject(flag);
             AddObject(flag, (BG_SA_ObjEntries[flag] - (Source->GetTeamId() == TEAM_ALLIANCE ? 0 : 1)),
                 BG_SA_ObjSpawnlocs[flag], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
@@ -781,7 +781,7 @@ void BattlegroundSA::CaptureGraveyard(BG_SA_Graveyards i, Player* Source)
             break;
         case BG_SA_RIGHT_CAPTURABLE_GY:
             flag = BG_SA_RIGHT_FLAG;
-            DelObject(flag);
+            DeleteObject(flag);
             AddObject(flag, (BG_SA_ObjEntries[flag] - (Source->GetTeamId() == TEAM_ALLIANCE ? 0 : 1)),
                 BG_SA_ObjSpawnlocs[flag], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
@@ -806,7 +806,7 @@ void BattlegroundSA::CaptureGraveyard(BG_SA_Graveyards i, Player* Source)
             break;
         case BG_SA_CENTRAL_CAPTURABLE_GY:
             flag = BG_SA_CENTRAL_FLAG;
-            DelObject(flag);
+            DeleteObject(flag);
             AddObject(flag, (BG_SA_ObjEntries[flag] - (Source->GetTeamId() == TEAM_ALLIANCE ? 0 : 1)),
               BG_SA_ObjSpawnlocs[flag], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 

@@ -19,7 +19,7 @@
 #ifndef __BATTLEGROUNDIC_H
 #define __BATTLEGROUNDIC_H
 
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "BattlegroundScore.h"
 #include "Language.h"
 #include "Object.h"
@@ -893,7 +893,7 @@ class BattlegroundIC : public BattlegroundMap
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
         /* inherited from BattlegroundClass */
-        void AddPlayer(Player* player);
+        void OnPlayerJoin(Player* player);
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
         void PostUpdateImpl(uint32 diff);

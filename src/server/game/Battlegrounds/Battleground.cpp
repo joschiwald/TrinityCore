@@ -189,11 +189,11 @@ Battleground::~Battleground()
     // (this is done automatically in mapmanager update, when the instance is reset after the reset time)
     uint32 size = uint32(BgCreatures.size());
     for (uint32 i = 0; i < size; ++i)
-        DelCreature(i);
+        DeleteCreature(i);
 
     size = uint32(BgObjects.size());
     for (uint32 i = 0; i < size; ++i)
-        DelObject(i);
+        DeleteObject(i);
 
     sBattlegroundMgr->RemoveBattleground(GetTypeID(), GetInstanceID());
     // unload map
@@ -1113,7 +1113,7 @@ void Battleground::StartBattleground()
         TC_LOG_DEBUG("bg.arena", "Arena match type: %u for Team1Id: %u - Team2Id: %u started.", m_ArenaType, m_ArenaTeamIds[TEAM_ALLIANCE], m_ArenaTeamIds[TEAM_HORDE]);
 }
 
-void Battleground::AddPlayer(Player* player)
+void Battleground::OnPlayerJoin(Player* player)
 {
     // remove afk from player
     if (player->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_AFK))
@@ -1373,20 +1373,6 @@ void Battleground::BuildPvPLogDataPacket(WorldPacket& data)
         score.second->AppendToPacket(data);
 }
 
-bool Battleground::UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool doAddHonor)
-{
-    BattlegroundScoreMap::const_iterator itr = PlayerScores.find(player->GetGUIDLow());
-    if (itr == PlayerScores.end()) // player not found...
-        return false;
-
-    itr->second->UpdateScore(type, value);
-
-    if (type == SCORE_BONUS_HONOR && doAddHonor && isBattleground())
-        player->RewardHonor(NULL, 1, value); // RewardHonor calls UpdatePlayerScore with doAddHonor = false
-
-    return true;
-}
-
 void Battleground::AddPlayerToResurrectQueue(uint64 npc_guid, uint64 player_guid)
 {
     m_ReviveQueue[npc_guid].push_back(player_guid);
@@ -1619,7 +1605,7 @@ Creature* Battleground::AddCreature(uint32 entry, uint32 type, Position const& p
     return AddCreature(entry, type, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), pos.GetOrientation(), teamId, respawntime);
 }
 
-bool Battleground::DelCreature(uint32 type)
+bool Battleground::DeleteCreature(uint32 type)
 {
     if (!BgCreatures[type])
         return true;
@@ -1637,7 +1623,7 @@ bool Battleground::DelCreature(uint32 type)
     return false;
 }
 
-bool Battleground::DelObject(uint32 type)
+bool Battleground::DeleteObject(uint32 type)
 {
     if (!BgObjects[type])
         return true;

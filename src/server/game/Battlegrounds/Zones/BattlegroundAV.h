@@ -19,9 +19,10 @@
 #ifndef __BATTLEGROUNDAV_H
 #define __BATTLEGROUNDAV_H
 
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "BattlegroundScore.h"
-#include "Object.h"
+
+class Battleground;
 
 #define LANG_BG_AV_A_CAPTAIN_BUFF       "Begone. Uncouth scum! The Alliance shall prevail in Alterac Valley!"
 #define LANG_BG_AV_H_CAPTAIN_BUFF       "Now is the time to attack! For the Horde!"
@@ -1586,7 +1587,7 @@ class BattlegroundAV : public BattlegroundMap
         void InitializeTextIds();       // Initializes text IDs that are used in the battleground at any possible phase.
 
         /* inherited from BattlegroundClass */
-        void AddPlayer(Player* player);
+        void OnPlayerJoin(Player* player);
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
 

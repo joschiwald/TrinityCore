@@ -16,6 +16,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "BattlegroundMap.h"
 #include "BattlegroundWS.h"
 #include "Creature.h"
 #include "GameObject.h"
@@ -222,9 +223,9 @@ void BattlegroundWS::StartingEventOpenDoors()
     StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, WS_EVENT_START_BATTLE);
 }
 
-void BattlegroundWS::AddPlayer(Player* player)
+void BattlegroundWS::OnPlayerJoin(Player* player)
 {
-    Battleground::AddPlayer(player);
+    Battleground::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundWGScore(player->GetGUID());
 }
 

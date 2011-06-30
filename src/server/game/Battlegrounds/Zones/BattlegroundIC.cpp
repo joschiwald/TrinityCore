@@ -17,7 +17,8 @@
  */
 
 #include "Player.h"
-#include "Battleground.h"
+#include "BattlegroundMap.h"
+#include "BattlegroundScore.h"
 #include "BattlegroundIC.h"
 #include "Language.h"
 #include "WorldPacket.h"
@@ -201,7 +202,7 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
 
                 float cords[4] = {banner->GetPositionX(), banner->GetPositionY(), banner->GetPositionZ(), banner->GetOrientation() };
 
-                DelObject(nodePoint[i].gameobject_type);
+                DeleteObject(nodePoint[i].gameobject_type);
                 AddObject(nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry, cords[0], cords[1], cords[2], cords[3], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
                 GetBGObject(nodePoint[i].gameobject_type)->SetUInt32Value(GAMEOBJECT_FACTION, nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_Factions[1] : BG_IC_Factions[0]);
@@ -265,9 +266,9 @@ void BattlegroundIC::StartingEventOpenDoors()
     }
 }
 
-void BattlegroundIC::AddPlayer(Player* player)
+void BattlegroundIC::OnPlayerJoin(Player* player)
 {
-    Battleground::AddPlayer(player);
+    Battleground::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundICScore(player->GetGUID());
 
     if (nodePoint[NODE_TYPE_QUARRY].nodeState == (player->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H))
@@ -466,7 +467,7 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
 
                 if (nodePoint[i].nodeType != NODE_TYPE_REFINERY && nodePoint[i].nodeType != NODE_TYPE_QUARRY)
                     if (BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2])
-                        DelCreature(BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2);
+                        DeleteCreature(BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2);
 
                 UpdatePlayerScore(player, SCORE_BASES_ASSAULTED, 1);
 
@@ -491,7 +492,7 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
 
             float cords[4] = {banner->GetPositionX(), banner->GetPositionY(), banner->GetPositionZ(), banner->GetOrientation() };
 
-            DelObject(nodePoint[i].gameobject_type);
+            DeleteObject(nodePoint[i].gameobject_type);
             if (!AddObject(nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry, cords[0], cords[1], cords[2], cords[3], 0, 0, 0, 0, RESPAWN_ONE_DAY))
             {
                 TC_LOG_ERROR("bg.battleground", "Isle of Conquest: There was an error spawning a banner (type: %u, entry: %u). Isle of Conquest BG cancelled.", nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry);
@@ -502,8 +503,8 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
 
             if (nodePoint[i].nodeType == NODE_TYPE_WORKSHOP)
             {
-                DelObject(BG_IC_GO_SEAFORIUM_BOMBS_1);
-                DelObject(BG_IC_GO_SEAFORIUM_BOMBS_2);
+                DeleteObject(BG_IC_GO_SEAFORIUM_BOMBS_1);
+                DeleteObject(BG_IC_GO_SEAFORIUM_BOMBS_2);
             }
 
             UpdateNodeWorldState(&nodePoint[i]);
@@ -572,7 +573,7 @@ void BattlegroundIC::HandleContestedNodes(ICNodePoint* nodePoint)
              (nodePoint->faction == TEAM_ALLIANCE ? gunshipHorde : gunshipAlliance)->EnableMovement(false);
 
         for (uint8 u = BG_IC_GO_HANGAR_TELEPORTER_1; u < BG_IC_GO_HANGAR_TELEPORTER_3; ++u)
-            DelObject(u);
+            DeleteObject(u);
     }
 }
 
@@ -631,7 +632,7 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                     if (Vehicle* vehicleGlaive = glaiveThrower->GetVehicleKit())
                     {
                         if (!vehicleGlaive->GetPassenger(0))
-                            DelCreature(i);
+                            DeleteCreature(i);
                     }
                 }
             }
@@ -643,7 +644,7 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                     if (Vehicle* vehicleGlaive = catapult->GetVehicleKit())
                     {
                         if (!vehicleGlaive->GetPassenger(0))
-                            DelCreature(i);
+                            DeleteCreature(i);
                     }
                 }
             }
@@ -689,7 +690,7 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                             {
                                 // is IsVehicleInUse working as expected?
                                 if (!vehicleDemolisher->IsVehicleInUse())
-                                    DelCreature(i);
+                                    DeleteCreature(i);
                             }
                         }
                     }
@@ -714,7 +715,7 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                         {
                             // is VehicleInUse working as expected ?
                             if (!vehicleSiege->IsVehicleInUse())
-                                DelCreature(enemySiege);
+                                DeleteCreature(enemySiege);
                         }
                     }
 

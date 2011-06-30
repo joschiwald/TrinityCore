@@ -19,7 +19,7 @@
 #ifndef __BATTLEGROUNDWS_H
 #define __BATTLEGROUNDWS_H
 
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "BattlegroundScore.h"
 
 enum BG_WS_TimerOrScore
@@ -191,7 +191,7 @@ class BattlegroundWS : public BattlegroundMap
         ~BattlegroundWS();
 
         /* inherited from BattlegroundClass */
-        void AddPlayer(Player* player);
+        void OnPlayerJoin(Player* player);
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
 

@@ -23,6 +23,8 @@
 #include "BattlegroundScore.h"
 #include "Object.h"
 
+class Battleground;
+
 enum BG_AB_WorldStates
 {
     BG_AB_OP_OCCUPIED_BASES_HORDE       = 1778,
@@ -281,7 +283,7 @@ class BattlegroundAB : public BattlegroundMap
 
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
-        void AddPlayer(Player* player);
+        void OnPlayerJoin(Player* player);
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
         void RemovePlayer(Player* player, uint64 guid, uint32 team);

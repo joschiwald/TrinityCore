@@ -19,7 +19,7 @@
 #ifndef __BATTLEGROUNDEY_H
 #define __BATTLEGROUNDEY_H
 
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "BattlegroundScore.h"
 #include "Language.h"
 #include "Object.h"
@@ -363,7 +363,7 @@ class BattlegroundEY : public BattlegroundMap
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
         /* inherited from BattlegroundClass */
-        void AddPlayer(Player* player);
+        void OnPlayerJoin(Player* player);
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
 

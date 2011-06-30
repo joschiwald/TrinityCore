@@ -17,6 +17,7 @@
  */
 
 #include "BattlegroundAB.h"
+#include "BattlegroundMap.h"
 #include "World.h"
 #include "WorldPacket.h"
 #include "ObjectMgr.h"
@@ -31,8 +32,6 @@ BattlegroundAB::BattlegroundAB()
 {
     m_IsInformedNearVictory = false;
     m_BuffChange = true;
-    BgObjects.resize(BG_AB_OBJECT_MAX);
-    BgCreatures.resize(BG_AB_ALL_NODES_COUNT + 5);//+5 for aura triggers
 
     for (uint8 i = 0; i < BG_AB_DYNAMIC_NODES_COUNT; ++i)
     {
@@ -216,9 +215,9 @@ void BattlegroundAB::StartingEventOpenDoors()
     StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, AB_EVENT_START_BATTLE);
 }
 
-void BattlegroundAB::AddPlayer(Player* player)
+void BattlegroundAB::OnPlayerJoin(Player *plr)
 {
-    Battleground::AddPlayer(player);
+    Battleground::OnPlayerJoin(plr);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundABScore(player->GetGUID());
 }
 
@@ -408,11 +407,12 @@ void BattlegroundAB::_NodeDeOccupied(uint8 node)
 
     //remove bonus honor aura trigger creature when node is lost
     if (node < BG_AB_DYNAMIC_NODES_COUNT)//only dynamic nodes, no start points
-        DelCreature(node+7);//NULL checks are in DelCreature! 0-6 spirit guides
+        DeleteCreature(node+7);//NULL checks are in DeleteCreature! 0-6 spirit guides
 
     RelocateDeadPlayers(BgCreatures[node]);
 
-    DelCreature(node);
+    if (BgCreatures[node])
+        DeleteCreature(node);
 
     // buff object isn't despawned
 }
@@ -631,7 +631,7 @@ void BattlegroundAB::Reset()
 
     for (uint8 i = 0; i < BG_AB_ALL_NODES_COUNT + 5; ++i)//+5 for aura triggers
         if (BgCreatures[i])
-            DelCreature(i);
+            DeleteCreature(i);
 }
 
 void BattlegroundAB::EndBattleground(uint32 winner)
@@ -689,7 +689,7 @@ WorldSafeLocsEntry const* BattlegroundAB::GetClosestGraveYard(Player* player)
 
 bool BattlegroundAB::UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool doAddHonor)
 {
-    if (!Battleground::UpdatePlayerScore(player, type, value, doAddHonor))
+    if (!BattlegroundMap::UpdatePlayerScore(player, type, value, doAddHonor))
         return false;
 
     switch (type)

@@ -120,7 +120,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
         else if (Battleground* bg = _player->GetBattleground())
         {
             if (_player->IsInvitedForBattlegroundInstance(_player->GetBattlegroundId()))
-                bg->AddPlayer(_player);
+                bg->OnPlayerJoin(_player);  // AUTO REFACTOR - called method is wrong
         }
     }
 

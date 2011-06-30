@@ -18,6 +18,8 @@
 #ifndef TRINITY_BATTLEGROUND_MAP_H
 #define TRINITY_BATTLEGROUND_MAP_H
 
+#include "BattlegroundTemplate.h"
+
 enum BattlegroundStartTimeIntervals
 {
     BG_START_DELAY_2M               = 120000,               // ms (2 minutes)
@@ -36,7 +38,7 @@ enum BattlegroundStartingEventsIds
     BG_STARTING_EVENT_COUNT     = 4
 };
 
-class BattlegroundTemplate;
+class BattlegroundScore;
 
 class BattlegroundMap : public Map
 {
@@ -52,6 +54,10 @@ class BattlegroundMap : public Map
         void SetUnload();
 
     protected:
+        // Typedefs here
+        typedef std::map<uint32, BattlegroundScore*> BattlegroundScoreMap;
+
+    protected:
         uint32 GetMaxPlayers() const { return _template.MaxPlayersPerTeam * 2; }
         uint32 GetMinPlayers() const { return _template.MinPlayersPerTeam * 2; }
         uint32 GetMinLevel() const { return _template.MinLevel; }
@@ -62,27 +68,11 @@ class BattlegroundMap : public Map
     protected:
         virtual void InitializeTextIds() { }   // Initializes text IDs that are used in the battleground at any possible phase.
         virtual void InitializePreparationDelayTimes(); // Initializes preparation delay timers.
-        void InitializePreparationDelayTimer();
         virtual void StartBattleground() { }   // Initializes EndTimer and other bg-specific variables.
         virtual void EndBattleground() { }     // Contains rules on which team wins.
         virtual void DestroyBattleground() { } // Contains battleground specific cleanup method calls.
 
-        // Hooks called after Map methods
-        virtual void OnPlayerJoin(Player* player); // Initialize battleground specific variables.
-        virtual void OnPlayerExit(Player* player); // Remove battleground specific auras etc.
-
-        uint32 EndTimer;        // Battleground specific time limit. Must be overwritten in subclass.
-        uint32 PreparationPhaseTextIds[BG_STARTING_EVENT_COUNT]; // Must be initialized for each battleground
-        uint32 PreparationDelayTimers[BG_STARTING_EVENT_COUNT];
-
-    private:
-        // Private initializers, non overridable 
-        void InitVisibilityDistance() final;
-
-        // Private processing methods
-        void ProcessPreparation(uint32 diff);
-        void ProcessInProgress(uint32 diff);
-        void ProcessEnded(uint32 diff);
+        virtual void UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true);
 
         // Private entity management - GameObject
         GameObject* AddObject(uint32 type, uint32 entry, Position const* pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0); // Adds GO's to the map but doesn't necessarily spawn them
@@ -93,10 +83,30 @@ class BattlegroundMap : public Map
         Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, Position const* pos, uint32 respawntime = 0); // Adds and spawns creatures to map
         bool DeleteCreature(uint32 type);
 
+        // Hooks called after Map methods
+        virtual void OnPlayerJoin(Player* player); // Initialize battleground specific variables.
+        virtual void OnPlayerExit(Player* player); // Remove battleground specific auras etc.
+
+        uint32 EndTimer;        // Battleground specific time limit. Must be overwritten in subclass.
+        uint32 PreparationPhaseTextIds[BG_STARTING_EVENT_COUNT]; // Must be initialized for each battleground
+        uint32 PreparationDelayTimers[BG_STARTING_EVENT_COUNT];
+
+        BattlegroundScoreMap ScoreMap;             // Player scores
+
+    private:
+        // Private initializers, non overridable 
+        void InitVisibilityDistance() final;
+        void InitializePreparationDelayTimer();
+
+        // Private processing methods
+        void ProcessPreparation(uint32 diff);
+        void ProcessInProgress(uint32 diff);
+        void ProcessEnded(uint32 diff);
+
         void RemoveAllPlayers();
 
         void SendMessageToAll(int32 entry, ChatMsg type);
-       
+
         bool AreTeamsInBalance() const;
 
         BattlegroundTemplate _template;
