@@ -54,8 +54,10 @@ class BattlegroundMap : public Map
     protected:
         uint32 GetMaxPlayers() const { return _template.MaxPlayersPerTeam * 2; }
         uint32 GetMinPlayers() const { return _template.MinPlayersPerTeam * 2; }
-        uint32 GetMinLevel() const   { return _template.MinLevel; }
-        uint32 GetMaxLevel() const   { return _template.MaxLevel; }
+        uint32 GetMinLevel() const { return _template.MinLevel; }
+        uint32 GetMaxLevel() const { return _template.MaxLevel; }
+
+        uint32 GetStatus() const { return _status; }
 
     protected:
         virtual void InitializeTextIds() { }   // Initializes text IDs that are used in the battleground at any possible phase.
@@ -74,13 +76,24 @@ class BattlegroundMap : public Map
         uint32 PreparationDelayTimers[BG_STARTING_EVENT_COUNT];
 
     private:
-        void InitVisibilityDistance() override;
+        // Private initializers, non overridable 
+        void InitVisibilityDistance() final;
 
+        // Private processing methods
         void ProcessPreparation(uint32 diff);
         void ProcessInProgress(uint32 diff);
         void ProcessEnded(uint32 diff);
 
-        void RemoveAllPlayers() override;
+        // Private entity management - GameObject
+        GameObject* AddObject(uint32 type, uint32 entry, Position const* pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0); // Adds GO's to the map but doesn't necessarily spawn them
+        void SpawnObject(uint32 type, uint32 respawntime); // Spawns an already added gameobject
+        bool DeleteObject(uint32 type); // Deletes an object with specified type designation 
+
+        // Private entity management - Creature
+        Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, Position const* pos, uint32 respawntime = 0); // Adds and spawns creatures to map
+        bool DeleteCreature(uint32 type);
+
+        void RemoveAllPlayers();
 
         void SendMessageToAll(int32 entry, ChatMsg type);
        
@@ -96,6 +109,8 @@ class BattlegroundMap : public Map
 
         uint16 _participantCount[BG_TEAMS_COUNT];   // Players actually in the battleground
         uint16 _invitedCount[BG_TEAMS_COUNT];       // Players invited to join the battleground
+
+        std::vector<uint64> _objectGUIDsByType;     // Stores object guids per enum-defined arbitrary type
 };
 
 #endif // TRINITY_BATTLEGROUND_MAP_H

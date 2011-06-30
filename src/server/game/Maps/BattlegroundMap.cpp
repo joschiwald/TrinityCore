@@ -187,7 +187,7 @@ void BattlegroundMap::ProcessEnded(uint32 diff)
     {
         RemoveAllPlayers();
         DestroyBattleground();
-    }    
+    }
     else
         _postEndTimer -= diff;
 }
@@ -252,4 +252,139 @@ bool BattlegroundMap::AreTeamsInBalance() const
 {
     return !(_participantCount[BG_TEAM_HORDE] < _template.MinPlayersPerTeam ||
              _participantCount[BG_TEAM_ALLIANCE] < _template.MinPlayersPerTeam);
+}
+
+GameObject* BattlegroundMap::AddObject(uint32 type, uint32 entry, Position* pos, float rotation0, float rotation1, float rotation2, float rotation3, uint32 respawnTime /*= 0*/)
+{
+    // Must be created this way, adding to godatamap would add it to the base map of the instance
+    // and when loading it (in go::LoadFromDB()), a new guid would be assigned to the object, and a new object would be created
+    // So we must create it specific for this instance
+    GameObject* go = new GameObject;
+    if (!go->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT), entry, this,
+        PHASEMASK_NORMAL, pos->GetPositionX(), pos->GetPositionY, pos->GetPositionZ(), pos->GetOrientation(), rotation0, rotation1, rotation2, rotation3, 100, GO_STATE_READY))
+    {
+        TC_LOG_ERROR("bg.battleground.addobject", "Cannot create gameobject (entry: %u) for BG (map: %u, instance id: %u)!", entry, m_MapId, m_InstanceID);
+        delete go;
+        return NULL;
+    }
+
+    if (respawnTime)
+        go->SetRespawnTime(respawnTime);
+
+    // Add to world, so it can be later looked up from HashMapHolder
+    Add(go);
+
+    // Add to enum type -> guid lookup
+    _objectGUIDsByType[type] = go->GetGUID();
+    return go;
+}
+
+void BattlegroundMap::SpawnObject(uint32 type, uint32 respawntime)
+{
+    ASSERT(type < _objectGUIDsByType.size());
+
+    uint64 guid = _objectGUIDsByType[type];
+    if (!guid)
+    {
+        TC_LOG_ERROR("bg.battleground.spawnobject", "Cannot spawn defined type %u. It was not found in current map. Are you missing an AddObject call in the Battleground initialization?", type);
+        return;
+    }
+
+    GameObject* go = GetGameObject(guid);
+    // If it's present in _objectGUIDsByType it MUST also be in world
+    ASSERT(go);
+    ASSERT(go->IsInWorld());
+    ASSERT(go->GetMap() == this);
+
+    if (respawntime)
+        go->SetLootState(GO_JUST_DEACTIVATED);
+    else if (go->getLootState() == GO_JUST_DEACTIVATED)
+        // Change state from GO_JUST_DEACTIVATED to GO_READY in case battleground is starting again
+        go->SetLootState(GO_READY);
+
+    go->SetRespawnTime(respawntime);
+}
+
+bool BattlegroundMap::DeleteObject(uint32 type)
+{
+    ASSERT(type < _objectGUIDsByType.size());
+
+    uint64 guid = _objectGUIDsByType[type];
+    if (!guid)
+    {
+        TC_LOG_ERROR("bg.battleground.deleteobject", "Tried to delete object type: %u from battleground (map: %u), but object was not registered in this BattlegroundMap!", type, GetId());
+        return true;        // Already deleted or never added
+    }
+
+    GameObject* go = GetGameObject(guid);
+    if (!go)
+    {
+        TC_LOG_ERROR("bg.battleground.deleteobject", "Tried to delete object type: %u, entry: %u from battleground (map: %u), but object was not found in world!", type, GUID_ENPART(guid), GetId());
+        return false;      // Was added, but now it's not in world any more. Data is desynchronized
+    }
+
+    go->SetRespawnTime(0);
+    go->Delete();
+    _objectGUIDsByType[type] = 0;
+    return true;
+}
+
+Creature* BattlegroundMap::AddCreature(uint32 entry, uint32 type, uint32 teamval, Position* pos, uint32 respawntime /*= 0*/)
+{
+    ASSERT(type < _objectGUIDsByType.size());
+
+    Creature* creature = new Creature;
+    if (!creature->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_UNIT), map, PHASEMASK_NORMAL, entry, 0, teamval, pos->GetPositionX(), pos->GetPositionY, pos->GetPositionZ(), pos->GetOrientation()))
+    {
+        TC_LOG_ERROR("bg.battleground.addcreature", "Cannot create creature (entry: %u) for BG (map: %u)!",
+            entry, GetId());
+        delete creature;
+        return NULL;
+    }
+
+    creature->SetHomePosition(pos);
+
+    CreatureTemplate const *creatureInfo = sObjectMgr->GetCreatureTemplate(entry);
+    if (!creatureInfo)
+    {
+        TC_LOG_ERROR("bg.battleground.addcreature", "Creature template (entry: %u) does not exist for BG (map: %u)!",
+            entry, GetId());
+        delete creature;
+        return NULL;
+    }
+
+    // Force using DB speeds
+    creature->SetSpeed(MOVE_WALK, creatureInfo->speed_walk);
+    creature->SetSpeed(MOVE_RUN, creatureInfo->speed_run);
+
+    Add(creature);
+    _objectGUIDsByType[type] = creature->GetGUID();
+
+    if (respawntime)
+        creature->SetRespawnDelay(respawntime);
+
+    return creature;
+}
+
+bool BattlegroundMap::DeleteCreature(uint32 type)
+{
+    ASSERT(type < _objectGUIDsByType.size());
+
+    uint64 guid = _objectGUIDsByType[type];
+    if (!guid)
+    {
+        TC_LOG_ERROR("bg.battleground.deletecreaeture", "Tried to delete creature type: %u from battleground (map: %u), but creature was not registered in this BattlegroundMap!", type, GetId());
+        return true;        // Already deleted or never added
+    }
+
+    Creature* creature = GetCreature(guid);
+    if (!creature)
+    {
+        TC_LOG_ERROR("bg.battleground.deletecreaeture", "Tried to delete creature type: %u, entry: %u from battleground (map: %u), but creature was not found in world!", type, GUID_ENPART(guid), GetId());
+        return false;      // Was added, but now it's not in world any more. Data is desynchronized
+    }
+
+    creature->AddObjectToRemoveList();
+    _objectGUIDsByType[type] = 0;
+    return true;
 }
