@@ -271,11 +271,15 @@ struct BattlegroundABScore final : public BattlegroundScore
         uint32 BasesDefended;
 };
 
-class BattlegroundAB : public Battleground
+class BattlegroundMap;
+
+class BattlegroundAB : public BattlegroundMap
 {
     public:
         BattlegroundAB();
         ~BattlegroundAB();
+
+        void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
         void AddPlayer(Player* player);
         void StartingEventCloseDoors();

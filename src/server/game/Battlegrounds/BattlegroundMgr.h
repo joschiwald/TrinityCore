@@ -63,8 +63,8 @@ class BattlegroundMgr
 
         /* Battlegrounds */
         Battleground* GetBattlegroundThroughClientInstance(uint32 instanceId, BattlegroundTypeId bgTypeId);
-        Battleground* GetBattleground(uint32 InstanceID, BattlegroundTypeId bgTypeId);
-        Battleground* GetBattlegroundTemplate(BattlegroundTypeId bgTypeId);
+        Battleground* GetBattleground(uint32 InstanceID, BattlegroundTypeId bgTypeId); // there must be uint32 because MAX_BATTLEGROUND_TYPE_ID means unknown
+        Battleground* GetBattleground(BattlegroundTypeId bgTypeId);
         Battleground* CreateNewBattleground(BattlegroundTypeId bgTypeId, PvPDifficultyEntry const* bracketEntry, uint8 arenaType, bool isRated);
 
         void AddBattleground(Battleground* bg);
@@ -135,8 +135,7 @@ class BattlegroundMgr
     protected:
         typedef std::map<BattlegroundTypeId, BattlegroundTemplate> BattlegroundTemplateMap;
 
-    private:
-        BattlegroundTemplate const* GetBattlegroundTemplateByTypeId(BattlegroundTypeId id)
+        BattlegroundTemplate const* GetBattlegroundTemplate(BattlegroundTypeId id)
         {
             BattlegroundTemplateMap::const_iterator itr = _battlegroundTemplates.find(id);
             if (itr != _battlegroundTemplates.end())
@@ -152,6 +151,7 @@ class BattlegroundMgr
             return nullptr;
         }
 
+    private:
         typedef std::map<BattlegroundTypeId, uint8 /*weight*/> BattlegroundSelectionWeightMap;
 
         typedef std::map<BattlegroundTypeId, BattlegroundTemplate> BattlegroundTemplateMap;

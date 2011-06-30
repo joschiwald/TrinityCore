@@ -254,7 +254,7 @@ Battleground* BattlegroundMgr::GetBattlegroundThroughClientInstance(uint32 insta
 {
     //cause at HandleBattlegroundJoinOpcode the clients sends the instanceid he gets from
     //SMSG_BATTLEFIELD_LIST we need to find the battleground with this clientinstance-id
-    Battleground* bg = GetBattlegroundTemplate(bgTypeId);
+    Battleground* bg = GetBattleground(bgTypeId);
     if (!bg)
         return NULL;
 
@@ -305,7 +305,7 @@ Battleground* BattlegroundMgr::GetBattleground(uint32 instanceId, BattlegroundTy
     return NULL;
 }
 
-Battleground* BattlegroundMgr::GetBattlegroundTemplate(BattlegroundTypeId bgTypeId)
+Battleground* BattlegroundMgr::GetBattleground(BattlegroundTypeId bgTypeId)
 {
     BattlegroundDataContainer::const_iterator itr = bgDataStore.find(bgTypeId);
     if (itr == bgDataStore.end())
@@ -347,8 +347,7 @@ Battleground* BattlegroundMgr::CreateNewBattleground(BattlegroundTypeId original
     BattlegroundTypeId bgTypeId = GetRandomBG(originalBgTypeId);
 
     // get the template BG
-    Battleground* bg_template = GetBattlegroundTemplate(bgTypeId);
-
+    Battleground* bg_template = GetBattleground(bgTypeId);
     if (!bg_template)
     {
         TC_LOG_ERROR("bg.battleground", "Battleground: CreateNewBattleground - bg template not found for %u", bgTypeId);
@@ -668,8 +667,7 @@ void BattlegroundMgr::BuildBattlegroundListPacket(WorldPacket* data, uint64 guid
         size_t count_pos = data->wpos();
         *data << uint32(0);                                 // number of bg instances
 
-        BattlegroundDataContainer::iterator it = bgDataStore.find(bgTypeId);
-        if (it != bgDataStore.end())
+        if (Battleground* bgTemplate = sBattlegroundMgr->GetBattleground(bgTypeId))
         {
             // expected bracket entry
             if (PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketByLevel(it->second.m_Battlegrounds.begin()->second->GetMapId(), player->getLevel()))
@@ -823,7 +821,7 @@ void BattlegroundMgr::SetHolidayWeekends(uint32 mask)
 {
     for (uint32 bgtype = 1; bgtype < MAX_BATTLEGROUND_TYPE_ID; ++bgtype)
     {
-        if (Battleground* bg = GetBattlegroundTemplate(BattlegroundTypeId(bgtype)))
+        if (Battleground* bg = GetBattleground(BattlegroundTypeId(bgtype)))
         {
             bg->SetHoliday(mask & (1 << bgtype));
         }

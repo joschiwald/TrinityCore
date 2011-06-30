@@ -542,12 +542,16 @@ struct BattlegroundSAScore final : public BattlegroundScore
         uint32 GatesDestroyed;
 };
 
+class BattlegroundMap;
+
 /// Class for manage Strand of Ancient battleground
-class BattlegroundSA : public Battleground
+class BattlegroundSA : public BattlegroundMap
 {
     public:
         BattlegroundSA();
         ~BattlegroundSA();
+
+        void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
         /**
          * \brief Called every time for update battle data

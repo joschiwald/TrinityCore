@@ -37,7 +37,9 @@ enum BattlegroundRLObjects
     BG_RL_OBJECT_TYPE_BUFF_2    = 184664
 };
 
-class BattlegroundRL : public Battleground
+class ArenaMap;
+
+class BattlegroundRL : public ArenaMap
 {
     public:
         BattlegroundRL();

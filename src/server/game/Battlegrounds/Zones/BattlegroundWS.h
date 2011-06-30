@@ -181,7 +181,9 @@ struct BattlegroundWGScore final : public BattlegroundScore
         uint32 FlagReturns;
 };
 
-class BattlegroundWS : public Battleground
+class BattlegroundMap;
+
+class BattlegroundWS : public BattlegroundMap
 {
     public:
         /* Construction */

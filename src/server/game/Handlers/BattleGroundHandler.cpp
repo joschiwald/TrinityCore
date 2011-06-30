@@ -114,7 +114,7 @@ void WorldSession::HandleBattlemasterJoinOpcode(WorldPacket& recvData)
         bg = sBattlegroundMgr->GetBattlegroundThroughClientInstance(instanceId, bgTypeId);
 
     if (!bg)
-        bg = sBattlegroundMgr->GetBattlegroundTemplate(bgTypeId);
+        bg = sBattlegroundMgr->GetBattleground(bgTypeId);
     if (!bg)
         return;
 
@@ -393,7 +393,7 @@ void WorldSession::HandleBattleFieldPortOpcode(WorldPacket &recvData)
             return;
         }
 
-        bg = sBattlegroundMgr->GetBattlegroundTemplate(bgTypeId);
+        bg = sBattlegroundMgr->GetBattleground(bgTypeId);
         if (!bg)
         {
             TC_LOG_ERROR("network", "BattlegroundHandler: bg_template not found for type id %u.", bgTypeId);
@@ -566,7 +566,7 @@ void WorldSession::HandleBattlefieldStatusOpcode(WorldPacket & /*recvData*/)
         }
         else
         {
-            bg = sBattlegroundMgr->GetBattlegroundTemplate(bgTypeId);
+            bg = sBattlegroundMgr->GetBattleground(bgTypeId);
             if (!bg)
                 continue;
 
@@ -627,7 +627,7 @@ void WorldSession::HandleBattlemasterJoinArena(WorldPacket& recvData)
     }
 
     //check existance
-    Battleground* bg = sBattlegroundMgr->GetBattlegroundTemplate(BATTLEGROUND_AA);
+    Battleground* bg = sBattlegroundMgr->GetBattleground(BATTLEGROUND_AA);
     if (!bg)
     {
         TC_LOG_ERROR("network", "Battleground: template bg (all arenas) not found");

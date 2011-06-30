@@ -41,7 +41,9 @@ enum BattlegroundNAObjects
     BG_NA_OBJECT_TYPE_BUFF_2    = 184664
 };
 
-class BattlegroundNA : public Battleground
+class ArenaMap;
+
+class BattlegroundNA : public ArenaMap
 {
     public:
         BattlegroundNA();

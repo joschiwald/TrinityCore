@@ -42,7 +42,7 @@ enum BattlegroundBEObjects
     BG_BE_OBJECT_TYPE_BUFF_2    = 184664
 };
 
-class BattlegroundBE : public Battleground
+class BattlegroundBE : public ArenaMap
 {
     public:
         BattlegroundBE();

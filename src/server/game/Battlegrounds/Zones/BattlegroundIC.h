@@ -882,11 +882,16 @@ struct BattlegroundICScore final : public BattlegroundScore
         uint32 BasesDefended;
 };
 
-class BattlegroundIC : public Battleground
+class BattlegroundMap;
+
+class BattlegroundIC : public BattlegroundMap
 {
     public:
         BattlegroundIC();
         ~BattlegroundIC();
+
+        void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
+
 
         /* inherited from BattlegroundClass */
         void AddPlayer(Player* player);

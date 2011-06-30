@@ -79,7 +79,7 @@ enum BattlegroundDSData
     BG_DS_WATERFALL_STATUS_OFF                   = 3
 };
 
-class BattlegroundDS : public Battleground
+class BattlegroundDS : public ArenaMap
 {
     public:
         BattlegroundDS();

@@ -352,11 +352,15 @@ struct BattlegroundEYScore final : public BattlegroundScore
         uint32 FlagCaptures;
 };
 
-class BattlegroundEY : public Battleground
+class BattlegroundMap;
+
+class BattlegroundEY : public BattlegroundMap
 {
     public:
         BattlegroundEY();
         ~BattlegroundEY();
+
+        void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
         /* inherited from BattlegroundClass */
         void AddPlayer(Player* player);
