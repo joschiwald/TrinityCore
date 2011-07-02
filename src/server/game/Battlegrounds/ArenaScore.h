@@ -60,4 +60,20 @@ struct ArenaScore : public BattlegroundScore
         uint8 TeamId; // bgTeamId
 };
 
+struct ArenaTeamScore
+{
+    ArenaTeamScore() : RatingChange(0), MatchmakerRating(0) {};
+
+    void Assign(int32 ratingChange, uint32 matchMakerRating, std::string const& teamName)
+    {
+        RatingChange = ratingChange;
+        MatchmakerRating = matchMakerRating;
+        TeamName = teamName;
+    }
+
+    int32 RatingChange;
+    uint32 MatchmakerRating;
+    std::string TeamName;
+};
+
 #endif // TRINITY_ARENA_SCORE_H

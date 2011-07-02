@@ -216,10 +216,6 @@ void BattlegroundAB::OnPlayerJoin(Player* player)
     PlayerScores[player->GetGUIDLow()] = new BattlegroundABScore(player->GetGUID());
 }
 
-void BattlegroundAB::RemovePlayer(Player* /*player*/, uint64 /*guid*/, uint32 /*team*/)
-{
-}
-
 void BattlegroundAB::HandleAreaTrigger(Player* player, uint32 trigger)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)

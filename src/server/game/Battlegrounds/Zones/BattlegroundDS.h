@@ -81,16 +81,20 @@ enum BattlegroundDSData
 
 class BattlegroundDS : public ArenaMap
 {
-    public:
+    friend class BattlegroundMgr;
+
+    protected:
         BattlegroundDS();
         ~BattlegroundDS();
 
-        /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player) override;
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
+        void Update(uint32 const& diff);
 
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
+        void InitializeObjects();
+
+        /* inherited from BattlegroundClass */
+        virtual void StartingEventCloseDoors();
+        virtual void StartingEventOpenDoors();
+
         void HandleAreaTrigger(Player* Source, uint32 Trigger);
         bool SetupBattleground();
         void Reset();

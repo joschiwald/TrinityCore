@@ -50,12 +50,11 @@ class BattlegroundNA : public ArenaMap
         ~BattlegroundNA();
 
         /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player);
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
 
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
         void HandleAreaTrigger(Player* Source, uint32 Trigger);
+
         bool SetupBattleground();
         void Reset();
         void FillInitialWorldStates(WorldPacket &d);

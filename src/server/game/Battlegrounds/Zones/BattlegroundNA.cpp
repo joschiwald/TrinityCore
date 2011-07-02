@@ -49,22 +49,6 @@ void BattlegroundNA::StartingEventOpenDoors()
         SpawnObject(i, 60);
 }
 
-void BattlegroundNA::OnPlayerJoin(Player* player)
-{
-    ArenaMap::OnPlayerJoin(player);
-    PlayerScores[player->GetGUIDLow()] = new ArenaScore(player->GetGUID(), player->GetBGTeam());
-    UpdateArenaWorldState();
-}
-
-void BattlegroundNA::RemovePlayer(Player* /*player*/, uint64 /*guid*/, uint32 /*team*/)
-{
-    if (GetStatus() == STATUS_WAIT_LEAVE)
-        return;
-
-    UpdateArenaWorldState();
-    CheckArenaWinConditions();
-}
-
 void BattlegroundNA::HandleKillPlayer(Player* player, Player* killer)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)

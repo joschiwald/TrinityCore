@@ -87,20 +87,10 @@ enum BattlegroundQueueTypeId
 
 class BattlegroundMap : public Map
 {
+    friend class WorldSession;
+    friend class MapManager;
+
     public:
-        BattlegroundMap(uint32 id, time_t expiry, uint32 instanceId, Map* parent, uint8 spawnMode);
-        ~BattlegroundMap();
-
-        bool AddPlayerToMap(Player* player) override;
-        void RemovePlayerFromMap(Player*, bool) override;
-        void Update(uint32 const diff) override;
-
-        bool CanEnter(Player* player) override;
-        void SetUnload();
-
-        // Packet builders
-        void BuildPvPLogDataPacket(WorldPacket& data);
-
     protected:
         // Typedefs here
         typedef std::map<uint32, BattlegroundScore*> BattlegroundScoreMap;
@@ -114,37 +104,57 @@ class BattlegroundMap : public Map
         uint32 GetStatus() const { return _status; }
 
     protected:
-        // Methods and attributes accessed by subclasses
+        /* Methods called by upper level code */
+        BattlegroundMap(uint32 id, time_t expiry, uint32 instanceId, Map* parent, uint8 spawnMode);
+        ~BattlegroundMap();
+
+        bool AddPlayerToMap(Player* player) override;
+        void RemovePlayerFromMap(Player*, bool) override;
+        void Update(uint32 const diff) override;
+
+        bool CanEnter(Player* player);
+        void SetUnload();
+
+        // Packet builders
+        virtual void BuildPvPLogDataPacket(WorldPacket& data);
+
+        /* Methods and attributes accessed by subclasses */
+        // Initialization
         virtual void InitializeObjects() { }   // Resize ObjectGUIDsByType and spawn objects
         virtual void InitializeTextIds() { }   // Initializes text IDs that are used in the battleground at any possible phase.
         virtual void InitializePreparationDelayTimes(); // Initializes preparation delay timers.
         virtual void FillInitialWorldStates(WorldPacket& data) { }
 
-        virtual void StartBattleground() { }   // Initializes EndTimer and other bg-specific variables.
-        virtual uint32 GetWinningTeam() const { return WINNER_NONE; } // Contains rules on which team to pick as winner
-        virtual void EndBattleground(uint32 winner) { } // Handles out rewards etc
-        virtual void DestroyBattleground() { } // Contains battleground specific cleanup method calls.
+        virtual void InstallBattleground() { }  // Calls all overridable InitializeXX() methods
+        virtual void StartBattleground() { }    // Initializes EndTimer and other bg-specific variables.
+        virtual uint32 GetWinningTeam() const { return WINNER_NONE; }  // Contains rules on which team to pick as winner
+        virtual void EndBattleground(uint32 winner) { }  // Handles out rewards etc
+        virtual void DestroyBattleground() { }  // Contains battleground specific cleanup method calls.
 
         virtual bool UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true);
-
         void UpdateWorldState(uint32 type, uint32 value);
 
         // Entity management - GameObject
         GameObject* AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float r0, float r1, float r2, float r3, uint32 respawnTime = 0);   // Adds GO's to the map but doesn't necessarily spawn them
-        GameObject* AddObject(uint32 type, uint32 entry, Position const* pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0);   // Adds GO's to the map but doesn't necessarily spawn them
+        GameObject* AddObject(uint32 type, uint32 entry, Position* pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0);   // Adds GO's to the map but doesn't necessarily spawn them
+        GameObject* GetGameObject(uint32 type);
         void SpawnObject(uint32 type, uint32 respawntime);  // Spawns an already added gameobject
         bool DeleteObject(uint32 type); // Deletes an object with specified type designation
 
         // Entity management - Creature
         Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o, uint32 respawntime = 0); // Adds and spawns creatures to map
-        Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, Position const* pos, uint32 respawntime = 0); // Adds and spawns creatures to map
+        Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, Position* pos, uint32 respawntime = 0); // Adds and spawns creatures to map
+        Creature* GetCreature(uint32 type);
         bool DeleteCreature(uint32 type);
 
         std::vector<uint64> ObjectGUIDsByType;      // Stores object GUIDs per enum-defined arbitrary type
 
         // Hooks called after Map methods
-        virtual void OnPlayerJoin(Player* player); // Initialize battleground specific variables.
-        virtual void OnPlayerExit(Player* player); // Remove battleground specific auras etc.
+        virtual void OnPlayerJoin(Player* player);  // Initialize battleground specific variables.
+        virtual void OnPlayerExit(Player* player);  // Remove battleground specific auras etc.
+
+        // Misc. hooks
+        virtual void OnPlayerKill(Player* victim, Player* killer);
 
         uint32 EndTimer;        // Battleground specific time limit. Must be overwritten in subclass.
         uint32 PreparationPhaseTextIds[BG_STARTING_EVENT_COUNT]; // Must be initialized for each battleground

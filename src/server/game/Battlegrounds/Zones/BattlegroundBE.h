@@ -48,16 +48,16 @@ class BattlegroundBE : public ArenaMap
         BattlegroundBE();
         ~BattlegroundBE();
 
-        /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player) override;
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
+        void InitializeObjects();
 
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
-        void HandleAreaTrigger(Player* Source, uint32 Trigger);
-        bool SetupBattleground();
-        void Reset();
-        void FillInitialWorldStates(WorldPacket &d);
+        /* inherited from BattlegroundClass */
+        virtual void StartingEventCloseDoors();
+        virtual void StartingEventOpenDoors();
+
+        void HandleAreaTrigger(Player *Source, uint32 Trigger);
+
+        virtual void Reset();
+        virtual void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player* killer);
 };
 

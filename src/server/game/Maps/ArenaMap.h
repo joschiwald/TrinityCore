@@ -20,19 +20,32 @@
 
 #include "BattlegroundMap.h"
 
+class ArenaTeam;
+class ArenaTeamScore;
+
 class ArenaMap : public BattlegroundMap
 {
     public:
-        void InitializeTextIds() override;               // Initializes text IDs that are used in the battleground at any possible phase.
-        void InitializePreparationDelayTimes() override; // Initializes preparation delay timers.
+        void BuildPvPLogDataPacket(WorldPacket& data);
 
     protected:
+        void InitializeTextIds();                   // Initializes text IDs that are used in the battleground at any possible phase.
+        void InitializePreparationDelayTimes();     // Initializes preparation delay timers.
+
+        void InstallBattleground();
+        void StartBattleground();
+        void DestroyBattleground();
+
+        void OnPlayerJoin(Player* player);
+        void OnPlayerExit(Player* player);
+
         void EndBattleground(uint32 winner);
         Group* GetGroupForTeam(uint32 team) const;  // Needed for GetAverageMMR
 
     private:
         bool _rated;
         ArenaTeam* _arenaTeams[BG_TEAMS_COUNT];
+        ArenaTeamScore* _arenaTeamScores[BG_TEAMS_COUNT];
 };
 
 #endif // TRINITY_ARENA_MAP_H

@@ -275,11 +275,14 @@ class BattlegroundMap;
 
 class BattlegroundAB : public BattlegroundMap
 {
-    public:
+    friend class BattlegroundMgr;
+
+    protected:
         BattlegroundAB();
         ~BattlegroundAB();
 
-    protected:
+        void Update(uint32 const& diff);
+
         void InitializeObjects();
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
