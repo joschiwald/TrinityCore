@@ -87,7 +87,7 @@ bool BattlegroundSA::ResetObjs()
     uint32 defF = BG_SA_Factions[Attackers ? TEAM_ALLIANCE : TEAM_HORDE];
 
     for (uint8 i = 0; i < BG_SA_MAXOBJ; i++)
-        DeleteObject(i);
+        DeleteGameObject(i);
 
     for (uint8 i = 0; i < BG_SA_MAXNPC; i++)
         DeleteCreature(i);
@@ -102,7 +102,7 @@ bool BattlegroundSA::ResetObjs()
 
     for (uint8 i = 0; i <= BG_SA_PORTAL_DEFFENDER_RED; i++)
     {
-        if (!AddObject(i, BG_SA_ObjEntries[i], BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY))
+        if (!AddGameObject(i, BG_SA_ObjEntries[i], BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY))
             return false;
     }
 
@@ -120,7 +120,7 @@ bool BattlegroundSA::ResetObjs()
             default:
                 break;
         }
-        if (!AddObject(i, boatid, BG_SA_ObjSpawnlocs[i].GetPositionX(),
+        if (!AddGameObject(i, boatid, BG_SA_ObjSpawnlocs[i].GetPositionX(),
           BG_SA_ObjSpawnlocs[i].GetPositionY(),
           BG_SA_ObjSpawnlocs[i].GetPositionZ() + (Attackers ? -3.750f: 0),
           BG_SA_ObjSpawnlocs[i].GetOrientation(), 0, 0, 0, 0, RESPAWN_ONE_DAY))
@@ -129,15 +129,15 @@ bool BattlegroundSA::ResetObjs()
 
     for (uint8 i = BG_SA_SIGIL_1; i <= BG_SA_LEFT_FLAGPOLE; i++)
     {
-        if (!AddObject(i, BG_SA_ObjEntries[i], BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY))
+        if (!AddGameObject(i, BG_SA_ObjEntries[i], BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY))
             return false;
     }
 
     // MAD props for Kiper for discovering those values - 4 hours of his work.
     GetObject(BG_SA_BOAT_ONE)->UpdateRotationFields(1.0f, 0.0002f);
     GetObject(BG_SA_BOAT_TWO)->UpdateRotationFields(1.0f, 0.00001f);
-    SpawnObject(BG_SA_BOAT_ONE, RESPAWN_IMMEDIATELY);
-    SpawnObject(BG_SA_BOAT_TWO, RESPAWN_IMMEDIATELY);
+    SpawnGameObject(BG_SA_BOAT_ONE, RESPAWN_IMMEDIATELY);
+    SpawnGameObject(BG_SA_BOAT_TWO, RESPAWN_IMMEDIATELY);
 
     //Cannons and demolishers - NPCs are spawned
     //By capturing GYs.
@@ -152,7 +152,7 @@ bool BattlegroundSA::ResetObjs()
 
     for (uint8 i = 0; i <= BG_SA_PORTAL_DEFFENDER_RED; i++)
     {
-        SpawnObject(i, RESPAWN_IMMEDIATELY);
+        SpawnGameObject(i, RESPAWN_IMMEDIATELY);
         GetObject(i)->SetFaction(defF);
     }
 
@@ -193,13 +193,14 @@ bool BattlegroundSA::ResetObjs()
     //GY capture points
     for (uint8 i = BG_SA_CENTRAL_FLAG; i <= BG_SA_LEFT_FLAG; i++)
     {
-        AddObject(i, (BG_SA_ObjEntries[i] - (Attackers == TEAM_ALLIANCE ? 1 : 0)), BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY);
+        AddGameObject(i, (BG_SA_ObjEntries[i] - (Attackers == TEAM_ALLIANCE ? 1 : 0)), BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY);
         GetObject(i)->SetFaction(atF);
+
     }
 
     for (uint8 i = BG_SA_BOMB; i < BG_SA_MAXOBJ; i++)
     {
-        AddObject(i, BG_SA_ObjEntries[BG_SA_BOMB], BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY);
+        AddGameObject(i, BG_SA_ObjEntries[BG_SA_BOMB], BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY);
         GetObject(i)->SetFaction(atF);
     }
 
@@ -756,8 +757,8 @@ void BattlegroundSA::CaptureGraveyard(BG_SA_Graveyards i, Player* Source)
     {
         case BG_SA_LEFT_CAPTURABLE_GY:
             flag = BG_SA_LEFT_FLAG;
-            DeleteObject(flag);
-            AddObject(flag, (BG_SA_ObjEntries[flag] - (Source->GetTeamId() == TEAM_ALLIANCE ? 0 : 1)),
+            DeleteGameObject(flag);
+            AddGameObject(flag, (BG_SA_ObjEntries[flag] - (Source->GetTeamId() == TEAM_ALLIANCE ? 0 : 1)),
                 BG_SA_ObjSpawnlocs[flag], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
             npc = BG_SA_NPC_RIGSPARK;
@@ -781,8 +782,8 @@ void BattlegroundSA::CaptureGraveyard(BG_SA_Graveyards i, Player* Source)
             break;
         case BG_SA_RIGHT_CAPTURABLE_GY:
             flag = BG_SA_RIGHT_FLAG;
-            DeleteObject(flag);
-            AddObject(flag, (BG_SA_ObjEntries[flag] - (Source->GetTeamId() == TEAM_ALLIANCE ? 0 : 1)),
+            DeleteGameObject(flag);
+            AddGameObject(flag, (BG_SA_ObjEntries[flag] - (Source->GetTeamId() == TEAM_ALLIANCE ? 0 : 1)),
                 BG_SA_ObjSpawnlocs[flag], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
             npc = BG_SA_NPC_SPARKLIGHT;
@@ -806,8 +807,8 @@ void BattlegroundSA::CaptureGraveyard(BG_SA_Graveyards i, Player* Source)
             break;
         case BG_SA_CENTRAL_CAPTURABLE_GY:
             flag = BG_SA_CENTRAL_FLAG;
-            DeleteObject(flag);
-            AddObject(flag, (BG_SA_ObjEntries[flag] - (Source->GetTeamId() == TEAM_ALLIANCE ? 0 : 1)),
+            DeleteGameObject(flag);
+            AddGameObject(flag, (BG_SA_ObjEntries[flag] - (Source->GetTeamId() == TEAM_ALLIANCE ? 0 : 1)),
               BG_SA_ObjSpawnlocs[flag], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
             UpdateWorldState(BG_SA_CENTER_GY_ALLIANCE, GraveyardStatus[i] == TEAM_ALLIANCE);

@@ -202,8 +202,8 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
 
                 float cords[4] = {banner->GetPositionX(), banner->GetPositionY(), banner->GetPositionZ(), banner->GetOrientation() };
 
-                DeleteObject(nodePoint[i].gameobject_type);
-                AddObject(nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry, cords[0], cords[1], cords[2], cords[3], 0, 0, 0, 0, RESPAWN_ONE_DAY);
+                DeleteGameObject(nodePoint[i].gameobject_type);
+                AddGameObject(nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry, cords[0], cords[1], cords[2], cords[3], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
                 GetObject(nodePoint[i].gameobject_type)->SetUInt32Value(GAMEOBJECT_FACTION, nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_Factions[1] : BG_IC_Factions[0]);
 
@@ -256,7 +256,7 @@ void BattlegroundIC::StartingEventOpenDoors()
 
     for (uint8 i = 0; i < MAX_FORTRESS_TELEPORTERS_SPAWNS; ++i)
     {
-        if (!AddObject(BG_IC_Teleporters[i].type, BG_IC_Teleporters[i].entry,
+        if (!AddGameObject(BG_IC_Teleporters[i].type, BG_IC_Teleporters[i].entry,
                        BG_IC_Teleporters[i].x, BG_IC_Teleporters[i].y,
                        BG_IC_Teleporters[i].z, BG_IC_Teleporters[i].o,
                        0, 0, 0, 0, RESPAWN_ONE_DAY))
@@ -331,7 +331,7 @@ bool BattlegroundIC::SetupBattleground()
 {
     for (uint8 i = 0; i < MAX_NORMAL_GAMEOBJECTS_SPAWNS; ++i)
     {
-        if (!AddObject(BG_IC_ObjSpawnlocs[i].type, BG_IC_ObjSpawnlocs[i].entry,
+        if (!AddGameObject(BG_IC_ObjSpawnlocs[i].type, BG_IC_ObjSpawnlocs[i].entry,
             BG_IC_ObjSpawnlocs[i].x, BG_IC_ObjSpawnlocs[i].y,
             BG_IC_ObjSpawnlocs[i].z, BG_IC_ObjSpawnlocs[i].o,
             0, 0, 0, 0, RESPAWN_ONE_DAY))
@@ -492,19 +492,15 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
 
             float cords[4] = {banner->GetPositionX(), banner->GetPositionY(), banner->GetPositionZ(), banner->GetOrientation() };
 
-            DeleteObject(nodePoint[i].gameobject_type);
-            if (!AddObject(nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry, cords[0], cords[1], cords[2], cords[3], 0, 0, 0, 0, RESPAWN_ONE_DAY))
-            {
-                TC_LOG_ERROR("bg.battleground", "Isle of Conquest: There was an error spawning a banner (type: %u, entry: %u). Isle of Conquest BG cancelled.", nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry);
-                Battleground::EndBattleground(WINNER_NONE);
-            }
+            DeleteGameObject(nodePoint[i].gameobject_type);
+            AddGameObject(nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry, cords[0], cords[1], cords[2], cords[3], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
             GetObject(nodePoint[i].gameobject_type)->SetUInt32Value(GAMEOBJECT_FACTION, nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_Factions[1] : BG_IC_Factions[0]);
 
             if (nodePoint[i].nodeType == NODE_TYPE_WORKSHOP)
             {
-                DeleteObject(BG_IC_GO_SEAFORIUM_BOMBS_1);
-                DeleteObject(BG_IC_GO_SEAFORIUM_BOMBS_2);
+                DeleteGameObject(BG_IC_GO_SEAFORIUM_BOMBS_1);
+                DeleteGameObject(BG_IC_GO_SEAFORIUM_BOMBS_2);
             }
 
             UpdateNodeWorldState(&nodePoint[i]);
@@ -573,7 +569,7 @@ void BattlegroundIC::HandleContestedNodes(ICNodePoint* nodePoint)
              (nodePoint->faction == TEAM_ALLIANCE ? gunshipHorde : gunshipAlliance)->EnableMovement(false);
 
         for (uint8 u = BG_IC_GO_HANGAR_TELEPORTER_1; u < BG_IC_GO_HANGAR_TELEPORTER_3; ++u)
-            DeleteObject(u);
+            DeleteGameObject(u);
     }
 }
 
@@ -595,11 +591,8 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
             for (uint8 u = 0; u < MAX_HANGAR_TELEPORTERS_SPAWNS; ++u)
             {
                 uint8 type = BG_IC_GO_HANGAR_TELEPORTER_1+u;
-                if (!AddObject(type, (nodePoint->faction == TEAM_ALLIANCE ? GO_ALLIANCE_GUNSHIP_PORTAL : GO_HORDE_GUNSHIP_PORTAL),
-                    BG_IC_HangarTeleporters[u], 0, 0, 0, 0, RESPAWN_ONE_DAY))
-                {
-                    TC_LOG_ERROR("bg.battleground", "Isle of Conquest: There was an error spawning a gunship portal. Type: %u", BG_IC_GO_HANGAR_TELEPORTER_1+u);
-                }
+                AddGameObject(type, (nodePoint->faction == TEAM_ALLIANCE ? GO_ALLIANCE_GUNSHIP_PORTAL : GO_HORDE_GUNSHIP_PORTAL),
+                    BG_IC_HangarTeleporters[u], 0, 0, 0, 0, RESPAWN_ONE_DAY);
             }
 
             //TC_LOG_ERROR("bg.battleground", "BG_IC_GO_HANGAR_BANNER CAPTURED Faction: %u", nodePoint->faction);
@@ -735,7 +728,7 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
 
                 for (uint8 i = 0; i < MAX_WORKSHOP_BOMBS_SPAWNS_PER_FACTION; ++i)
                 {
-                    AddObject(BG_IC_GO_SEAFORIUM_BOMBS_1+i, GO_SEAFORIUM_BOMBS,
+                    AddGameObject(BG_IC_GO_SEAFORIUM_BOMBS_1+i, GO_SEAFORIUM_BOMBS,
                     workshopBombs[i].GetPositionX(), workshopBombs[i].GetPositionY(),
                     workshopBombs[i].GetPositionZ(), workshopBombs[i].GetOrientation(),
                     0, 0, 0, 0, 10);
