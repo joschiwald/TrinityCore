@@ -76,11 +76,6 @@ int MapUpdater::schedule_update(Map& map, ACE_UINT32 diff)
     return 0;
 }
 
-bool MapUpdater::activated()
-{
-    return m_executor.activated();
-}
-
 void MapUpdater::update_finished()
 {
     TRINITY_GUARD(ACE_Thread_Mutex, m_mutex);
