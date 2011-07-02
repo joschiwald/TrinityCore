@@ -30,18 +30,17 @@
 MapInstanced::MapInstanced(uint32 id, time_t expiry) : Map(id, expiry, 0, DUNGEON_DIFFICULTY_NORMAL)
 {
     // fill with zero
-    memset(&GridMapReference, 0, MAX_NUMBER_OF_GRIDS*MAX_NUMBER_OF_GRIDS*sizeof(uint16));
+    memset(&GridMapReference, 0, MAX_NUMBER_OF_GRIDS * MAX_NUMBER_OF_GRIDS * sizeof(uint16));
 }
 
 void MapInstanced::InitVisibilityDistance()
 {
     if (m_InstancedMaps.empty())
         return;
-    //initialize visibility distances for all instance copies
+
+    // initialize visibility distances for all instances of map
     for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
-    {
-        (*i).second->InitVisibilityDistance();
-    }
+        i->second->InitVisibilityDistance();
 }
 
 void MapInstanced::Update(const uint32 t)
