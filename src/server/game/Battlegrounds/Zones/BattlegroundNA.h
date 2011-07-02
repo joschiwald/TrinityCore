@@ -18,7 +18,7 @@
 #ifndef __BATTLEGROUNDNA_H
 #define __BATTLEGROUNDNA_H
 
-#include "Battleground.h"
+#include "ArenaMap.h"
 
 enum BattlegroundNAObjectTypes
 {
@@ -50,7 +50,7 @@ class BattlegroundNA : public ArenaMap
         ~BattlegroundNA();
 
         /* inherited from BattlegroundClass */
-        void AddPlayer(Player* player);
+        void OnPlayerJoin(Player* player);
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
 

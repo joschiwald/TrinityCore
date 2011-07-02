@@ -26,7 +26,7 @@
 #include "SharedDefines.h"
 
 class Battlefield;
-class Battleground;
+class BattlegroundMap;
 class Creature;
 class GroupReference;
 class InstanceSave;

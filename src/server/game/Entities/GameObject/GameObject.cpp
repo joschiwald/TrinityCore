@@ -18,7 +18,7 @@
 
 #include <G3D/Quat.h>
 #include "GameObjectAI.h"
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "CellImpl.h"
 #include "CreatureAISelector.h"
 #include "DynamicTree.h"

@@ -24,7 +24,7 @@
 #include "Battlefield.h"
 #include "BattlefieldMgr.h"
 #include "BattlefieldWG.h"
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "BattlegroundMgr.h"
 #include "BattlegroundScore.h"
 #include "CellImpl.h"

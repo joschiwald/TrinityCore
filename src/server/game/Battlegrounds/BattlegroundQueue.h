@@ -21,7 +21,7 @@
 
 #include "Common.h"
 #include "DBCEnums.h"
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "EventProcessor.h"
 
 #include <deque>

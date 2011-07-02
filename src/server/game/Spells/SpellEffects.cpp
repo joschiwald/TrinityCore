@@ -44,7 +44,7 @@
 #include "Totem.h"
 #include "CreatureAI.h"
 #include "BattlegroundMgr.h"
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "OutdoorPvPMgr.h"
 #include "Language.h"
 #include "SocialMgr.h"

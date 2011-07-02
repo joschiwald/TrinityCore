@@ -31,11 +31,56 @@ enum BattlegroundStartTimeIntervals
 
 enum BattlegroundStartingEventsIds
 {
-    BG_STARTING_EVENT_FIRST     = 0,
-    BG_STARTING_EVENT_SECOND    = 1,
-    BG_STARTING_EVENT_THIRD     = 2,
-    BG_STARTING_EVENT_FOURTH    = 3,
-    BG_STARTING_EVENT_COUNT     = 4
+    BG_STARTING_EVENT_FIRST,
+    BG_STARTING_EVENT_SECOND,
+    BG_STARTING_EVENT_THIRD,
+    BG_STARTING_EVENT_FOURTH,
+    BG_STARTING_EVENT_COUNT
+};
+
+enum BattlegroundStatus
+{
+    STATUS_NONE,                                // first status, should mean bg is not instance
+    STATUS_WAIT_QUEUE,                          // means bg is empty and waiting for queue
+    STATUS_WAIT_JOIN,                           // this means, that BG has already started and it is waiting for more players
+    STATUS_IN_PROGRESS,                         // means bg is running
+    STATUS_WAIT_LEAVE                           // means some faction has won BG and it is ending
+};
+
+enum BattlegroundWinner
+{
+    WINNER_HORDE            = 0,
+    WINNER_ALLIANCE         = 1,
+    WINNER_NONE             = 2
+};
+
+enum BattlegroundTimeIntervals
+{
+    RESURRECTION_INTERVAL           = 30000,                // ms
+    INVITATION_REMIND_TIME          = 20000,                // ms
+    INVITE_ACCEPT_WAIT_TIME         = 40000,                // ms
+    TIME_TO_AUTOREMOVE              = 120000,               // ms
+    MAX_OFFLINE_TIME                = 300,                  // secs
+    RESPAWN_ONE_DAY                 = 86400,                // secs
+    RESPAWN_IMMEDIATELY             = 0,                    // secs
+    BUFF_RESPAWN_TIME               = 180,                  // secs
+};
+
+// handle the queue types and bg types separately to enable joining queue for different sized arenas at the same time
+enum BattlegroundQueueTypeId
+{
+    BATTLEGROUND_QUEUE_NONE,
+    BATTLEGROUND_QUEUE_AV,
+    BATTLEGROUND_QUEUE_WS,
+    BATTLEGROUND_QUEUE_AB,
+    BATTLEGROUND_QUEUE_EY,
+    BATTLEGROUND_QUEUE_SA,
+    BATTLEGROUND_QUEUE_IC,
+    BATTLEGROUND_QUEUE_RB,
+    BATTLEGROUND_QUEUE_2v2,
+    BATTLEGROUND_QUEUE_3v3,
+    BATTLEGROUND_QUEUE_5v5,
+    MAX_BATTLEGROUND_QUEUE_TYPES
 };
 
 class BattlegroundScore;
@@ -53,6 +98,9 @@ class BattlegroundMap : public Map
         bool CanEnter(Player* player) override;
         void SetUnload();
 
+        // Packet builders
+        void BuildPvPLogDataPacket(WorldPacket& data);
+
     protected:
         // Typedefs here
         typedef std::map<uint32, BattlegroundScore*> BattlegroundScoreMap;
@@ -66,22 +114,33 @@ class BattlegroundMap : public Map
         uint32 GetStatus() const { return _status; }
 
     protected:
+        // Methods and attributes accessed by subclasses
+        virtual void InitializeObjects() { }   // Resize ObjectGUIDsByType and spawn objects
         virtual void InitializeTextIds() { }   // Initializes text IDs that are used in the battleground at any possible phase.
         virtual void InitializePreparationDelayTimes(); // Initializes preparation delay timers.
+        virtual void FillInitialWorldStates(WorldPacket& data) { }
+
         virtual void StartBattleground() { }   // Initializes EndTimer and other bg-specific variables.
-        virtual void EndBattleground() { }     // Contains rules on which team wins.
+        virtual uint32 GetWinningTeam() const { return WINNER_NONE; } // Contains rules on which team to pick as winner
+        virtual void EndBattleground(uint32 winner) { } // Handles out rewards etc
         virtual void DestroyBattleground() { } // Contains battleground specific cleanup method calls.
 
         virtual bool UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true);
 
-        // Private entity management - GameObject
-        GameObject* AddObject(uint32 type, uint32 entry, Position const* pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0); // Adds GO's to the map but doesn't necessarily spawn them
-        void SpawnObject(uint32 type, uint32 respawntime); // Spawns an already added gameobject
-        bool DeleteObject(uint32 type); // Deletes an object with specified type designation
+        void UpdateWorldState(uint32 type, uint32 value);
 
-        // Private entity management - Creature
+        // Entity management - GameObject
+        GameObject* AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float r0, float r1, float r2, float r3, uint32 respawnTime = 0);   // Adds GO's to the map but doesn't necessarily spawn them
+        GameObject* AddObject(uint32 type, uint32 entry, Position const* pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0);   // Adds GO's to the map but doesn't necessarily spawn them
+        void SpawnObject(uint32 type, uint32 respawntime);  // Spawns an already added gameobject
+        bool DeleteObject(uint32 type); // Deletes an object with specified type designation 
+
+        // Entity management - Creature
+        Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o, uint32 respawntime = 0); // Adds and spawns creatures to map
         Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, Position const* pos, uint32 respawntime = 0); // Adds and spawns creatures to map
         bool DeleteCreature(uint32 type);
+
+        std::vector<uint64> ObjectGUIDsByType;      // Stores object GUIDs per enum-defined arbitrary type
 
         // Hooks called after Map methods
         virtual void OnPlayerJoin(Player* player); // Initialize battleground specific variables.
@@ -91,7 +150,8 @@ class BattlegroundMap : public Map
         uint32 PreparationPhaseTextIds[BG_STARTING_EVENT_COUNT]; // Must be initialized for each battleground
         uint32 PreparationDelayTimers[BG_STARTING_EVENT_COUNT];
 
-        BattlegroundScoreMap ScoreMap;             // Player scores
+        BattlegroundScoreMap PlayerScores;                  // Player scores
+        int32 TeamScores[BG_TEAMS_COUNT];                   // Team scores - can this even be negative?
 
     private:
         // Private initializers, non overridable
@@ -105,7 +165,12 @@ class BattlegroundMap : public Map
 
         void RemoveAllPlayers();
 
+        // Packet senders
+        void SendPacketToAll(WorldPacket* data);
+        void SendPacketToTeam(WorldPacket* data, uint32 team, Player* exclude);
         void SendMessageToAll(int32 entry, ChatMsg type);
+        void SendPlayerJoinedPacket(Player* player);
+        void SendPlayerLeftPacket(Player* player);
 
         bool AreTeamsInBalance() const;
 
@@ -119,8 +184,6 @@ class BattlegroundMap : public Map
 
         uint16 _participantCount[BG_TEAMS_COUNT];   // Players actually in the battleground
         uint16 _invitedCount[BG_TEAMS_COUNT];       // Players invited to join the battleground
-
-        std::vector<uint64> _objectGUIDsByType;     // Stores object guids per enum-defined arbitrary type
 };
 
 #endif // TRINITY_BATTLEGROUND_MAP_H

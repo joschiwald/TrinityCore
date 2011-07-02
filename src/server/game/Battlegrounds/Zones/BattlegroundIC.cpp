@@ -125,7 +125,7 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
                     // we need to confirm this, i am not sure if this every 3 minutes
                     for (uint8 u = (nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_NPC_CATAPULT_1_A : BG_IC_NPC_CATAPULT_1_H); u < (nodePoint[i].faction  == TEAM_ALLIANCE ? BG_IC_NPC_CATAPULT_4_A : BG_IC_NPC_CATAPULT_4_H); ++u)
                     {
-                        if (Creature* catapult = GetBGCreature(u))
+                        if (Creature* catapult = GetCreature(u))
                         {
                             if (!catapult->IsAlive())
                                 catapult->Respawn(true);
@@ -135,7 +135,7 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
                     // we need to confirm this is blizzlike, not sure if it is every 3 minutes
                     for (uint8 u = (nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_NPC_GLAIVE_THROWER_1_A : BG_IC_NPC_GLAIVE_THROWER_1_H); u < (nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_NPC_GLAIVE_THROWER_2_A : BG_IC_NPC_GLAIVE_THROWER_2_H); ++u)
                     {
-                        if (Creature* glaiveThrower = GetBGCreature(u))
+                        if (Creature* glaiveThrower = GetCreature(u))
                         {
                             if (!glaiveThrower->IsAlive())
                                 glaiveThrower->Respawn(true);
@@ -156,7 +156,7 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
                 {
                     uint8 siegeType = (nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_NPC_SIEGE_ENGINE_A : BG_IC_NPC_SIEGE_ENGINE_H);
 
-                    if (Creature* siege = GetBGCreature(siegeType)) // this always should be true
+                    if (Creature* siege = GetCreature(siegeType)) // this always should be true
                     {
                         if (siege->IsAlive())
                         {
@@ -173,7 +173,7 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
                     // we need to confirm if it is every 3 minutes
                     for (uint8 u = (nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_NPC_DEMOLISHER_1_A : BG_IC_NPC_DEMOLISHER_1_H); u < (nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_NPC_DEMOLISHER_4_A : BG_IC_NPC_DEMOLISHER_4_H); ++u)
                     {
-                        if (Creature* demolisher = GetBGCreature(u))
+                        if (Creature* demolisher = GetCreature(u))
                         {
                             if (!demolisher->IsAlive())
                                 demolisher->Respawn(true);
@@ -376,13 +376,13 @@ bool BattlegroundIC::SetupBattleground()
 
     // setting correct factions for Keep Cannons
     for (uint8 i = BG_IC_NPC_KEEP_CANNON_1; i < BG_IC_NPC_KEEP_CANNON_12; ++i)
-        GetBGCreature(i)->setFaction(BG_IC_Factions[0]);
+        GetCreature(i)->setFaction(BG_IC_Factions[0]);
     for (uint8 i = BG_IC_NPC_KEEP_CANNON_13; i < BG_IC_NPC_KEEP_CANNON_25; ++i)
-        GetBGCreature(i)->setFaction(BG_IC_Factions[1]);
+        GetCreature(i)->setFaction(BG_IC_Factions[1]);
 
     // correcting spawn time for keeps bombs
     for (uint8 i = BG_IC_GO_HUGE_SEAFORIUM_BOMBS_A_1; i < BG_IC_GO_HUGE_SEAFORIUM_BOMBS_H_4; ++i)
-        GetBGObject(i)->SetRespawnTime(10);
+        GetObject(i)->SetRespawnTime(10);
 
     return true;
 }
@@ -627,7 +627,7 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
             // we must del opposing faction vehicles when the node is captured (unused ones)
             for (uint8 i = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_GLAIVE_THROWER_1_H : BG_IC_NPC_GLAIVE_THROWER_1_A); i < (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_GLAIVE_THROWER_2_H : BG_IC_NPC_GLAIVE_THROWER_2_A); ++i)
             {
-                if (Creature* glaiveThrower = GetBGCreature(i, false))
+                if (Creature* glaiveThrower = GetCreature(i, false))
                 {
                     if (Vehicle* vehicleGlaive = glaiveThrower->GetVehicleKit())
                     {
@@ -639,7 +639,7 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
 
             for (uint8 i = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_CATAPULT_1_H : BG_IC_NPC_CATAPULT_1_A); i < (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_CATAPULT_4_H  : BG_IC_NPC_CATAPULT_4_A); ++i)
             {
-                if (Creature* catapult = GetBGCreature(i, false))
+                if (Creature* catapult = GetCreature(i, false))
                 {
                     if (Vehicle* vehicleGlaive = catapult->GetVehicleKit())
                     {
@@ -654,12 +654,12 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
             {
                 uint8 type = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_GLAIVE_THROWER_1_A : BG_IC_NPC_GLAIVE_THROWER_1_H)+i;
 
-                if (GetBGCreature(type, false) && GetBGCreature(type)->IsAlive())
+                if (GetBGCreature(type, false) && GetCreature(type)->IsAlive())
                     continue;
 
                 if (AddCreature(nodePoint->faction == TEAM_ALLIANCE ? NPC_GLAIVE_THROWER_A : NPC_GLAIVE_THROWER_H, type,
                         BG_IC_DocksVehiclesGlaives[i], nodePoint->faction, RESPAWN_ONE_DAY))
-                    GetBGCreature(type)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+                    GetCreature(type)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
             }
 
             // spawning catapults
@@ -667,11 +667,11 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
             {
                 uint8 type = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_CATAPULT_1_A : BG_IC_NPC_CATAPULT_1_H)+i;
 
-                if (GetBGCreature(type, false) && GetBGCreature(type)->IsAlive())
+                if (GetCreature(type, false) && GetBGCreature(type)->IsAlive())
                     continue;
 
                 if (AddCreature(NPC_CATAPULT, type, BG_IC_DocksVehiclesCatapults[i], nodePoint->faction, RESPAWN_ONE_DAY))
-                    GetBGCreature(type)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+                    GetCreature(type)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
             }
             break;
         case BG_IC_GO_WORKSHOP_BANNER:
@@ -684,7 +684,7 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                     // we must del opposing faction vehicles when the node is captured (unused ones)
                     for (uint8 i = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_DEMOLISHER_1_H : BG_IC_NPC_DEMOLISHER_1_A); i < (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_DEMOLISHER_4_H : BG_IC_NPC_DEMOLISHER_4_A); ++i)
                     {
-                        if (Creature* demolisher = GetBGCreature(i, false))
+                        if (Creature* demolisher = GetCreature(i, false))
                         {
                             if (Vehicle* vehicleDemolisher = demolisher->GetVehicleKit())
                             {
@@ -699,17 +699,17 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                     {
                         uint8 type = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_DEMOLISHER_1_A : BG_IC_NPC_DEMOLISHER_1_H)+i;
 
-                        if (GetBGCreature(type, false) && GetBGCreature(type)->IsAlive())
+                        if (GetCreature(type, false) && GetBGCreature(type)->IsAlive())
                             continue;
 
                         if (AddCreature(NPC_DEMOLISHER, type, BG_IC_WorkshopVehicles[i], nodePoint->faction, RESPAWN_ONE_DAY))
-                            GetBGCreature(type)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+                            GetCreature(type)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
                     }
 
                     // we check if the opossing siege engine is in use
                     int8 enemySiege = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_SIEGE_ENGINE_H : BG_IC_NPC_SIEGE_ENGINE_A);
 
-                    if (Creature* siegeEngine = GetBGCreature(enemySiege, false))
+                    if (Creature* siegeEngine = GetCreature(enemySiege, false))
                     {
                         if (Vehicle* vehicleSiege = siegeEngine->GetVehicleKit())
                         {
@@ -720,12 +720,12 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                     }
 
                     uint8 siegeType = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_SIEGE_ENGINE_A : BG_IC_NPC_SIEGE_ENGINE_H);
-                    if (!GetBGCreature(siegeType, false) || !GetBGCreature(siegeType)->IsAlive())
+                    if (!GetCreature(siegeType, false) || !GetCreature(siegeType)->IsAlive())
                     {
                         AddCreature((nodePoint->faction == TEAM_ALLIANCE ? NPC_SIEGE_ENGINE_A : NPC_SIEGE_ENGINE_H), siegeType,
                             BG_IC_WorkshopVehicles[4], nodePoint->faction, RESPAWN_ONE_DAY);
 
-                        if (Creature* siegeEngine = GetBGCreature(siegeType))
+                        if (Creature* siegeEngine = GetCreature(siegeType))
                         {
                             siegeEngine->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_IMMUNE_TO_PC);
                             siegeEngine->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);

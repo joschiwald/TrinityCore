@@ -85,12 +85,6 @@ enum BattlegroundMarks
     ITEM_SA_MARK_OF_HONOR           = 42425
 };
 
-enum BattlegroundMarksCount
-{
-    ITEM_WINNER_COUNT               = 3,
-    ITEM_LOSER_COUNT                = 1
-};
-
 enum BattlegroundCreatures
 {
     BG_CREATURE_ENTRY_A_SPIRITGUIDE      = 13116,           // alliance
@@ -121,7 +115,6 @@ enum BattlegroundTimeIntervals
 {
     CHECK_PLAYER_POSITION_INVERVAL  = 1000,                 // ms
     RESURRECTION_INTERVAL           = 30000,                // ms
-    //REMIND_INTERVAL                 = 10000,                // ms
     INVITATION_REMIND_TIME          = 20000,                // ms
     INVITE_ACCEPT_WAIT_TIME         = 60000,                // ms
     TIME_TO_AUTOREMOVE              = 120000,               // ms
@@ -148,15 +141,6 @@ enum BattlegroundBuffObjects
 };
 
 const uint32 Buff_Entries[3] = { BG_OBJECTID_SPEEDBUFF_ENTRY, BG_OBJECTID_REGENBUFF_ENTRY, BG_OBJECTID_BERSERKERBUFF_ENTRY };
-
-enum BattlegroundStatus
-{
-    STATUS_NONE         = 0,                                // first status, should mean bg is not instance
-    STATUS_WAIT_QUEUE   = 1,                                // means bg is empty and waiting for queue
-    STATUS_WAIT_JOIN    = 2,                                // this means, that BG has already started and it is waiting for more players
-    STATUS_IN_PROGRESS  = 3,                                // means bg is running
-    STATUS_WAIT_LEAVE   = 4                                 // means some faction has won BG and it is ending
-};
 
 struct BattlegroundPlayer
 {
@@ -340,8 +324,8 @@ class Battleground
 
         void StartBattleground();
 
-        GameObject* GetBGObject(uint32 type, bool logError = true);
-        Creature* GetBGCreature(uint32 type, bool logError = true);
+        GameObject* GetBGObject(uint32 type);
+        Creature* GetCreature(uint32 type);
 
         // Location
         void SetMapId(uint32 MapID) { m_MapId = MapID; }

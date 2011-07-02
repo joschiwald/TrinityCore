@@ -37,7 +37,7 @@ BattlegroundRL::~BattlegroundRL()
 void BattlegroundRL::StartingEventCloseDoors()
 {
     for (uint32 i = BG_RL_OBJECT_DOOR_1; i <= BG_RL_OBJECT_DOOR_2; ++i)
-        SpawnBGObject(i, RESPAWN_IMMEDIATELY);
+        SpawnObject(i, RESPAWN_IMMEDIATELY);
 }
 
 void BattlegroundRL::StartingEventOpenDoors()
@@ -46,7 +46,7 @@ void BattlegroundRL::StartingEventOpenDoors()
         DoorOpen(i);
 
     for (uint32 i = BG_RL_OBJECT_BUFF_1; i <= BG_RL_OBJECT_BUFF_2; ++i)
-        SpawnBGObject(i, 60);
+        SpawnObject(i, 60);
 }
 
 void BattlegroundRL::OnPlayerJoin(Player* player)

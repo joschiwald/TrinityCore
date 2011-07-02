@@ -20,7 +20,7 @@
 #include "Common.h"
 #include "Battlefield.h"
 #include "BattlefieldMgr.h"
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "BattlegroundScore.h"
 #include "CellImpl.h"
 #include "ConditionMgr.h"

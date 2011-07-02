@@ -19,7 +19,7 @@
 #ifndef __BATTLEGROUNDDS_H
 #define __BATTLEGROUNDDS_H
 
-#include "Battleground.h"
+#include "ArenaMap.h"
 
 enum BattlegroundDSObjectTypes
 {

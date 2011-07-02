@@ -25,6 +25,14 @@ class ArenaMap : public BattlegroundMap
     public:
         void InitializeTextIds() override;               // Initializes text IDs that are used in the battleground at any possible phase.
         void InitializePreparationDelayTimes() override; // Initializes preparation delay timers.
+
+    protected:
+        void EndBattleground(uint32 winner);
+        Group* GetGroupForTeam(uint32 team) const;  // Needed for GetAverageMMR
+
+    private:
+        bool _rated;
+        ArenaTeam* _arenaTeams[BG_TEAMS_COUNT];
 };
 
 #endif // TRINITY_ARENA_MAP_H

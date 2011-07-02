@@ -18,7 +18,7 @@
 #ifndef __BATTLEGROUNDRL_H
 #define __BATTLEGROUNDRL_H
 
-#include "Battleground.h"
+#include "ArenaMap.h"
 
 enum BattlegroundRLObjectTypes
 {
@@ -48,7 +48,7 @@ class BattlegroundRL : public ArenaMap
         /* inherited from BattlegroundClass */
         void OnPlayerJoin(Player* player);
         void Reset();
-        void FillInitialWorldStates(WorldPacket &d);
+        void FillInitialWorldStates(WorldPacket& data);
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
 

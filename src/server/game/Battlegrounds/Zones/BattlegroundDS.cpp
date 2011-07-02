@@ -110,7 +110,7 @@ void BattlegroundDS::PostUpdateImpl(uint32 diff)
 void BattlegroundDS::StartingEventCloseDoors()
 {
     for (uint32 i = BG_DS_OBJECT_DOOR_1; i <= BG_DS_OBJECT_DOOR_2; ++i)
-        SpawnBGObject(i, RESPAWN_IMMEDIATELY);
+        SpawnObject(i, RESPAWN_IMMEDIATELY);
 }
 
 void BattlegroundDS::StartingEventOpenDoors()
@@ -119,7 +119,7 @@ void BattlegroundDS::StartingEventOpenDoors()
         DoorOpen(i);
 
     for (uint32 i = BG_DS_OBJECT_BUFF_1; i <= BG_DS_OBJECT_BUFF_2; ++i)
-        SpawnBGObject(i, 60);
+        SpawnObject(i, 60);
 
     setWaterFallTimer(urand(BG_DS_WATERFALL_TIMER_MIN, BG_DS_WATERFALL_TIMER_MAX));
     setWaterFallStatus(BG_DS_WATERFALL_STATUS_OFF);
@@ -127,7 +127,7 @@ void BattlegroundDS::StartingEventOpenDoors()
     setPipeKnockBackTimer(BG_DS_PIPE_KNOCKBACK_FIRST_DELAY);
     setPipeKnockBackCount(0);
 
-    SpawnBGObject(BG_DS_OBJECT_WATER_2, RESPAWN_IMMEDIATELY);
+    SpawnObject(BG_DS_OBJECT_WATER_2, RESPAWN_IMMEDIATELY);
     DoorOpen(BG_DS_OBJECT_WATER_2);
 
     // Turn off collision
