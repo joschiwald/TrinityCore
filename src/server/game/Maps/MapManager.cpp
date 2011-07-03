@@ -141,7 +141,7 @@ bool MapManager::CanPlayerEnter(uint32 mapId, Player* player, bool loginCheck)
     MapDifficulty const* mapDiff = GetDownscaledMapDifficultyData(entry->MapID, targetDifficulty);
     if (!mapDiff)
     {
-        player->SendTransferAborted(mapid, TRANSFER_ABORT_DIFFICULTY, requestedDifficulty);
+        player->SendTransferAborted(mapId, TRANSFER_ABORT_DIFFICULTY, requestedDifficulty);
         return false;
     }
 
@@ -173,12 +173,13 @@ bool MapManager::CanPlayerEnter(uint32 mapId, Player* player, bool loginCheck)
             uint32 corpseMap = corpse->GetMapId();
             do
             {
-                if (corpseMap == mapid)
+                if (corpseMap == mapId)
                     break;
 
                 InstanceTemplate const* corpseInstance = sObjectMgr->GetInstanceTemplate(corpseMap);
                 corpseMap = corpseInstance ? corpseInstance->Parent : 0;
-            } while (corpseMap);
+            }
+            while (corpseMap);
 
             if (!corpseMap)
             {
@@ -200,7 +201,7 @@ bool MapManager::CanPlayerEnter(uint32 mapId, Player* player, bool loginCheck)
     {
         InstanceGroupBind* boundInstance = group->GetBoundInstance(entry);
         if (boundInstance && boundInstance->save)
-            if (Map* boundMap = sMapMgr->FindMap(mapid, boundInstance->save->GetInstanceId()))
+            if (Map* boundMap = sMapMgr->FindMap(mapId, boundInstance->save->GetInstanceId()))
                 if (!loginCheck && !boundMap->CanEnter(player))
                     return false;
             /*
@@ -219,19 +220,19 @@ bool MapManager::CanPlayerEnter(uint32 mapId, Player* player, bool loginCheck)
     if (entry->IsDungeon() && (!player->GetGroup() || (player->GetGroup() && !player->GetGroup()->isLFGGroup())))
     {
         uint32 instanceIdToCheck = 0;
-        if (InstanceSave* save = player->GetInstanceSave(mapid, entry->IsRaid()))
+        if (InstanceSave* save = player->GetInstanceSave(mapId, entry->IsRaid()))
             instanceIdToCheck = save->GetInstanceId();
 
         // instanceId can never be 0 - will not be found
         if (!player->CheckInstanceCount(instanceIdToCheck) && !player->isDead())
         {
-            player->SendTransferAborted(mapid, TRANSFER_ABORT_TOO_MANY_INSTANCES);
+            player->SendTransferAborted(mapId, TRANSFER_ABORT_TOO_MANY_INSTANCES);
             return false;
         }
     }
 
     //Other requirements
-    return player->Satisfy(sObjectMgr->GetAccessRequirement(mapid, targetDifficulty), mapid, true);
+    return player->Satisfy(sObjectMgr->GetAccessRequirement(mapId, targetDifficulty), mapId, true);
 }
 
 void MapManager::Update(uint32 diff)

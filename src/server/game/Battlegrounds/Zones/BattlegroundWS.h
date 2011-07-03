@@ -209,7 +209,11 @@ class BattlegroundWS : public BattlegroundMap
         bool IsHordeFlagPickedup() const            { return m_FlagKeepers[TEAM_HORDE] != 0; }
         void RespawnFlag(uint32 Team, bool captured);
         void RespawnFlagAfterDrop(uint32 Team);
-        uint8 GetFlagState(uint32 team)             { return _flagState[GetTeamIndexByTeamId(team)]; }
+        uint8 GetFlagState(uint32 team)             { return _flagState[team]; }
+        void AddTimedAura(uint32 aura);
+        void RemoveTimedAura(uint32 aura);
+        bool IsBrutalTimerDone;
+        bool IsForceTimerDone;
 
         /* Battleground Events */
         void EventPlayerDroppedFlag(Player* player);
@@ -227,21 +231,17 @@ class BattlegroundWS : public BattlegroundMap
         void UpdateFlagState(uint32 team, uint32 value);
         void SetLastFlagCapture(uint32 team)                { _lastFlagCaptureTeam = team; }
         void UpdateTeamScore(uint32 team);
-        bool UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool doAddHonor = true) override;
-        void SetDroppedFlagGUID(uint64 guid, int32 team = -1)
-        {
-            if (team == TEAM_ALLIANCE || team == TEAM_HORDE)
-                m_DroppedFlagGUID[team] = guid;
-        }
 
-        uint64 GetDroppedFlagGUID(uint32 TeamID)             { return m_DroppedFlagGUID[GetTeamIndexByTeamId(TeamID)];}
-        void FillInitialWorldStates(WorldPacket& data);
+        void UpdatePlayerScore(Player *source, uint32 type, uint32 value, bool doAddHonor = true);
+        void SetDroppedFlagGUID(uint64 guid, uint32 teamId)  { m_DroppedFlagGUID[teamId] = guid;}
+        uint64 GetDroppedFlagGUID(uint32 teamId)             { return m_DroppedFlagGUID[teamId];}
+        virtual void FillInitialWorldStates(WorldPacket& data);
 
         /* Scorekeeping */
-        uint32 GetTeamScore(uint32 TeamID) const            { return TeamScores[GetTeamIndexByTeamId(TeamID)]; }
-        void AddPoint(uint32 TeamID, uint32 Points = 1)     { TeamScores[GetTeamIndexByTeamId(TeamID)] += Points; }
-        void SetTeamPoint(uint32 TeamID, uint32 Points = 0) { TeamScores[GetTeamIndexByTeamId(TeamID)] = Points; }
-        void RemovePoint(uint32 TeamID, uint32 Points = 1)  { TeamScores[GetTeamIndexByTeamId(TeamID)] -= Points; }
+        uint32 GetTeamScore(uint32 teamId) const            { return TeamScores[teamId]; }
+        void AddPoint(uint32 teamId, uint32 points = 1)     { TeamScores[teamId] += points; }
+        void SetTeamPoint(uint32 teamId, uint32 points = 0) { TeamScores[teamId] = points; }
+        void RemovePoint(uint32 teamId, uint32 points = 1)  { TeamScores[teamId] -= points; }
 
         uint32 GetPrematureWinner();
 

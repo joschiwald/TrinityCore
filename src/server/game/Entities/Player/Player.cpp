@@ -19,6 +19,7 @@
 #include "Player.h"
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
+#include "ArenaMap.h"
 #include "ArenaTeam.h"
 #include "ArenaTeamMgr.h"
 #include "Battlefield.h"
@@ -23422,12 +23423,9 @@ void Player::ResetMonthlyQuestStatus()
     m_MonthlyQuestChanged = false;
 }
 
-Battleground* Player::GetBattleground() const
+BattlegroundMap* Player::GetBattleground() const
 {
-    if (GetBattlegroundId() == 0)
-        return NULL;
-
-    return sBattlegroundMgr->GetBattleground(GetBattlegroundId(), m_bgData.bgTypeID);
+    return dynamic_cast<BattlegroundMap*>(GetMap());
 }
 
 bool Player::InBattlegroundQueue() const
@@ -23522,11 +23520,7 @@ bool Player::IsInvitedForBattlegroundInstance(uint32 instanceId) const
 
 bool Player::InArena() const
 {
-    Battleground* bg = GetBattleground();
-    if (!bg || !bg->isArena())
-        return false;
-
-    return true;
+    return dynamic_cast<ArenaMap*>(GetMap()) == NULL ? false : true;
 }
 
 bool Player::GetBGAccessByLevel(BattlegroundTypeId bgTypeId) const

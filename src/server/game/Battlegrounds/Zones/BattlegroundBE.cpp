@@ -93,9 +93,3 @@ void BattlegroundBE::FillInitialWorldStates(WorldPacket &data)
     data << uint32(0x9f3) << uint32(1);           // 9
     UpdateArenaWorldState();
 }
-
-void BattlegroundBE::Reset()
-{
-    //call parent's class reset
-    Battleground::Reset();
-}

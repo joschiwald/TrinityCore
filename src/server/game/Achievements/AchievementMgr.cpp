@@ -385,12 +385,11 @@ bool AchievementCriteriaData::Meets(uint32 criteria_id, Player const* source, Un
             return IsHolidayActive(HolidayIds(holiday.id));
         case ACHIEVEMENT_CRITERIA_DATA_TYPE_BG_LOSS_TEAM_SCORE:
         {
-            Battleground* bg = source->GetBattleground();
+            BattlegroundMap* bg = source->GetBattleground();
             if (!bg)
                 return false;
 
-            uint32 score = bg->GetTeamScore(source->GetTeamId() == TEAM_ALLIANCE ? TEAM_HORDE : TEAM_ALLIANCE);
-            return score >= bg_loss_team_score.min_score && score <= bg_loss_team_score.max_score;
+            return bg->IsTeamScoreInRange(source->GetTeam() == ALLIANCE ? HORDE : ALLIANCE, bg_loss_team_score.min_score, bg_loss_team_score.max_score);
         }
         case ACHIEVEMENT_CRITERIA_DATA_TYPE_INSTANCE_SCRIPT:
         {
@@ -970,8 +969,8 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 {
                     if (achievIdByArenaSlot[j] == achievement->ID)
                     {
-                        Battleground* bg = GetPlayer()->GetBattleground();
-                        if (!bg || !bg->isArena() || ArenaTeam::GetSlotByType(bg->GetArenaType()) != j)
+                        BattlegroundMap* bg = GetPlayer()->GetBattleground();
+                        if (!bg || !bg->IsBattleArena() || ArenaTeam::GetSlotByType(bg->GetArenaType()) != j)
                             notfit = true;
 
                         break;

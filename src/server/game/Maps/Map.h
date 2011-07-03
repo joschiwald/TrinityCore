@@ -49,7 +49,6 @@ class CreatureGroup;
 struct ScriptInfo;
 struct ScriptAction;
 struct Position;
-class Battleground;
 class MapInstanced;
 class BattlegroundMap;
 class InstanceMap;

@@ -226,6 +226,18 @@ void BattlegroundMap::SendMessageToAll(int32 entry, ChatMsg type)
     */
 }
 
+char const* BattlegroundMap::ParseStrings(int32 mainEntry, int32 args1, int32 args2)
+{
+    char const* text = sObjectMgr->GetTrinityStringForDBCLocale(mainEntry);
+    char const* arg1str = args1 ? sObjectMgr->GetTrinityStringForDBCLocale(args1) : "";
+    char const* arg2str = args2 ? sObjectMgr->GetTrinityStringForDBCLocale(args2) : "";
+
+    char str[1024];
+    snprintf(str, 1024, text, arg1str, arg2str);
+
+    return &str;
+}
+
 void BattlegroundMap::OnPlayerJoin(Player* player)
 {
     ASSERT(player);
@@ -354,6 +366,38 @@ bool BattlegroundMap::DeleteGameObject(uint32 type)
     go->Delete();
     ObjectGUIDsByType[type] = 0;
     return true;
+}
+
+// Some doors aren't despawned so we cannot handle their closing in gameobject::update()
+// It would be nice to correctly implement GO_ACTIVATED state and open/close doors in gameobject code
+void BattlegroundMap::DoorClose(uint32 type)
+{
+    if (GameObject* obj = GetGameObject(type))
+    {
+        // If doors are open, close it
+        if (obj->getLootState() == GO_ACTIVATED && obj->GetGoState() != GO_STATE_READY)
+        {
+            // Change state to allow door to be closed
+            obj->SetLootState(GO_READY);
+            obj->UseDoorOrButton(RESPAWN_ONE_DAY);
+        }
+    }
+    else
+        sLog->outError("BattlegroundMap::DoorClose: door gameobject (type: %u, GUID: %u) not found for BG (map: %u)!",
+        type, GUID_LOPART(ObjectGUIDsByType[type]), GetId());
+}
+
+void BattlegroundMap::DoorOpen(uint32 type)
+{
+    if (GameObject* obj = GetGameObject(type))
+    {
+        // Change state to be sure they will be opened
+        obj->SetLootState(GO_READY);
+        obj->UseDoorOrButton(RESPAWN_ONE_DAY);
+    }
+    else
+        sLog->outError("BattlegroundMap::DoorOpen: door gameobject (type: %u, GUID: %u) not found for BG (map: %u, instance id: %u)!",
+        type, GUID_LOPART(ObjectGUIDsByType[type]), m_MapId, m_InstanceID);
 }
 
 Creature* BattlegroundMap::AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o, uint32 respawntime /*= 0*/)

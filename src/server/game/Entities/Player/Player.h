@@ -2029,7 +2029,7 @@ class Player : public Unit, public GridObject<Player>
         bool InArena()              const;
         uint32 GetBattlegroundId()  const                { return m_bgData.bgInstanceID; }
         BattlegroundTypeId GetBattlegroundTypeId() const { return m_bgData.bgTypeID; }
-        Battleground* GetBattleground() const;
+        BattlegroundMap* GetBattleground() const;
 
         bool InBattlegroundQueue() const;
 
