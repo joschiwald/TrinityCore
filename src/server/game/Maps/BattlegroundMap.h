@@ -112,7 +112,12 @@ class BattlegroundMap : public Map
 
         bool AddPlayerToMap(Player* player) override;
         void RemovePlayerFromMap(Player*, bool) override;
-        void Update(uint32 const diff) override;
+
+        void Update(uint32 const diff);
+        // Private processing methods
+        virtual void ProcessPreparation(uint32 const& diff);
+        virtual void ProcessInProgress(uint32 const& diff);
+        virtual void ProcessEnded(uint32 const& diff);
 
         bool CanEnter(Player* player);
         void SetUnload();
@@ -122,13 +127,13 @@ class BattlegroundMap : public Map
 
         /* Methods and attributes accessed by subclasses */
         // Initialization
-        virtual void InitializeObjects() { }   // Resize ObjectGUIDsByType and spawn objects
-        virtual void InitializeTextIds() { }   // Initializes text IDs that are used in the battleground at any possible phase.
-        virtual void InitializePreparationDelayTimes(); // Initializes preparation delay timers.
-        virtual void FillInitialWorldStates(WorldPacket& data) { }
+        virtual void InitializeObjects() {}                 // Resize ObjectGUIDsByType and spawn objects
+        virtual void InitializeTextIds() {};                // Initializes text IDs that are used in the battleground at any possible phase.
+        virtual void InitializePreparationDelayTimes() {};  // Initializes preparation delay timers.
+        virtual void FillInitialWorldStates(WorldPacket& data) {};
 
-        virtual void InstallBattleground() { }  // Calls all overridable InitializeXX() methods
-        virtual void StartBattleground() { }    // Initializes EndTimer and other bg-specific variables.
+        virtual void InstallBattleground() {};  // Calls all overridable InitializeXX() methods and other variables
+        virtual void StartBattleground() {};    // Initializes EndTimer and opens gameobjects
         virtual uint32 GetWinningTeam() const { return WINNER_NONE; }  // Contains rules on which team to pick as winner
         virtual void EndBattleground(uint32 winner) { }  // Handles out rewards etc
         virtual void DestroyBattleground() { }  // Contains battleground specific cleanup method calls.
@@ -163,17 +168,12 @@ class BattlegroundMap : public Map
         uint32 PreparationDelayTimers[BG_STARTING_EVENT_COUNT];
 
         BattlegroundScoreMap PlayerScores;                  // Player scores
-        int32 TeamScores[BG_TEAMS_COUNT];                   // Team scores - can this even be negative?
+        int32 TeamScores[BG_TEAMS_COUNT];                   // Team scores - unused for arena's
 
     private:
         // Private initializers, non overridable
         void InitVisibilityDistance() final;
         void InitializePreparationDelayTimer();
-
-        // Private processing methods
-        void ProcessPreparation(uint32 diff);
-        void ProcessInProgress(uint32 diff);
-        void ProcessEnded(uint32 diff);
 
         void RemoveAllPlayers();
 

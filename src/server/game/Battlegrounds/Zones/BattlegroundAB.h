@@ -281,27 +281,24 @@ class BattlegroundAB : public BattlegroundMap
         BattlegroundAB();
         ~BattlegroundAB();
 
-        void Update(uint32 const& diff);
+        void ProcessInProgress(uint32 const& diff);
 
         void InitializeObjects();
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
+        void InstallBattleground();
         void StartBattleground();
+        void EndBattleground(uint32 winner);
 
-        void UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool doAddHonor = true);
+        void UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true);
         void FillInitialWorldStates(WorldPacket& data);
 
         void OnPlayerJoin(Player* player) override;
 
     public:
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
-        void HandleAreaTrigger(Player* Source, uint32 Trigger);
-        bool SetupBattleground();
-        void Reset();
-        void EndBattleground(uint32 winner);
-        WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
+        void HandleAreaTrigger(Player *Source, uint32 Trigger);
+        
+        virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
 
         /* Nodes occupying */
         void EventPlayerClickedOnFlag(Player* source, GameObject* target_obj);
@@ -313,7 +310,6 @@ class BattlegroundAB : public BattlegroundMap
         uint32 GetPrematureWinner();
 
     private:
-        void PostUpdateImpl(uint32 diff);
         /* Gameobject spawning/despawning */
         void _CreateBanner(uint8 node, uint8 type, uint8 teamIndex, bool delay);
         void _DelBanner(uint8 node, uint8 type, uint8 teamIndex);

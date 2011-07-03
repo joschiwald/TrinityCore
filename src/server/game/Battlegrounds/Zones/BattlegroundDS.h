@@ -87,18 +87,16 @@ class BattlegroundDS : public ArenaMap
         BattlegroundDS();
         ~BattlegroundDS();
 
-        void Update(uint32 const diff);
+        void ProcessInProgress(uint32 const& diff);
 
         void InitializeObjects();
 
-        /* inherited from BattlegroundClass */
-        virtual void StartingEventCloseDoors();
-        virtual void StartingEventOpenDoors();
+        void StartBattleground();
 
-        void HandleAreaTrigger(Player* Source, uint32 Trigger);
-        bool SetupBattleground();
-        void Reset();
-        void FillInitialWorldStates(WorldPacket &d);
+        void HandleAreaTrigger(Player *Source, uint32 Trigger);
+
+        virtual void Reset();
+        virtual void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player* killer);
     private:
         uint32 _waterfallTimer;
@@ -107,17 +105,16 @@ class BattlegroundDS : public ArenaMap
         uint32 _pipeKnockBackTimer;
         uint8 _pipeKnockBackCount;
 
-        void PostUpdateImpl(uint32 diff);
     protected:
-        uint32 getWaterFallStatus() { return _waterfallStatus; }
-        void setWaterFallStatus(uint8 status) { _waterfallStatus = status; }
-        uint32 getWaterFallTimer() { return _waterfallTimer; }
-        void setWaterFallTimer(uint32 timer) { _waterfallTimer = timer; }
-        uint32 getWaterFallKnockbackTimer() { return _waterfallKnockbackTimer; }
-        void setWaterFallKnockbackTimer(uint32 timer) { _waterfallKnockbackTimer = timer; }
-        uint8 getPipeKnockBackCount() { return _pipeKnockBackCount; }
-        void setPipeKnockBackCount(uint8 count) { _pipeKnockBackCount = count; }
-        uint32 getPipeKnockBackTimer() { return _pipeKnockBackTimer; }
-        void setPipeKnockBackTimer(uint32 timer) { _pipeKnockBackTimer = timer; }
+        uint32 GetWaterFallStatus() { return _waterfallStatus; }
+        void SetWaterFallStatus(uint8 status) { _waterfallStatus = status; }
+        uint32 GetWaterFallTimer() { return _waterfallTimer; }
+        void SetWaterFallTimer(uint32 timer) { _waterfallTimer = timer; }
+        uint32 GetWaterFallKnockbackTimer() { return _waterfallKnockbackTimer; }
+        void SetWaterFallKnockbackTimer(uint32 timer) { _waterfallKnockbackTimer = timer; }
+        uint8 GetPipeKnockBackCount() { return _pipeKnockBackCount; }
+        void SetPipeKnockBackCount(uint8 count) { _pipeKnockBackCount = count; }
+        uint32 GetPipeKnockBackTimer() { return _pipeKnockBackTimer; }
+        void SetPipeKnockBackTimer(uint32 timer) { _pipeKnockBackTimer = timer; }
 };
 #endif

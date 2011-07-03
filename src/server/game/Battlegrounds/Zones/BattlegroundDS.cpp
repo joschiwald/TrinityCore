@@ -35,10 +35,6 @@ BattlegroundDS::BattlegroundDS()
     _pipeKnockBackCount = 0;
 }
 
-BattlegroundDS::~BattlegroundDS()
-{
-}
-
 void BattlegroundDS::InitializeObjects()
 {
     ObjectGUIDsByType.resize(BG_DS_OBJECT_MAX + BG_DS_NPC_MAX);
@@ -58,10 +54,9 @@ void BattlegroundDS::InitializeObjects()
     AddCreature(BG_DS_NPC_TYPE_WATER_SPOUT, BG_DS_NPC_PIPE_KNOCKBACK_2, 1212.833f, 765.3871f, 16.09484f, 0.0f, TEAM_NEUTRAL, RESPAWN_IMMEDIATELY);
 }
 
-void BattlegroundDS::PostUpdateImpl(uint32 diff)
+void BattlegroundDS::ProcessInProgress(uint32 const& diff)
 {
-    if (GetStatus() != STATUS_IN_PROGRESS)
-        return;
+    ArenaMap::ProcessInProgress(diff);
 
     if (getPipeKnockBackCount() < BG_DS_PIPE_KNOCKBACK_TOTAL_COUNT)
     {
@@ -129,7 +124,7 @@ void BattlegroundDS::StartingEventCloseDoors()
         SpawnGameObject(i, RESPAWN_IMMEDIATELY);
 }
 
-void BattlegroundDS::StartingEventOpenDoors()
+void BattlegroundDS::StartBattleground()
 {
     for (uint32 i = BG_DS_OBJECT_DOOR_1; i <= BG_DS_OBJECT_DOOR_2; ++i)
         DoorOpen(i);
@@ -202,10 +197,4 @@ void BattlegroundDS::FillInitialWorldStates(WorldPacket &data)
 {
     data << uint32(3610) << uint32(1);                                              // 9 show
     UpdateArenaWorldState();
-}
-
-void BattlegroundDS::Reset()
-{
-    //call parent's class reset
-    Battleground::Reset();
 }

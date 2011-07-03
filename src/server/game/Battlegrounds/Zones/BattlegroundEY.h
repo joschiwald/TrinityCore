@@ -362,12 +362,18 @@ class BattlegroundEY : public BattlegroundMap
         BattlegroundEY();
         ~BattlegroundEY();
 
+        void ProcessInProgress(uint32 const& diff);
+
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
+        void InitializeObjects();
+
+        void InstallBattleground();
+        void StartBattleground();
+        void EndBattleground(uint32 winner);
 
         /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player) override;
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
+        void OnPlayerJoin(Player* player);
+        void OnPlayerExit(Player* player);
 
         /* BG Flags */
         uint64 GetFlagPickerGUID() const    { return _flagKeeper; }
@@ -377,19 +383,17 @@ class BattlegroundEY : public BattlegroundMap
         void RespawnFlag(bool send_message);
         void RespawnFlagAfterDrop();
 
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
-        void HandleBuffUse(uint64 buff_guid);
-        void HandleAreaTrigger(Player* Source, uint32 Trigger);
+        void HandleBuffUse(uint64 const& buff_guid);
+        void HandleAreaTrigger(Player *Source, uint32 Trigger);
         void HandleKillPlayer(Player* player, Player* killer);
-        WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
-        bool SetupBattleground();
-        void Reset();
+        virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
+
         void UpdateTeamScore(uint32 Team);
-        void EndBattleground(uint32 winner);
-        bool UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool doAddHonor = true) override;
-        void FillInitialWorldStates(WorldPacket& data);
-        void SetDroppedFlagGUID(uint64 guid, int32 /*TeamID*/ = -1)  { m_DroppedFlagGUID = guid;}
-        uint64 GetDroppedFlagGUID() const          { return m_DroppedFlagGUID;}
+
+        void UpdatePlayerScore(Player *Source, uint32 type, uint32 value, bool doAddHonor = true);
+        virtual void FillInitialWorldStates(WorldPacket& data);
+        void SetDroppedFlagGUID(uint64 guid)       { _droppedFlagGUID = guid;}
+        uint64 GetDroppedFlagGUID() const          { return _droppedFlagGUID;}
 
         /* Battleground Events */
         void EventPlayerClickedOnFlag(Player* Source, GameObject* target_obj);
@@ -414,33 +418,33 @@ class BattlegroundEY : public BattlegroundMap
         void UpdatePointStatuses();
 
         /* Scorekeeping */
-        uint32 GetTeamScore(uint32 Team) const { return TeamScores[GetTeamIndexByTeamId(Team)]; }
-        void AddPoints(uint32 Team, uint32 Points);
+        uint32 GetTeamScore(uint32 team) const { return TeamScores[team]; }
+        void AddPoints(uint32 team, uint32 points);
 
-        void RemovePoint(uint32 TeamID, uint32 Points = 1) { TeamScores[GetTeamIndexByTeamId(TeamID)] -= Points; }
-        void SetTeamPoint(uint32 TeamID, uint32 Points = 0) { TeamScores[GetTeamIndexByTeamId(TeamID)] = Points; }
+        void RemovePoint(uint32 team, uint32 points = 1) { TeamScores[team] -= points; }
+        void SetTeamPoint(uint32 team, uint32 points = 0) { TeamScores[team] = points; }
 
-        uint32 m_HonorScoreTics[2];
-        uint32 m_TeamPointsCount[2];
+        uint32 _honorScoreTicks[BG_TEAMS_COUNT];
 
-        uint32 m_Points_Trigger[EY_POINTS_MAX];
+        uint32 _pointsTrigger[EY_POINTS_MAX];
 
         uint64 _flagKeeper;                                // keepers guid
-        uint64 m_DroppedFlagGUID;
-        uint32 m_FlagCapturedBgObjectType;                  // type that should be despawned when flag is captured
+        uint64 _droppedFlagGUID;
+        uint32 _flagCapturedBgObjectType;                  // type that should be despawned when flag is captured
         uint8 _flagState;                                  // for checking flag state
         int32 _flagsTimer;
         int32 _towerCapCheckTimer;
 
-        uint32 m_PointOwnedByTeam[EY_POINTS_MAX];
-        uint8 m_PointState[EY_POINTS_MAX];
-        int32 m_PointBarStatus[EY_POINTS_MAX];
-        typedef std::vector<uint64> PlayersNearPointType;
-        PlayersNearPointType m_PlayersNearPoint[EY_POINTS_MAX + 1];
-        uint8 m_CurrentPointPlayersCount[2*EY_POINTS_MAX];
+        uint32 _pointOwnedByTeam[EY_POINTS_MAX];
+        uint8 _pointState[EY_POINTS_MAX];
+        int32 _pointBarStatus[EY_POINTS_MAX];
 
-        int32 m_PointAddingTimer;
-        uint32 m_HonorTics;
+        typedef std::vector<uint64> PlayersNearPointType;
+        PlayersNearPointType _playersNearPoint[EY_POINTS_MAX + 1];
+        uint8 _currentPointPlayersCount[2*EY_POINTS_MAX];
+
+        int32 _pointAddingTimer;
+        uint32 _honorTics;
 };
 #endif
 
