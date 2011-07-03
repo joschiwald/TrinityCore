@@ -192,8 +192,9 @@ class BattlegroundWS : public BattlegroundMap
 
         /* inherited from BattlegroundClass */
         void OnPlayerJoin(Player* player) override;
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
+        void StartBattleground();
+        void InitializeObjects();
+        void ProcessInProgress(uint32 diff);
 
         /* BG Flags */
         uint64 GetFlagPickerGUID(int32 team) const

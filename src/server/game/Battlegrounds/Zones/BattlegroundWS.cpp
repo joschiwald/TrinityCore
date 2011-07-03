@@ -70,123 +70,121 @@ BattlegroundWS::BattlegroundWS()
 
 BattlegroundWS::~BattlegroundWS() { }
 
-void BattlegroundWS::PostUpdateImpl(uint32 diff)
+void BattlegroundWS::ProcessInProgress(uint32 diff)
 {
-    if (GetStatus() == STATUS_IN_PROGRESS)
+    BattlegroundMap::ProcessInProgress(diff);
+
+    if (GetStartTime() >= 25 * MINUTE * IN_MILLISECONDS)
     {
-        if (GetStartTime() >= 27*MINUTE*IN_MILLISECONDS)
+        if (GetTeamScore(TEAM_ALLIANCE) == 0)
         {
-            if (GetTeamScore(TEAM_ALLIANCE) == 0)
-            {
-                if (GetTeamScore(TEAM_HORDE) == 0)        // No one scored - result is tie
-                    EndBattleground(WINNER_NONE);
-                else                                 // Horde has more points and thus wins
-                    EndBattleground(HORDE);
-            }
-            else if (GetTeamScore(TEAM_HORDE) == 0)
-                EndBattleground(ALLIANCE);           // Alliance has > 0, Horde has 0, alliance wins
-            else if (GetTeamScore(TEAM_HORDE) == GetTeamScore(TEAM_ALLIANCE)) // Team score equal, winner is team that scored the last flag
-                EndBattleground(_lastFlagCaptureTeam);
-            else if (GetTeamScore(TEAM_HORDE) > GetTeamScore(TEAM_ALLIANCE))  // Last but not least, check who has the higher score
+            if (GetTeamScore(TEAM_HORDE) == 0)        // No one scored - result is tie
+                EndBattleground(WINNER_NONE);
+            else                                 // Horde has more points and thus wins
                 EndBattleground(HORDE);
-            else
-                EndBattleground(ALLIANCE);
         }
-        // first update needed after 1 minute of game already in progress
-        else if (GetStartTime() > uint32(_minutesElapsed * MINUTE * IN_MILLISECONDS) +  3 * MINUTE * IN_MILLISECONDS)
-        {
-            ++_minutesElapsed;
-            UpdateWorldState(BG_WS_STATE_TIMER, 25 - _minutesElapsed);
-        }
-
-        if (_flagState[TEAM_ALLIANCE] == BG_WS_FLAG_STATE_WAIT_RESPAWN)
-        {
-            _flagsTimer[TEAM_ALLIANCE] -= diff;
-
-            if (_flagsTimer[TEAM_ALLIANCE] < 0)
-            {
-                _flagsTimer[TEAM_ALLIANCE] = 0;
-                RespawnFlag(ALLIANCE, true);
-            }
-        }
-
-        if (_flagState[TEAM_ALLIANCE] == BG_WS_FLAG_STATE_ON_GROUND)
-        {
-            _flagsDropTimer[TEAM_ALLIANCE] -= diff;
-
-            if (_flagsDropTimer[TEAM_ALLIANCE] < 0)
-            {
-                _flagsDropTimer[TEAM_ALLIANCE] = 0;
-                RespawnFlagAfterDrop(ALLIANCE);
-                _bothFlagsKept = false;
-            }
-        }
-
-        if (_flagState[TEAM_HORDE] == BG_WS_FLAG_STATE_WAIT_RESPAWN)
-        {
-            _flagsTimer[TEAM_HORDE] -= diff;
-
-            if (_flagsTimer[TEAM_HORDE] < 0)
-            {
-                _flagsTimer[TEAM_HORDE] = 0;
-                RespawnFlag(HORDE, true);
-            }
-        }
-
-        if (_flagState[TEAM_HORDE] == BG_WS_FLAG_STATE_ON_GROUND)
-        {
-            _flagsDropTimer[TEAM_HORDE] -= diff;
-
-            if (_flagsDropTimer[TEAM_HORDE] < 0)
-            {
-                _flagsDropTimer[TEAM_HORDE] = 0;
-                RespawnFlagAfterDrop(HORDE);
-                _bothFlagsKept = false;
-            }
-        }
-
-        if (_bothFlagsKept)
-        {
-            _flagSpellForceTimer += diff;
-            if (_flagDebuffState == 0 && _flagSpellForceTimer >= 10*MINUTE*IN_MILLISECONDS)  //10 minutes
-            {
-                if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[0]))
-                    player->CastSpell(player, WS_SPELL_FOCUSED_ASSAULT, true);
-                if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[1]))
-                    player->CastSpell(player, WS_SPELL_FOCUSED_ASSAULT, true);
-                _flagDebuffState = 1;
-            }
-            else if (_flagDebuffState == 1 && _flagSpellForceTimer >= 900000) //15 minutes
-            {
-                if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[0]))
-                {
-                    player->RemoveAurasDueToSpell(WS_SPELL_FOCUSED_ASSAULT);
-                    player->CastSpell(player, WS_SPELL_BRUTAL_ASSAULT, true);
-                }
-                if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[1]))
-                {
-                    player->RemoveAurasDueToSpell(WS_SPELL_FOCUSED_ASSAULT);
-                    player->CastSpell(player, WS_SPELL_BRUTAL_ASSAULT, true);
-                }
-                _flagDebuffState = 2;
-            }
-        }
+        else if (GetTeamScore(TEAM_HORDE) == 0)
+            EndBattleground(ALLIANCE);           // Alliance has > 0, Horde has 0, alliance wins
+        else if (GetTeamScore(TEAM_HORDE) == GetTeamScore(TEAM_ALLIANCE)) // Team score equal, winner is team that scored the last flag
+            EndBattleground(_lastFlagCaptureTeam);
+        else if (GetTeamScore(TEAM_HORDE) > GetTeamScore(TEAM_ALLIANCE))  // Last but not least, check who has the higher score
+            EndBattleground(HORDE);
         else
+            EndBattleground(ALLIANCE);
+    }
+    // first update needed after 1 minute of game already in progress
+    else if (GetStartTime() > uint32(_minutesElapsed * MINUTE * IN_MILLISECONDS) +  3 * MINUTE * IN_MILLISECONDS)
+    {
+        ++_minutesElapsed;
+        UpdateWorldState(BG_WS_STATE_TIMER, 25 - _minutesElapsed);
+
+    if (_flagState[TEAM_ALLIANCE] == BG_WS_FLAG_STATE_WAIT_RESPAWN)
+    {
+        _flagsTimer[TEAM_ALLIANCE] -= diff;
+
+        if (_flagsTimer[TEAM_ALLIANCE] < 0)
+        {
+            _flagsTimer[TEAM_ALLIANCE] = 0;
+            RespawnFlag(ALLIANCE, true);
+        }
+    }
+
+    if (_flagState[TEAM_ALLIANCE] == BG_WS_FLAG_STATE_ON_GROUND)
+    {
+        _flagsDropTimer[TEAM_ALLIANCE] -= diff;
+
+        if (_flagsDropTimer[TEAM_ALLIANCE] < 0)
+        {
+            _flagsDropTimer[TEAM_ALLIANCE] = 0;
+            RespawnFlagAfterDrop(ALLIANCE);
+            _bothFlagsKept = false;
+        }
+    }
+
+    if (_flagState[TEAM_HORDE] == BG_WS_FLAG_STATE_WAIT_RESPAWN)
+    {
+        _flagsTimer[TEAM_HORDE] -= diff;
+
+        if (_flagsTimer[TEAM_HORDE] < 0)
+        {
+            _flagsTimer[TEAM_HORDE] = 0;
+            RespawnFlag(HORDE, true);
+        }
+    }
+
+    if (_flagState[TEAM_HORDE] == BG_WS_FLAG_STATE_ON_GROUND)
+    {
+        _flagsDropTimer[TEAM_HORDE] -= diff;
+
+        if (_flagsDropTimer[TEAM_HORDE] < 0)
+        {
+            _flagsDropTimer[TEAM_HORDE] = 0;
+            RespawnFlagAfterDrop(HORDE);
+            _bothFlagsKept = false;
+        }
+    }
+
+    if (_bothFlagsKept)
+    {
+        _flagSpellForceTimer += diff;
+        if (_flagDebuffState == 0 && _flagSpellForceTimer >= 10*MINUTE*IN_MILLISECONDS)  //10 minutes
+        {
+            if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[0]))
+                player->CastSpell(player, WS_SPELL_FOCUSED_ASSAULT, true);
+            if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[1]))
+                player->CastSpell(player, WS_SPELL_FOCUSED_ASSAULT, true);
+            _flagDebuffState = 1;
+        }
+        else if (_flagDebuffState == 1 && _flagSpellForceTimer >= 900000) //15 minutes
         {
             if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[0]))
             {
                 player->RemoveAurasDueToSpell(WS_SPELL_FOCUSED_ASSAULT);
-                player->RemoveAurasDueToSpell(WS_SPELL_BRUTAL_ASSAULT);
+                player->CastSpell(player, WS_SPELL_BRUTAL_ASSAULT, true);
             }
             if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[1]))
             {
                 player->RemoveAurasDueToSpell(WS_SPELL_FOCUSED_ASSAULT);
-                player->RemoveAurasDueToSpell(WS_SPELL_BRUTAL_ASSAULT);
+                player->CastSpell(player, WS_SPELL_BRUTAL_ASSAULT, true);
             }
-
-            _flagSpellForceTimer = 0; //reset timer.
-            _flagDebuffState = 0;
+            _flagDebuffState = 2;
         }
+    }
+    else
+    {
+        if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[0]))
+        {
+            player->RemoveAurasDueToSpell(WS_SPELL_FOCUSED_ASSAULT);
+            player->RemoveAurasDueToSpell(WS_SPELL_BRUTAL_ASSAULT);
+        }
+        if (Player* player = ObjectAccessor::FindPlayer(m_FlagKeepers[1]))
+        {
+            player->RemoveAurasDueToSpell(WS_SPELL_FOCUSED_ASSAULT);
+            player->RemoveAurasDueToSpell(WS_SPELL_BRUTAL_ASSAULT);
+        }
+
+        _flagSpellForceTimer = 0; //reset timer.
+        _flagDebuffState = 0;
     }
 }
 
