@@ -21,7 +21,7 @@
 #include "BattlegroundScore.h"
 #include "SharedDefines.h"
 
-struct ArenaScore : public BattlegroundScore
+class ArenaScore : public BattlegroundScore
 {
     friend class ArenaMap;
 
@@ -56,9 +56,9 @@ struct ArenaScore : public BattlegroundScore
         uint8 TeamId; // bgTeamId
 };
 
-struct ArenaTeamScore
+class ArenaTeamScore
 {
-    friend class Battleground;
+    friend class ArenaMap;
 
     protected:
         ArenaTeamScore() : RatingChange(0), MatchmakerRating(0) { }

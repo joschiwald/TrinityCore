@@ -103,11 +103,11 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
     {
         if (closeFortressDoorsTimer <= diff)
         {
-            GetObject(BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01)->RemoveFromWorld();
-            GetObject(BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01)->RemoveFromWorld();
+            GetGameObject(BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01)->RemoveFromWorld();
+            GetGameObject(BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01)->RemoveFromWorld();
 
-            GetObject(BG_IC_GO_ALLIANCE_GATE_3)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Alliance door
-            GetObject(BG_IC_GO_HORDE_GATE_1)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Horde door
+            GetGameObject(BG_IC_GO_ALLIANCE_GATE_3)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Alliance door
+            GetGameObject(BG_IC_GO_HORDE_GATE_1)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Horde door
 
             doorsClosed = true;
         } else closeFortressDoorsTimer -= diff;
@@ -195,7 +195,7 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
                 nodePoint[i].gameobject_entry = nextBanner;
                 // nodePoint[i].faction = the faction should be the same one...
 
-                GameObject* banner = GetObject(nodePoint[i].gameobject_type);
+                GameObject* banner = GetGameObject(nodePoint[i].gameobject_type);
 
                 if (!banner) // this should never happen
                     return;
@@ -205,7 +205,7 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
                 DeleteGameObject(nodePoint[i].gameobject_type);
                 AddGameObject(nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry, cords[0], cords[1], cords[2], cords[3], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
-                GetObject(nodePoint[i].gameobject_type)->SetUInt32Value(GAMEOBJECT_FACTION, nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_Factions[1] : BG_IC_Factions[0]);
+                GetGameObject(nodePoint[i].gameobject_type)->SetUInt32Value(GAMEOBJECT_FACTION, nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_Factions[1] : BG_IC_Factions[0]);
 
                 UpdateNodeWorldState(&nodePoint[i]);
                 HandleCapturedNodes(&nodePoint[i], false);
@@ -237,10 +237,10 @@ void BattlegroundIC::PostUpdateImpl(uint32 diff)
 void BattlegroundIC::StartingEventCloseDoors()
 {
     // Show Full Gate Displays
-    GetObject(BG_IC_GO_ALLIANCE_GATE_1)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Alliance door
-    GetObject(BG_IC_GO_ALLIANCE_GATE_2)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Alliance door
-    GetObject(BG_IC_GO_HORDE_GATE_2)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Horde door
-    GetObject(BG_IC_GO_HORDE_GATE_3)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Horde door
+    GetGameObject(BG_IC_GO_ALLIANCE_GATE_1)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Alliance door
+    GetGameObject(BG_IC_GO_ALLIANCE_GATE_2)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Alliance door
+    GetGameObject(BG_IC_GO_HORDE_GATE_2)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Horde door
+    GetGameObject(BG_IC_GO_HORDE_GATE_3)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Horde door
 }
 
 void BattlegroundIC::StartingEventOpenDoors()
@@ -382,7 +382,7 @@ bool BattlegroundIC::SetupBattleground()
 
     // correcting spawn time for keeps bombs
     for (uint8 i = BG_IC_GO_HUGE_SEAFORIUM_BOMBS_A_1; i < BG_IC_GO_HUGE_SEAFORIUM_BOMBS_H_4; ++i)
-        GetObject(i)->SetRespawnTime(10);
+        GetGameObject(i)->SetRespawnTime(10);
 
     return true;
 }
@@ -485,7 +485,7 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
                 UpdatePlayerScore(player, SCORE_BASES_DEFENDED, 1);
             }
 
-            GameObject* banner = GetObject(nodePoint[i].gameobject_type);
+            GameObject* banner = GetGameObject(nodePoint[i].gameobject_type);
 
             if (!banner) // this should never happen
                 return;
@@ -495,7 +495,7 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
             DeleteGameObject(nodePoint[i].gameobject_type);
             AddGameObject(nodePoint[i].gameobject_type, nodePoint[i].gameobject_entry, cords[0], cords[1], cords[2], cords[3], 0, 0, 0, 0, RESPAWN_ONE_DAY);
 
-            GetObject(nodePoint[i].gameobject_type)->SetUInt32Value(GAMEOBJECT_FACTION, nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_Factions[1] : BG_IC_Factions[0]);
+            GetGameObject(nodePoint[i].gameobject_type)->SetUInt32Value(GAMEOBJECT_FACTION, nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_Factions[1] : BG_IC_Factions[0]);
 
             if (nodePoint[i].nodeType == NODE_TYPE_WORKSHOP)
             {

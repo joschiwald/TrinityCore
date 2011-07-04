@@ -7161,7 +7161,7 @@ bool Player::RewardHonor(Unit* victim, uint32 groupsize, int32 honor, bool pvpto
     UpdateHonorFields();
 
     // do not reward honor in arenas, but return true to enable onkill spellproc
-    if (InBattleground() && GetBattleground() && GetBattleground()->isArena())
+    if (GetBattleground() && GetBattleground()->IsBattleArena())
         return true;
 
     // Promote to float for calculations

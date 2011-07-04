@@ -152,24 +152,7 @@ void BattlegroundDS::StartBattleground()
                 player->RemoveAurasDueToSpell(48018);
 }
 
-void BattlegroundDS::HandleKillPlayer(Player* player, Player* killer)
-{
-    if (GetStatus() != STATUS_IN_PROGRESS)
-        return;
-
-    if (!killer)
-    {
-        TC_LOG_ERROR("bg.battleground", "BattlegroundDS: Killer player not found");
-        return;
-    }
-
-    Battleground::HandleKillPlayer(player, killer);
-
-    UpdateArenaWorldState();
-    CheckArenaWinConditions();
-}
-
-void BattlegroundDS::HandleAreaTrigger(Player* player, uint32 trigger)
+void BattlegroundDS::HandleAreaTrigger(Player *Source, uint32 Trigger)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;

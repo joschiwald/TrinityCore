@@ -41,20 +41,17 @@ class ArenaMap;
 
 class BattlegroundRL : public ArenaMap
 {
-    public:
+    friend class BattlegroundMgr;
+
+    protected:
         BattlegroundRL();
         ~BattlegroundRL();
 
-        /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player);
-        void Reset();
-        void FillInitialWorldStates(WorldPacket& data);
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
+        void FillInitialWorldStates(WorldPacket &d);
+        void StartBattleground();
+        void InitializeObjects();
 
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
-        void HandleAreaTrigger(Player* Source, uint32 Trigger);
-        bool SetupBattleground();
-        void HandleKillPlayer(Player* player, Player* killer);
+        void RemovePlayer(Player *plr, uint64 guid, uint32 team);
+        void HandleAreaTrigger(Player *Source, uint32 Trigger);
 };
 #endif

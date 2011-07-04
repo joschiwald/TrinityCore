@@ -19,6 +19,8 @@
 #include "ArenaScore.h"
 #include "ArenaTeam.h"
 #include "ArenaTeamMgr.h"
+#include "ArenaScore.h"
+#include "BattlegroundScore.h"
 #include "Player.h"
 #include "Log.h"
 
@@ -54,6 +56,8 @@ void ArenaMap::StartBattleground()
 {
     BattlegroundMap::StartBattleground();
     EndTimer = 47 * MINUTE * IN_MILLISECONDS;
+    _playersAlive[BG_TEAM_ALLIANCE] = ParticipantCount[BG_TEAM_ALLIANCE];
+    _playersAlive[BG_TEAM_HORDE] = ParticipantCount[BG_TEAM_HORDE];
 }
 
 void ArenaMap::EndBattleground(uint32 winner)
@@ -68,9 +72,9 @@ void ArenaMap::EndBattleground(uint32 winner)
     if (_rated && winner != WINNER_NONE)
     {
         uint32 loserTeamRating = loserTeam->GetRating();
-        uint32 loserMMR = loserTeam->GetAverageMMR(GetGroupForTeam(loserTeam));
+        uint32 loserMMR = loserTeam->GetAverageMMR(GetGroupForTeam(loser));
         uint32 winnerTeamRating = winnerTeam->GetRating();
-        uint32 winnerMMR = winnerTeam->GetAverageMMR(GetGroupForTeam(winnerTeam));
+        uint32 winnerMMR = winnerTeam->GetAverageMMR(GetGroupForTeam(winner));
 
         uint32 winnerChange = winnerTeam->WonAgainst(loserMMR);
         uint32 loserChange = loserTeam->WonAgainst(winnerMMR);
@@ -80,13 +84,15 @@ void ArenaMap::EndBattleground(uint32 winner)
         _arenaTeamScores[winner]->Assign(winnerChange, winnerMMR, winnerTeam->GetName());
         _arenaTeamScores[loser]->Assign(loserChange, loserMMR, loserTeam->GetName());
     }
+
+    // TODO: if WINNER_NONE - remove rating for both parties?
 }
 
 Group* ArenaMap::GetGroupForTeam(uint32 team) const
 {
     for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
         if (Player* player = itr->GetSource())
-            if (player->GetBGTeam() == winner)
+            if (player->GetBGTeam() == team)
                 return player->GetGroup();
 }
 
@@ -130,4 +136,31 @@ void ArenaMap::OnPlayerExit(Player* player)
 
     UpdateArenaWorldState();
     CheckArenaWinConditions();
+}
+
+void ArenaMap::OnPlayerKill(Player* victim, Player* killer)
+{
+    BattlegroundMap::OnPlayerKill(victim, killer);
+
+    if (_status != STATUS_IN_PROGRESS)
+        return;
+
+    --_playersAlive[victim->GetBGTeam()];
+
+    UpdateArenaWorldState();
+    CheckArenaWinConditions();
+}
+
+void ArenaMap::UpdateArenaWorldState()
+{
+    UpdateWorldState(WORLD_STATE_ARENA_TEAM_H, _playersAlive[TEAM_HORDE]);
+    UpdateWorldState(WORLD_STATE_ARENA_TEAM_A, _playersAlive[TEAM_ALLIANCE]);
+}
+
+void ArenaMap::CheckArenaWinConditions()
+{
+    if (!_playersAlive[TEAM_ALLIANCE] && _playersAlive[TEAM_HORDE])
+        EndBattleground(TEAM_HORDE);
+    else if (!_playersAlive[TEAM_HORDE] && _playersAlive[TEAM_ALLIANCE])
+        EndBattleground(TEAM_ALLIANCE);
 }

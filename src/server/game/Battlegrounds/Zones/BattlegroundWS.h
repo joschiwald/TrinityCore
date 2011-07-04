@@ -130,7 +130,7 @@ enum BG_WS_CreatureTypes
     WS_SPIRIT_MAIN_ALLIANCE   = 0,
     WS_SPIRIT_MAIN_HORDE      = 1,
 
-    BG_CREATURES_MAX_WS       = 2
+    BG_WS_CREATURES_MAX       = 2
 };
 
 enum BG_WS_CarrierDebuffs
@@ -185,28 +185,33 @@ class BattlegroundMap;
 
 class BattlegroundWS : public BattlegroundMap
 {
-    public:
+    friend class BattlegroundMgr;
+
+    protected:
         /* Construction */
         BattlegroundWS();
         ~BattlegroundWS();
 
-        /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player) override;
-        void StartBattleground();
         void InitializeObjects();
-        void ProcessInProgress(uint32 diff);
+        void InitializeTextIds();
+
+        void InstallBattleground();
+        void StartBattleground();
+        void EndBattleground(uint32 winner);
+
+        void OnPlayerJoin(Player* player);
+        void OnPlayerExit(Player* player);
+        void OnTimeoutReached();
+
+        void ProcessInProgress(uint32 const& diff);
 
         /* BG Flags */
-        uint64 GetFlagPickerGUID(int32 team) const
-        {
-            if (team == TEAM_ALLIANCE || team == TEAM_HORDE)
-                return m_FlagKeepers[team];
-            return 0;
-        }
-        void SetAllianceFlagPicker(uint64 guid)     { m_FlagKeepers[TEAM_ALLIANCE] = guid; }
-        void SetHordeFlagPicker(uint64 guid)        { m_FlagKeepers[TEAM_HORDE] = guid; }
-        bool IsAllianceFlagPickedup() const         { return m_FlagKeepers[TEAM_ALLIANCE] != 0; }
-        bool IsHordeFlagPickedup() const            { return m_FlagKeepers[TEAM_HORDE] != 0; }
+        uint64 GetAllianceFlagPickerGUID() const    { return _flagKeepers[BG_TEAM_ALLIANCE]; }
+        uint64 GetHordeFlagPickerGUID() const       { return _flagKeepers[BG_TEAM_HORDE]; }
+        void SetAllianceFlagPicker(uint64 guid)     { _flagKeepers[BG_TEAM_ALLIANCE] = guid; }
+        void SetHordeFlagPicker(uint64 guid)        { _flagKeepers[BG_TEAM_HORDE] = guid; }
+        bool IsAllianceFlagPickedup() const         { return _flagKeepers[BG_TEAM_ALLIANCE] != 0; }
+        bool IsHordeFlagPickedup() const            { return _flagKeepers[BG_TEAM_HORDE] != 0; }
         void RespawnFlag(uint32 Team, bool captured);
         void RespawnFlagAfterDrop(uint32 Team);
         uint8 GetFlagState(uint32 team)             { return _flagState[team]; }
@@ -216,20 +221,19 @@ class BattlegroundWS : public BattlegroundMap
         bool IsForceTimerDone;
 
         /* Battleground Events */
-        void EventPlayerDroppedFlag(Player* player);
-        void EventPlayerClickedOnFlag(Player* player, GameObject* target_obj);
-        void EventPlayerCapturedFlag(Player* player);
+        void EventPlayerDroppedFlag(Player *Source);
+        void EventPlayerClickedOnFlag(Player *Source, GameObject* target_obj);
+        void EventPlayerCapturedFlag(Player *Source);
 
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
-        void HandleAreaTrigger(Player* player, uint32 trigger);
-        void HandleKillPlayer(Player* player, Player* killer);
+        
+        void HandleAreaTrigger(Player *Source, uint32 Trigger);
+        void OnPlayerKill(Player* player, Player* killer);
         bool SetupBattleground();
-        void Reset();
-        void EndBattleground(uint32 winner);
+
         WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
 
         void UpdateFlagState(uint32 team, uint32 value);
-        void SetLastFlagCapture(uint32 team)                { _lastFlagCaptureTeam = team; }
+        void SetLastFlagCapture(uint32 team)                { _lastFlagCaptureTime = team; }
         void UpdateTeamScore(uint32 team);
 
         void UpdatePlayerScore(Player *source, uint32 type, uint32 value, bool doAddHonor = true);
@@ -249,12 +253,12 @@ class BattlegroundWS : public BattlegroundMap
         bool CheckAchievementCriteriaMeet(uint32 criteriaId, Player const* source, Unit const* target = NULL, uint32 miscvalue1 = 0);
 
     private:
-        uint64 m_FlagKeepers[2];                            // 0 - alliance, 1 - horde
+        uint64 _flagKeepers[2];                            // 0 - alliance, 1 - horde
         uint64 m_DroppedFlagGUID[2];
         uint8 _flagState[2];                               // for checking flag state
         int32 _flagsTimer[2];
         int32 _flagsDropTimer[2];
-        uint32 _lastFlagCaptureTeam;                       // Winner is based on this if score is equal
+        uint32 _lastFlagCaptureTime;                       // Winner is based on this if score is equal
 
         uint32 m_ReputationCapture;
         uint32 m_HonorWinKills;
@@ -264,6 +268,6 @@ class BattlegroundWS : public BattlegroundMap
         uint8 _flagDebuffState;                            // 0 - no debuffs, 1 - focused assault, 2 - brutal assault
         uint8 _minutesElapsed;
 
-        void PostUpdateImpl(uint32 diff);
+        uint32 _timerUpdateWorldState;
 };
 #endif

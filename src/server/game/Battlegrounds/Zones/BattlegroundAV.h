@@ -1606,8 +1606,8 @@ class BattlegroundAV : public BattlegroundMap
         bool UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool doAddHonor = true) override;
 
         /*handlestuff*/ //these are functions which get called from extern
-        void EventPlayerClickedOnFlag(Player* source, GameObject* target_obj);
-        void HandleKillPlayer(Player* player, Player* killer);
+        virtual void EventPlayerClickedOnFlag(Player *source, GameObject* target_obj);
+        void OnPlayerKill(Player* player, Player* killer);
         void HandleKillUnit(Creature* unit, Player* killer);
         void HandleQuestComplete(uint32 questid, Player* player);
         bool CanActivateGO(int32 GOId, uint32 team) const;

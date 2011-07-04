@@ -498,7 +498,6 @@ void GameObject::Update(uint32 diff)
 
                     if (target)
                         SetLootState(GO_ACTIVATED, target);
-
                 }
                 else if (uint32 max_charges = goInfo->GetCharges())
                 {

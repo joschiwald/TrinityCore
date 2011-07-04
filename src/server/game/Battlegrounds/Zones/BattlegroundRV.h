@@ -97,17 +97,15 @@ class BattlegroundRV : public ArenaMap
         BattlegroundRV();
         ~BattlegroundRV();
 
-        /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player) override;
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
-        void Reset();
+        void ProcessInProgress(uint32 const& diff);
+
+        void StartBattleground();
+        void InitializeObjects();
+
         void FillInitialWorldStates(WorldPacket &d);
 
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
         void HandleAreaTrigger(Player* Source, uint32 Trigger);
         bool SetupBattleground();
-        void HandleKillPlayer(Player* player, Player* killer);
 
     private:
         uint32 Timer;

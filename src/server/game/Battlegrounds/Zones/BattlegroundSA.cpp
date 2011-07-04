@@ -134,8 +134,8 @@ bool BattlegroundSA::ResetObjs()
     }
 
     // MAD props for Kiper for discovering those values - 4 hours of his work.
-    GetObject(BG_SA_BOAT_ONE)->UpdateRotationFields(1.0f, 0.0002f);
-    GetObject(BG_SA_BOAT_TWO)->UpdateRotationFields(1.0f, 0.00001f);
+    GetGameObject(BG_SA_BOAT_ONE)->UpdateRotationFields(1.0f, 0.0002f);
+    GetGameObject(BG_SA_BOAT_TWO)->UpdateRotationFields(1.0f, 0.00001f);
     SpawnGameObject(BG_SA_BOAT_ONE, RESPAWN_IMMEDIATELY);
     SpawnGameObject(BG_SA_BOAT_TWO, RESPAWN_IMMEDIATELY);
 
@@ -153,11 +153,11 @@ bool BattlegroundSA::ResetObjs()
     for (uint8 i = 0; i <= BG_SA_PORTAL_DEFFENDER_RED; i++)
     {
         SpawnGameObject(i, RESPAWN_IMMEDIATELY);
-        GetObject(i)->SetFaction(defF);
+        GetGameObject(i)->SetFaction(defF);
     }
 
-    GetObject(BG_SA_TITAN_RELIC)->SetFaction(atF);
-    GetObject(BG_SA_TITAN_RELIC)->Refresh();
+    GetGameObject(BG_SA_TITAN_RELIC)->SetFaction(atF);
+    GetGameObject(BG_SA_TITAN_RELIC)->Refresh();
 
     for (uint8 i = 0; i <= 5; i++)
         GateStatus[i] = BG_SA_GATE_OK;
@@ -194,14 +194,13 @@ bool BattlegroundSA::ResetObjs()
     for (uint8 i = BG_SA_CENTRAL_FLAG; i <= BG_SA_LEFT_FLAG; i++)
     {
         AddGameObject(i, (BG_SA_ObjEntries[i] - (Attackers == TEAM_ALLIANCE ? 1 : 0)), BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY);
-        GetObject(i)->SetFaction(atF);
-
+        GetGameObject(i)->SetFaction(atF);
     }
 
     for (uint8 i = BG_SA_BOMB; i < BG_SA_MAXOBJ; i++)
     {
         AddGameObject(i, BG_SA_ObjEntries[BG_SA_BOMB], BG_SA_ObjSpawnlocs[i], 0, 0, 0, 0, RESPAWN_ONE_DAY);
-        GetObject(i)->SetFaction(atF);
+        GetGameObject(i)->SetFaction(atF);
     }
 
     //Player may enter BEFORE we set up BG - lets update his worldstates anyway...
@@ -275,7 +274,7 @@ void BattlegroundSA::StartShips()
             {
                 UpdateData data;
                 WorldPacket pkt;
-                GetObject(i)->BuildValuesUpdateBlockForPlayer(&data, p);
+                GetGameObject(i)->BuildValuesUpdateBlockForPlayer(&data, p);
                 data.BuildPacket(&pkt);
                 p->SendDirectMessage(&pkt);
             }
@@ -489,9 +488,9 @@ void BattlegroundSA::HandleAreaTrigger(Player* /*Source*/, uint32 /*Trigger*/)
 
 void BattlegroundSA::TeleportPlayers()
 {
-    for (BattlegroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
+    for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
     {
-        if (Player* player = ObjectAccessor::FindPlayer(itr->first))
+        if (Player* player = itr->getSource())
         {
             // should remove spirit of redemption
             if (player->HasAuraType(SPELL_AURA_SPIRIT_OF_REDEMPTION))
@@ -951,9 +950,9 @@ void BattlegroundSA::SendTransportInit(Player* player)
     {
         UpdateData transData;
         if (BgObjects[BG_SA_BOAT_ONE])
-            GetObject(BG_SA_BOAT_ONE)->BuildCreateUpdateBlockForPlayer(&transData, player);
+            GetGameObject(BG_SA_BOAT_ONE)->BuildCreateUpdateBlockForPlayer(&transData, player);
         if (BgObjects[BG_SA_BOAT_TWO])
-            GetObject(BG_SA_BOAT_TWO)->BuildCreateUpdateBlockForPlayer(&transData, player);
+            GetGameObject(BG_SA_BOAT_TWO)->BuildCreateUpdateBlockForPlayer(&transData, player);
         WorldPacket packet;
         transData.BuildPacket(&packet);
         player->SendDirectMessage(&packet);
@@ -966,9 +965,9 @@ void BattlegroundSA::SendTransportsRemove(Player* player)
     {
         UpdateData transData;
         if (BgObjects[BG_SA_BOAT_ONE])
-            GetObject(BG_SA_BOAT_ONE)->BuildOutOfRangeUpdateBlock(&transData);
+            GetGameObject(BG_SA_BOAT_ONE)->BuildOutOfRangeUpdateBlock(&transData);
         if (BgObjects[BG_SA_BOAT_TWO])
-            GetObject(BG_SA_BOAT_TWO)->BuildOutOfRangeUpdateBlock(&transData);
+            GetGameObject(BG_SA_BOAT_TWO)->BuildOutOfRangeUpdateBlock(&transData);
         WorldPacket packet;
         transData.BuildPacket(&packet);
         player->SendDirectMessage(&packet);
