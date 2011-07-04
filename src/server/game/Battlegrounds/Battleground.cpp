@@ -709,7 +709,7 @@ void Battleground::UpdateWorldStateForPlayer(uint32 field, uint32 value, Player*
     player->SendDirectMessage(&data);
 }
 
-void Battleground::EndBattleground(uint32 winner)
+void Battleground::EndBattleground(BattlegroundWinner winner)
 {
     RemoveFromBGFreeSlotQueue();
 

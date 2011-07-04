@@ -288,7 +288,7 @@ class BattlegroundAB : public BattlegroundMap
 
         void InstallBattleground();
         void StartBattleground();
-        void EndBattleground(uint32 winner);
+        void EndBattleground(BattlegroundWinner winner);
 
         void UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true);
         void FillInitialWorldStates(WorldPacket& data);

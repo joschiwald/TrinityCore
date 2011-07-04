@@ -369,7 +369,7 @@ class BattlegroundEY : public BattlegroundMap
 
         void InstallBattleground();
         void StartBattleground();
-        void EndBattleground(uint32 winner);
+        void EndBattleground(BattlegroundWinner winner);
 
         /* inherited from BattlegroundClass */
         void OnPlayerJoin(Player* player);

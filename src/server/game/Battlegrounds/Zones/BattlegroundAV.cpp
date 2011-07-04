@@ -226,7 +226,7 @@ void BattlegroundAV::StartBattleground()
     DoorOpen(BG_AV_OBJECT_DOOR_A);
 }
 
-void BattlegroundAV::EndBattleground(uint32 winner)
+void BattlegroundAV::EndBattleground(BattlegroundWinner winner)
 {
     //calculate bonuskills for both teams:
     //first towers:
@@ -236,7 +236,7 @@ void BattlegroundAV::EndBattleground(uint32 winner)
     {
         if (m_Nodes[i].State == POINT_CONTROLED)
         {
-            if (m_Nodes[i].Owner == ALLIANCE)
+            if (m_Nodes[i].Owner == BG_TEAM_ALLIANCE)
             {
                 rep[0]   += BG_AV_REP_SURVIVING_TOWER;
                 kills[0] += BG_AV_KILL_SURVIVING_TOWER;
@@ -257,9 +257,9 @@ void BattlegroundAV::EndBattleground(uint32 winner)
             rep[i]   += BG_AV_REP_SURVIVING_CAPTAIN;
         }
         if (rep[i] != 0)
-            RewardReputationToTeam((i == 0)?730:729, rep[i], (i == 0)?ALLIANCE:HORDE);
+            RewardReputationToTeam((i == 0)?730:729, rep[i], (i == 0)? BG_TEAM_ALLIANCE : BG_TEAM_HORDE);
         if (kills[i] != 0)
-            RewardHonorToTeam(GetBonusHonor(kills[i]), (i == 0)?ALLIANCE:HORDE);
+            RewardHonorToTeam(GetBonusHonor(kills[i]), (i == 0)?BG_TEAM_ALLIANCE : BG_TEAM_HORDE);
     }
 
     //TODO add enterevademode for all attacking creatures
@@ -298,16 +298,16 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
     {
         CastSpellOnTeam(23658, HORDE); //this is a spell which finishes a quest where a player has to kill the boss
         RewardReputationToTeam(729, BG_AV_REP_BOSS, HORDE);
-        RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_BOSS), HORDE);
-        EndBattleground(HORDE);
+        RewardHonorToTeam(GetBonusHonor(BG_AV_KILL_BOSS), BG_TEAM_HORDE);
+        EndBattleground(WINNER_HORDE);
         DeleteCreature(AV_CPLACE_TRIGGER17);
     }
     else if (entry == BG_AV_CreatureInfo[AV_NPC_H_BOSS][0])
     {
-        CastSpellOnTeam(23658, ALLIANCE); //this is a spell which finishes a quest where a player has to kill the boss
+        CastSpellOnTeam(23658, BG_TEAM_ALLIANCE); //this is a spell which finishes a quest where a player has to kill the boss
         RewardReputationToTeam(730, BG_AV_REP_BOSS, ALLIANCE);
-        RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_BOSS), ALLIANCE);
-        EndBattleground(ALLIANCE);
+        RewardHonorToTeam(GetBonusHonor(BG_AV_KILL_BOSS), BG_TEAM_ALLIANCE);
+        EndBattleground(WINNER_ALLIANCE);
         DeleteCreature(AV_CPLACE_TRIGGER19);
     }
     else if (entry == BG_AV_CreatureInfo[AV_NPC_A_CAPTAIN][0])
@@ -318,9 +318,10 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
             return;
         }
         _captainAlive[0]=false;
-        RewardReputationToTeam(729, BG_AV_REP_CAPTAIN, HORDE);
-        RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_CAPTAIN), HORDE);
-        UpdateScore(ALLIANCE, (-1)*BG_AV_RES_CAPTAIN);
+
+        RewardReputationToTeam(729, BG_AV_REP_CAPTAIN, BG_TEAM_HORDE);
+        RewardHonorToTeam(GetBonusHonor(BG_AV_KILL_CAPTAIN), BG_TEAM_HORDE);
+        UpdateScore(BG_TEAM_ALLIANCE, (-1)*BG_AV_RES_CAPTAIN);
         //spawn destroyed aura
         for (uint8 i=0; i <= 9; i++)
             SpawnGameObject(BG_AV_OBJECT_BURN_BUILDING_ALLIANCE+i, RESPAWN_IMMEDIATELY);
@@ -337,9 +338,9 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
             return;
         }
         _captainAlive[1]=false;
-        RewardReputationToTeam(730, BG_AV_REP_CAPTAIN, ALLIANCE);
-        RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_CAPTAIN), ALLIANCE);
-        UpdateScore(HORDE, (-1)*BG_AV_RES_CAPTAIN);
+        RewardReputationToTeam(730, BG_AV_REP_CAPTAIN, BG_TEAM_ALLIANCE);
+        RewardHonorToTeam(GetBonusHonor(BG_AV_KILL_CAPTAIN), BG_TEAM_ALLIANCE);
+        UpdateScore(BG_TEAM_HORDE, (-1)*BG_AV_RES_CAPTAIN);
         //spawn destroyed aura
         for (uint8 i=0; i <= 9; i++)
             SpawnGameObject(BG_AV_OBJECT_BURN_BUILDING_HORDE+i, RESPAWN_IMMEDIATELY);
@@ -384,23 +385,23 @@ void BattlegroundAV::HandleQuestComplete(uint32 questid, Player* player)
         case AV_QUEST_A_COMMANDER1:
         case AV_QUEST_H_COMMANDER1:
             m_Team_QuestStatus[team][1]++;
-            RewardReputationToTeam(team, 1, player->GetTeam());
+            RewardReputationToTeam(team, 1, BattlegroundTeamId(player->GetBGTeam()));
             if (m_Team_QuestStatus[team][1] == 30)
                 TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
             break;
         case AV_QUEST_A_COMMANDER2:
         case AV_QUEST_H_COMMANDER2:
             m_Team_QuestStatus[team][2]++;
-            RewardReputationToTeam(team, 1, player->GetTeam());
+            RewardReputationToTeam(team, 1, BattlegroundTeamId(player->GetBGTeam()));
             if (m_Team_QuestStatus[team][2] == 60)
                 TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
             break;
         case AV_QUEST_A_COMMANDER3:
         case AV_QUEST_H_COMMANDER3:
             m_Team_QuestStatus[team][3]++;
-            RewardReputationToTeam(team, 1, player->GetTeam());
-            if (m_Team_QuestStatus[team][3] == 120)
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
+            RewardReputationToTeam(team, 1, BattlegroundTeamId(player->GetBGTeam()));
+            if (m_Team_QuestStatus[team][1] == 120)
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here", questid);
             break;
         case AV_QUEST_A_BOSS1:
         case AV_QUEST_H_BOSS1:
@@ -460,23 +461,22 @@ void BattlegroundAV::HandleQuestComplete(uint32 questid, Player* player)
 
 void BattlegroundAV::UpdateScore(uint16 team, int16 points)
 { //note: to remove reinforcementpoints points must be negative, for adding reinforcements points must be positive
-    ASSERT(team == ALLIANCE || team == HORDE);
-    uint8 teamindex = GetTeamIndexByTeamId(team); //0=ally 1=horde
-    TeamScores[teamindex] += points;
+    ASSERT(team == BG_TEAM_ALLIANCE || team == BG_TEAM_HORDE);
+    TeamScores[team] += points;
 
-    UpdateWorldState(((teamindex == BG_TEAM_HORDE)?AV_Horde_Score:AV_Alliance_Score), TeamScores[teamindex]);
+    UpdateWorldState(((team == BG_TEAM_HORDE) ? AV_Horde_Score : AV_Alliance_Score), TeamScores[team]);
     if (points < 0)
     {
-        if (TeamScores[teamindex] < 1)
+        if (TeamScores[team] < 1)
         {
-            TeamScores[teamindex]=0;
-            EndBattleground(((teamindex == BG_TEAM_HORDE)?ALLIANCE:HORDE));
+            TeamScores[team] = 0;
+            EndBattleground((team == BG_TEAM_HORDE) ? WINNER_ALLIANCE : WINNER_HORDE);
         }
-        else if (!_isInformedNearVictory[teamindex] && TeamScores[teamindex] < SEND_MSG_NEAR_LOSE)
+        else if (!_isInformedNearVictory[team] && TeamScores[team] < SEND_MSG_NEAR_LOSE)
         {
-            SendMessageToAll(teamindex == TEAM_HORDE?LANG_BG_AV_H_NEAR_LOSE:LANG_BG_AV_A_NEAR_LOSE, teamindex == TEAM_HORDE ? CHAT_MSG_BG_SYSTEM_HORDE : CHAT_MSG_BG_SYSTEM_ALLIANCE);
+            SendMessageToAll(teamindex == BG_TEAM_HORDE?LANG_BG_AV_H_NEAR_LOSE:LANG_BG_AV_A_NEAR_LOSE, team == BG_TEAM_HORDE ? CHAT_MSG_BG_SYSTEM_HORDE : CHAT_MSG_BG_SYSTEM_ALLIANCE);
             PlaySoundToAll(AV_SOUND_NEAR_VICTORY);
-            _isInformedNearVictory[teamindex] = true;
+            _isInformedNearVictory[team] = true;
         }
     }
 }

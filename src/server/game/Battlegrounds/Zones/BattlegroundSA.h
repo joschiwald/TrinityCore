@@ -504,7 +504,7 @@ GateInfo const Gates[MAX_GATES] =
 
 struct BG_SA_RoundScore
 {
-    TeamId winner;
+    BattlegroundTeamId winner;
     uint32 time;
 };
 
@@ -547,41 +547,47 @@ class BattlegroundMap;
 /// Class for manage Strand of Ancient battleground
 class BattlegroundSA : public BattlegroundMap
 {
-    public:
+    friend class BattlegroundMgr;
+
+    protected:
+        /// Constructor
         BattlegroundSA();
         ~BattlegroundSA();
 
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
+        void InitializeObjects();
 
-        /**
-         * \brief Called every time for update battle data
-         * -Update timer
-         * -Round switch
-         */
-        void PostUpdateImpl(uint32 diff);
+        void InstallBattleground();
+        void ResetObjectsAndWorldstates();
+        void StartBattleground();
+        void EndBattleground(BattlegroundWinner winner);
 
-        /* inherited from BattlegroundClass */
-        /// Called when a player join battle
-        void OnPlayerJoin(Player* player) override;
-        /// Called when battle start
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
-        /// Called for ini battleground, after that the first player be entered
-        bool SetupBattleground();
-        void Reset();
-        /// Called for generate packet contain worldstate data
+        void OnPlayerJoin(Player* player);
+        void OnUnitKill(Creature* unit, Player* killer);    /// Called when a player kill a unit in bg
+        void OnTimeoutReached();
+
+        void EventPlayerDamagedGO(Player* plr, GameObject* go, uint32 eventType);   /// Called when a player deal damage to building (door)
+        void EventPlayerClickedOnFlag(Player *Source, GameObject* target_obj);  /// Called when a player click on flag (graveyard flag)
+        void EventPlayerUsedGO(Player* Source, GameObject* object);        /// Called when a player use a gamobject (relic)
+
+        void ProcessPreparation(uint32 const& diff);    // Both warmup rounds
+        void ProcessInProgress(uint32 const& diff);
+
         void FillInitialWorldStates(WorldPacket& data);
-        /// Called when a player kill a unit in bg
-        void HandleKillUnit(Creature* creature, Player* killer);
-        /// Return the nearest graveyard where player can respawn
-        WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
-        /// Called when someone activates an event
-        void ProcessEvent(WorldObject* /*obj*/, uint32 /*eventId*/, WorldObject* /*invoker*/ = NULL) override;
-        /// Called when a player click on flag (graveyard flag)
-        void EventPlayerClickedOnFlag(Player* source, GameObject* go);
-        /// Called when a player clicked on relic
-        void TitanRelicActivated(Player* clicker);
 
+        void UpdatePlayerScore(Player* source, uint32 type, uint32 value, bool adHonor = true); /// Called for generate packet contain worldstate data
+
+        WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);  /// Return the nearest graveyard where player can respawn
+
+        void HandleAreaTrigger(Player *Source, uint32 Trigger);
+
+        // Achievement: Not Even a Scratch
+        bool CheckAchievementCriteriaMeet(uint32 criteriaId, Player const* source, Unit const* target = NULL, uint32 miscValue = 0) override;
+
+        // Control Phase Shift
+        bool IsSpellAllowed(uint32 spellId, Player const* player) const override;
+
+    private:
         /// Return GateInfo, relative to bg data, according to gameobject entry
         GateInfo const* GetGate(uint32 entry)
         {
@@ -591,29 +597,6 @@ class BattlegroundSA : public BattlegroundMap
             return NULL;
         }
 
-        /// Called on battleground ending
-        void EndBattleground(uint32 winner);
-
-        /// Called when a player leave battleground
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
-        void HandleAreaTrigger(Player* Source, uint32 Trigger);
-
-        /* Scorekeeping */
-
-        // Achievement: Not Even a Scratch
-        bool CheckAchievementCriteriaMeet(uint32 criteriaId, Player const* source, Unit const* target = NULL, uint32 miscValue = 0) override;
-
-        // Control Phase Shift
-        bool IsSpellAllowed(uint32 spellId, Player const* player) const override;
-
-    private:
-
-        /**
-         * \brief Called on setup and between the two round
-         * -Delete all gameobject / creature
-         * -Respawn all gameobject / creature to have good faction
-         */
-        bool ResetObjs();
         /// Called for start ship movement
         void StartShips();
         /**
@@ -635,10 +618,11 @@ class BattlegroundSA : public BattlegroundMap
          * -Delete gameobject in front of door (lighting object, with different colours for each door)
          */
         void DestroyGate(Player* player, GameObject* go);
-        /// Update timer worldstate
-        void SendTime();
+
+        void SendTime();    /// Update timer worldstate
+
         /**
-         * \brief Called when a graveyard is capture
+         * \brief Called when a graveyard is captured
          * -Update spiritguide
          * -Update gameobject (flag)
          * -Update Worldstate
@@ -646,45 +630,27 @@ class BattlegroundSA : public BattlegroundMap
          * \param i : id of graveyard
          * \param Source : Player who capture gy
          */
-        void CaptureGraveyard(BG_SA_Graveyards i, Player* Source);
-        /// Switch on/off timer worldstate
-        void ToggleTimer();
+        void CaptureGraveyard(BG_SA_Graveyards i, Player *Source);
+        
+        void ToggleTimer(); /// Switch on/off timer worldstate
+        
+        void UpdateDemolisherSpawns();  /// Respawn dead demolisher
+        
+        void SendTransportInit(Player* player); /// Send packet to player for create boats (client part)
+        void SendTransportsRemove(Player* player);  /// Send packet to player for destroy boats (client part)
 
-        /// Respawn dead demolisher
-        void UpdateDemolisherSpawns();
+        
+        uint32 _attackers;  /// Id of attacker team (BattlegroundTeamId)        
+        bool _shipsStarted; /// For know if boats has start moving or not yet
+        BG_SA_GateState _gateStatus[BG_SA_GATE_COUNT];  /// Status of each gate (Destroy/Damage/Intact)
+        uint32 _graveyardStatus[BG_SA_MAX_GY];  /// Team witch conntrol each graveyard (BattlegroundTeamId)
+        BG_SA_RoundScore _roundScores[2];   /// Score of each round
+        bool _timerEnabled;  /// used for know we are in timer phase or not (used for worldstate update)
 
-        /// Send packet to player for create boats (client part)
-        void SendTransportInit(Player* player);
-        /// Send packet to player for destroy boats (client part)
-        void SendTransportsRemove(Player* player);
+        uint8 _round;   // Round 1 or 2
+        uint32 _timerBoats;
+        uint32 _timerWorldStateUpdate;
 
-        /// Id of attacker team
-        TeamId Attackers;
-
-        /// Totale elapsed time of current round
-        uint32 TotalTime;
-        /// Max time of round
-        uint32 EndRoundTimer;
-        /// For know if boats has start moving or not yet
-        bool ShipsStarted;
-        /// Status of each gate (Destroy/Damage/Intact)
-        BG_SA_GateState GateStatus[MAX_GATES];
-        /// Statu of battle (Start or not, and what round)
-        BG_SA_Status Status;
-        /// Team witch conntrol each graveyard
-        TeamId GraveyardStatus[BG_SA_MAX_GY];
-        /// Score of each round
-        BG_SA_RoundScore RoundScores[2];
-        /// used for know we are in timer phase or not (used for worldstate update)
-        bool TimerEnabled;
-        /// 5secs before starting the 1min countdown for second round
-        uint32 UpdateWaitTimer;
-        /// for know if warning about second round start has been sent
-        bool SignaledRoundTwo;
-        /// for know if warning about second round start has been sent
-        bool SignaledRoundTwoHalfMin;
-        /// for know if second round has been init
-        bool InitSecondRound;
         std::map<uint32/*id*/, uint32/*timer*/> DemoliserRespawnList;
 
         // Achievement: Defense of the Ancients

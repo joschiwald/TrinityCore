@@ -197,7 +197,7 @@ class BattlegroundWS : public BattlegroundMap
 
         void InstallBattleground();
         void StartBattleground();
-        void EndBattleground(uint32 winner);
+        void EndBattleground(BattlegroundWinner winner);
 
         void OnPlayerJoin(Player* player);
         void OnPlayerExit(Player* player);

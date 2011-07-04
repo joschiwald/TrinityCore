@@ -60,11 +60,11 @@ void ArenaMap::StartBattleground()
     _playersAlive[BG_TEAM_HORDE] = ParticipantCount[BG_TEAM_HORDE];
 }
 
-void ArenaMap::EndBattleground(uint32 winner)
+void ArenaMap::EndBattleground(BattlegroundWinner winner)
 {
     BattlegroundMap::EndBattleground(winner);
 
-    uint32 loser = 1 - winner;
+    BattlegroundWinner loser = winner == WINNER_ALLIANCE ? WINNER_HORDE : WINNER_ALLIANCE;
 
     ArenaTeam* winnerTeam = _arenaTeams[winner];
     ArenaTeam* loserTeam = _arenaTeams[loser];
@@ -131,7 +131,7 @@ void ArenaMap::OnPlayerExit(Player* player)
 {
     BattlegroundMap::OnPlayerExit(player);
 
-    if (_status == STATUS_WAIT_LEAVE)
+    if (Status == STATUS_WAIT_LEAVE)
         return;
 
     UpdateArenaWorldState();
@@ -142,7 +142,7 @@ void ArenaMap::OnPlayerKill(Player* victim, Player* killer)
 {
     BattlegroundMap::OnPlayerKill(victim, killer);
 
-    if (_status != STATUS_IN_PROGRESS)
+    if (Status != STATUS_IN_PROGRESS)
         return;
 
     --_playersAlive[victim->GetBGTeam()];
@@ -160,7 +160,7 @@ void ArenaMap::UpdateArenaWorldState()
 void ArenaMap::CheckArenaWinConditions()
 {
     if (!_playersAlive[TEAM_ALLIANCE] && _playersAlive[TEAM_HORDE])
-        EndBattleground(TEAM_HORDE);
+        EndBattleground(WINNER_HORDE);
     else if (!_playersAlive[TEAM_HORDE] && _playersAlive[TEAM_ALLIANCE])
-        EndBattleground(TEAM_ALLIANCE);
+        EndBattleground(WINNER_ALLIANCE);
 }
