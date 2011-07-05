@@ -22,8 +22,6 @@
 #include "BattlegroundMap.h"
 #include "BattlegroundScore.h"
 
-class Battleground;
-
 #define LANG_BG_AV_A_CAPTAIN_BUFF       "Begone. Uncouth scum! The Alliance shall prevail in Alterac Valley!"
 #define LANG_BG_AV_H_CAPTAIN_BUFF       "Now is the time to attack! For the Horde!"
 #define LANG_BG_AV_S_MINE_BOSS_CLAIMS   "Snivvle is here! Snivvle claims the Coldtooth Mine!"
@@ -1581,8 +1579,7 @@ class BattlegroundMap;
 class BattlegroundAV : public BattlegroundMap
 {
     public:
-        BattlegroundAV();
-        ~BattlegroundAV();
+        void ProcessInProgress(uint32 const& diff);
 
         void InitializeTextIds();       // Initializes text IDs that are used in the battleground at any possible phase.
         void InitializeObjects();
@@ -1627,10 +1624,10 @@ class BattlegroundAV : public BattlegroundMap
         void EventPlayerDefendsPoint(Player* player, uint32 object);
         void EventPlayerDestroyedPoint(AVNodeId node);
 
-        void AssaultNode(AVNodeId node, uint16 team);
+        void AssaultNode(AVNodeId node, BattlegroundTeamId team);
         void DestroyNode(AVNodeId node);
-        void InitNode(AVNodeId node, uint16 team, bool tower);
-        void DefendNode(AVNodeId node, uint16 team);
+        void InitNode(AVNodeId node, BattlegroundTeamId team, bool tower);
+        void DefendNode(AVNodeId node, BattlegroundTeamId team);
 
         void PopulateNode(AVNodeId node);
         void DePopulateNode(AVNodeId node);
@@ -1653,7 +1650,7 @@ class BattlegroundAV : public BattlegroundMap
         Creature* AddAVCreature(uint16 cinfoid, uint16 type);
 
         /*variables */
-        uint32 m_Team_QuestStatus[BG_TEAMS_COUNT][9]; //[x][y] x=team y=questcounter
+        uint32 _teamQuestStatus[BG_TEAMS_COUNT][9]; //[x][y] x=team y=questcounter
 
         BG_AV_NodeInfo m_Nodes[BG_AV_NODES_MAX];
 

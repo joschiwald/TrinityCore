@@ -886,26 +886,25 @@ class BattlegroundMap;
 
 class BattlegroundIC : public BattlegroundMap
 {
-    public:
-        BattlegroundIC();
-        ~BattlegroundIC();
+    friend class BattlegroundMgr;
+
+    protected:
+        void ProcessInProgress(uint32 const& diff);
 
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
+        void InitializeObjects();
 
-        /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player) override;
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
-        void PostUpdateImpl(uint32 diff);
-
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
-        void HandleAreaTrigger(Player* player, uint32 trigger);
-        bool SetupBattleground();
-        void SpawnLeader(uint32 teamid);
+        void InstallBattleground();
+        void StartBattleground();
+        void EndBattleground(BattlegroundWinner winner);
+        
+        void OnPlayerJoin(Player *plr);
+        void OnPlayerExit(Player *plr);
         void OnUnitKill(Creature* unit, Player* killer);
         void OnPlayerKill(Player* player, Player* killer);
-        void EndBattleground(BattlegroundWinner winner);
-        void EventPlayerClickedOnFlag(Player *source, GameObject* /*target_obj*/);
+        void OnPlayerResurrect(Player* player);
+
+        void HandleAreaTrigger(Player *Source, uint32 Trigger);
 
         void DestroyGate(Player* player, GameObject* go);
 
@@ -918,24 +917,22 @@ class BattlegroundIC : public BattlegroundMap
 
         void HandlePlayerResurrect(Player* player);
 
-        uint32 GetNodeState(uint8 nodeType) const { return (uint8)nodePoint[nodeType].nodeState; }
-
         bool IsAllNodesControlledByTeam(uint32 team) const;
 
         bool IsSpellAllowed(uint32 spellId, Player const* player) const;
 
     private:
-        uint32 closeFortressDoorsTimer;
-        bool doorsClosed;
-        uint32 docksTimer;
-        uint32 resourceTimer;
-        uint32 siegeEngineWorkshopTimer;
-        uint16 factionReinforcements[2];
-        BG_IC_GateState GateStatus[6];
-        ICNodePoint nodePoint[7];
+        uint32 _closeFortressDoorsTimer;
+        bool _doorsClosed;
+        uint32 _docksTimer;
+        uint32 _resourceTimer;
+        uint32 _siegeEngineWorkshopTimer;
+        uint16 _factionReinforcements[2];
+        BG_IC_GateState _gateStatus[6];
+        ICNodePoint _nodePoint[7];
 
-        Transport* gunshipAlliance;
-        Transport* gunshipHorde;
+        Transport* _gunshipAlliance;
+        Transport* _gunshipHorde;
 
         uint32 GetNextBanner(ICNodePoint* nodePoint, uint32 team, bool returnDefinitve);
 
@@ -985,6 +982,9 @@ class BattlegroundIC : public BattlegroundMap
         void UpdateNodeWorldState(ICNodePoint* nodePoint);
         void HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture);
         void HandleContestedNodes(ICNodePoint* nodePoint);
+
+        void SpawnLeader(uint32 teamid);
+        uint32 GetNodeState(uint8 nodeType) { return (uint8)_nodePoint[nodeType].nodeState; }
 };
 
 #endif
