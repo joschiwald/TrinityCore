@@ -55,7 +55,10 @@ BattlegroundMgr::BattlegroundMgr() :
     m_NextRatedArenaUpdate(sWorld->getIntConfig(CONFIG_ARENA_RATED_UPDATE_TIMER)),
     m_NextAutoDistributionTime(0),
     m_AutoDistributionTimeChecker(0), m_ArenaTesting(false), m_Testing(false)
-{ }
+{
+    for (uint32 i = BATTLEGROUND_TYPE_NONE; i < MAX_BATTLEGROUND_TYPE_ID; i++)
+        _battlegrounds[i].clear();
+}
 
 BattlegroundMgr::~BattlegroundMgr()
 {
@@ -250,7 +253,7 @@ void BattlegroundMgr::BuildPlayerJoinedBattlegroundPacket(WorldPacket* data, Pla
     *data << uint64(player->GetGUID());
 }
 
-Battleground* BattlegroundMgr::GetBattlegroundThroughClientInstance(uint32 instanceId, BattlegroundTypeId bgTypeId)
+BattlegroundMap* BattlegroundMgr::GetBattlegroundThroughClientInstance(uint32 instanceId, BattlegroundTypeId bgTypeId)
 {
     //cause at HandleBattlegroundJoinOpcode the clients sends the instanceid he gets from
     //SMSG_BATTLEFIELD_LIST we need to find the battleground with this clientinstance-id
@@ -261,11 +264,7 @@ Battleground* BattlegroundMgr::GetBattlegroundThroughClientInstance(uint32 insta
     if (bg->isArena())
         return GetBattleground(instanceId, bgTypeId);
 
-    BattlegroundDataContainer::const_iterator it = bgDataStore.find(bgTypeId);
-    if (it == bgDataStore.end())
-        return NULL;
-
-    for (BattlegroundContainer::const_iterator itr = it->second.m_Battlegrounds.begin(); itr != it->second.m_Battlegrounds.end(); ++itr)
+    for (BattlegroundMap::iterator itr = _battlegrounds[bgTypeId].begin(); itr != _battlegrounds[bgTypeId].end(); ++itr)
     {
         if (itr->second->GetClientInstanceID() == instanceId)
             return itr->second;
@@ -274,38 +273,30 @@ Battleground* BattlegroundMgr::GetBattlegroundThroughClientInstance(uint32 insta
     return NULL;
 }
 
-Battleground* BattlegroundMgr::GetBattleground(uint32 instanceId, BattlegroundTypeId bgTypeId)
+BattlegroundMap* BattlegroundMgr::GetBattleground(uint32 instanceId, BattlegroundTypeId bgTypeId)
 {
     if (!instanceId)
         return NULL;
 
-    BattlegroundDataContainer::const_iterator begin, end;
 
+    //search if needed
+    BattlegroundMaps::const_iterator itr;
     if (bgTypeId == BATTLEGROUND_TYPE_NONE)
     {
-        begin = bgDataStore.begin();
-        end = bgDataStore.end();
-    }
-    else
-    {
-        end = bgDataStore.find(bgTypeId);
-        if (end == bgDataStore.end())
-            return NULL;
-        begin = end++;
+        for (uint32 i = BATTLEGROUND_AV; i < MAX_BATTLEGROUND_TYPE_ID; ++i)
+        {
+            itr = _battlegrounds[i].find(instanceId);
+            if (itr != _battlegrounds[i].end())
+                return itr->second;
+        }
+        return NULL;
     }
 
-    for (BattlegroundDataContainer::const_iterator it = begin; it != end; ++it)
-    {
-        BattlegroundContainer const& bgs = it->second.m_Battlegrounds;
-        BattlegroundContainer::const_iterator itr = bgs.find(instanceId);
-        if (itr != bgs.end())
-           return itr->second;
-    }
-
-    return NULL;
+    itr = _battlegrounds[bgTypeId].find(instanceId);
+    return ((itr != _battlegrounds[bgTypeId].end()) ? itr->second : NULL);
 }
 
-Battleground* BattlegroundMgr::GetBattleground(BattlegroundTypeId bgTypeId)
+BattlegroundMap* BattlegroundMgr::GetBattleground(BattlegroundTypeId bgTypeId)
 {
     BattlegroundDataContainer::const_iterator itr = bgDataStore.find(bgTypeId);
     if (itr == bgDataStore.end())
@@ -313,7 +304,7 @@ Battleground* BattlegroundMgr::GetBattleground(BattlegroundTypeId bgTypeId)
 
     BattlegroundContainer const& bgs = itr->second.m_Battlegrounds;
     //map is sorted and we can be sure that lowest instance id has only BG template
-    return bgs.empty() ? NULL : bgs.begin()->second;
+    return _battlegrounds[bgTypeId].empty() ? NULL : _battlegrounds[bgTypeId].begin()->second;
 }
 
 uint32 BattlegroundMgr::CreateClientVisibleInstanceId(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket_id)
@@ -686,7 +677,7 @@ void BattlegroundMgr::BuildBattlegroundListPacket(WorldPacket* data, uint64 guid
     }
 }
 
-void BattlegroundMgr::SendToBattleground(Player* player, uint32 instanceId, BattlegroundTypeId bgTypeId)
+void BattlegroundMgr::SendToBattleground(Player *pl, uint32 instanceId, Battleground* bg)
 {
     if (Battleground* bg = GetBattleground(instanceId, bgTypeId))
     {

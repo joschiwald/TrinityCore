@@ -26,6 +26,7 @@ enum BattlegroundTeamId
 };
 
 #include "BattlegroundTemplate.h"
+#include "MapInstanced.h"
 
 enum BattlegroundStartTimeIntervals
 {
@@ -133,9 +134,18 @@ enum BattlegroundSpells
     SPELL_THE_LAST_STANDING         = 26549                 // Arena achievement related
 };
 
+
+// Todo: IN MGR?
+enum ArenaType
+{
+    ARENA_TYPE_2v2          = 2,
+    ARENA_TYPE_3v3          = 3,
+    ARENA_TYPE_5v5          = 5
+};
+
 class BattlegroundScore;
 
-class BattlegroundMap : public Map
+class BattlegroundMap : public MapInstanced
 {
     friend class WorldSession;
     friend class MapManager;
@@ -158,8 +168,8 @@ class BattlegroundMap : public Map
 
     protected:
         /* Methods called by upper level code */
-        BattlegroundMap(uint32 id, time_t expiry, uint32 instanceId, Map* parent, uint8 spawnMode);
-        ~BattlegroundMap();
+        BattlegroundMap(uint32 id, time_t expiry, uint32 instanceId, BattlegroundTemplate* bgtemplate);
+        virtual ~BattlegroundMap();
 
         bool AddPlayerToMap(Player* player) override;
         void RemovePlayerFromMap(Player*, bool) override;
@@ -271,6 +281,7 @@ class BattlegroundMap : public Map
         bool AreTeamsInBalance() const;
 
         BattlegroundTemplate _template;
+        uint32 _instanceId;
 
         uint16 _invitedCount[BG_TEAMS_COUNT];       // Players invited to join the battleground
         BattlegroundWinner _winner;

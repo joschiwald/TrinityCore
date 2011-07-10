@@ -26,7 +26,6 @@
 #include "BattlegroundTemplate.h"
 #include <ace/Singleton.h>
 
-typedef std::map<uint32, Battleground*> BattlegroundContainer;
 typedef std::set<uint32> BattlegroundClientIdsContainer;
 
 typedef std::unordered_map<uint32, BattlegroundTypeId> BattleMastersMap;
@@ -63,16 +62,15 @@ class BattlegroundMgr
         void SendAreaSpiritHealerQueryOpcode(Player* player, Battleground* bg, uint64 guid);
 
         /* Battlegrounds */
-        Battleground* GetBattlegroundThroughClientInstance(uint32 instanceId, BattlegroundTypeId bgTypeId);
-        Battleground* GetBattleground(uint32 InstanceID, BattlegroundTypeId bgTypeId); // there must be uint32 because MAX_BATTLEGROUND_TYPE_ID means unknown
-        Battleground* GetBattleground(BattlegroundTypeId bgTypeId);
-        Battleground* CreateNewBattleground(BattlegroundTypeId bgTypeId, PvPDifficultyEntry const* bracketEntry, uint8 arenaType, bool isRated);
+        BattlegroundMap* GetBattlegroundThroughClientInstance(uint32 instanceId, BattlegroundTypeId bgTypeId);
+        BattlegroundMap* GetBattleground(uint32 instanceId, BattlegroundTypeId bgTypeId); // there must be uint32 because MAX_BATTLEGROUND_TYPE_ID means unknown
 
-        void AddBattleground(Battleground* bg);
-        void RemoveBattleground(BattlegroundTypeId bgTypeId, uint32 instanceId);
-        void AddToBGFreeSlotQueue(BattlegroundTypeId bgTypeId, Battleground* bg);
-        void RemoveFromBGFreeSlotQueue(BattlegroundTypeId bgTypeId, uint32 instanceId);
-        BGFreeSlotQueueContainer& GetBGFreeSlotQueueStore(BattlegroundTypeId bgTypeId);
+        BattlegroundMap* GetBattleground(BattlegroundTypeId bgTypeId);
+        BattlegroundMap* CreateNewBattleground(BattlegroundTypeId bgTypeId, PvPDifficultyEntry const* bracketEntry, uint8 arenaType, bool isRated);
+
+        void AddBattleground(uint32 InstanceID, BattlegroundTypeId bgTypeId, Battleground* BG) { _battlegrounds[bgTypeId][InstanceID] = BG; };
+        void RemoveBattleground(uint32 instanceID, BattlegroundTypeId bgTypeId) { _battlegrounds[bgTypeId].erase(instanceID); }
+        uint32 CreateClientVisibleInstanceId(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket_id);
 
         void LoadBattlegroundTemplates();
         void DeleteAllBattlegrounds();
@@ -135,6 +133,7 @@ class BattlegroundMgr
     // REFACTOR from here
     protected:
         typedef std::map<BattlegroundTypeId, BattlegroundTemplate> BattlegroundTemplateMap;
+        typedef std::map<uint32, BattlegroundMap*> BattlegroundMaps;
 
         BattlegroundTemplate const* GetBattlegroundTemplate(BattlegroundTypeId id)
         {

@@ -36,6 +36,9 @@
 #include "Player.h"
 #include "WorldSession.h"
 #include "Opcodes.h"
+#include "BattlegroundMap.h"
+#include "ArenaMap.h"
+#include "BattlegroundMgr.h"
 
 MapManager::MapManager()
 {

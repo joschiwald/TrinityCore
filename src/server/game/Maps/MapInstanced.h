@@ -38,11 +38,6 @@ class MapInstanced : public Map
         bool CanEnter(Player* player);
 
         Map* CreateInstanceForPlayer(const uint32 mapId, Player* player);
-        Map* FindInstanceMap(uint32 instanceId) const
-        {
-            InstancedMaps::const_iterator i = m_InstancedMaps.find(instanceId);
-            return(i == m_InstancedMaps.end() ? NULL : i->second);
-        }
         bool DestroyInstance(InstancedMaps::iterator &itr);
 
         void AddGridMapReference(const GridCoord &p)
@@ -58,14 +53,20 @@ class MapInstanced : public Map
                 SetUnloadReferenceLock(GridCoord(63-p.x_coord, 63-p.y_coord), false);
         }
 
-        InstancedMaps &GetInstancedMaps() { return m_InstancedMaps; }
+        InstancedMaps &GetInstancedMaps() { return _instancedMaps; }
         virtual void InitVisibilityDistance();
 
     private:
         InstanceMap* CreateInstance(uint32 InstanceId, InstanceSave* save, Difficulty difficulty);
-        BattlegroundMap* CreateBattleground(uint32 InstanceId, Battleground* bg);
+        BattlegroundMap* CreateBattlegroundOrArena(uint32 InstanceId, BattlegroundTypeId typeId);
 
-        InstancedMaps m_InstancedMaps;
+        InstancedMaps _instancedMaps;
+
+        Map* _FindMap(uint32 InstanceId) const
+        {
+            InstancedMaps::const_iterator i = _instancedMaps.find(InstanceId);
+            return(i == _instancedMaps.end() ? NULL : i->second);
+        }
 
         uint16 GridMapReference[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
 };
