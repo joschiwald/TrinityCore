@@ -4719,16 +4719,24 @@ void ObjectMgr::LoadSpellScripts()
     }
 }
 
+uint32 ObjectMgr::GetEventScriptId(uint32 eventId)
+{
+    EventScriptContainer::const_iterator i = _eventScriptStore.find(eventId);
+    if (i != _eventScriptStore.end())
+        return i->second;
+    return 0;
+}
+
 void ObjectMgr::LoadEventScripts()
 {
     LoadScripts(SCRIPTS_EVENT);
 
-    std::set<uint32> evt_scripts;
+    std::set<uint32> events;
     // Load all possible script entries from gameobjects
     GameObjectTemplateContainer const* gotc = sObjectMgr->GetGameObjectTemplates();
     for (GameObjectTemplateContainer::const_iterator itr = gotc->begin(); itr != gotc->end(); ++itr)
         if (uint32 eventId = itr->second.GetEventScriptId())
-            evt_scripts.insert(eventId);
+            events.insert(eventId);
 
     // Load all possible script entries from spells
     for (uint32 i = 1; i < sSpellMgr->GetSpellInfoStoreSize(); ++i)
@@ -4736,7 +4744,7 @@ void ObjectMgr::LoadEventScripts()
             for (uint8 j = 0; j < MAX_SPELL_EFFECTS; ++j)
                 if (spell->Effects[j].Effect == SPELL_EFFECT_SEND_EVENT)
                     if (spell->Effects[j].MiscValue)
-                        evt_scripts.insert(spell->Effects[j].MiscValue);
+                        events.insert(spell->Effects[j].MiscValue);
 
     for (size_t path_idx = 0; path_idx < sTaxiPathNodesByPath.size(); ++path_idx)
     {
@@ -4745,21 +4753,56 @@ void ObjectMgr::LoadEventScripts()
             TaxiPathNodeEntry const& node = sTaxiPathNodesByPath[path_idx][node_idx];
 
             if (node.arrivalEventID)
-                evt_scripts.insert(node.arrivalEventID);
+                events.insert(node.arrivalEventID);
 
             if (node.departureEventID)
-                evt_scripts.insert(node.departureEventID);
+                events.insert(node.departureEventID);
         }
     }
 
     // Then check if all scripts are in above list of possible script entries
     for (ScriptMapMap::const_iterator itr = sEventScripts.begin(); itr != sEventScripts.end(); ++itr)
     {
-        std::set<uint32>::const_iterator itr2 = evt_scripts.find(itr->first);
-        if (itr2 == evt_scripts.end())
+        std::set<uint32>::const_iterator itr2 = events.find(itr->first);
+        if (itr2 == events.end())
             sLog->outError(LOG_FILTER_SQL, "Table `event_scripts` has script (Id: %u) not referring to any gameobject_template type 10 data2 field, type 3 data6 field, type 13 data 2 field or any spell effect %u",
                 itr->first, SPELL_EFFECT_SEND_EVENT);
     }
+
+    uint32 oldMSTime = getMSTime();
+
+    _eventScriptStore.clear();                            // need for reload case
+
+    QueryResult result = WorldDatabase.Query("SELECT id, ScriptName FROM event_scripts");
+    if (!result)
+    {
+        sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded 0 event scripts. DB table `event_scripts` is empty.");
+        return;
+    }
+
+    uint32 count = 0;
+
+    do
+    {
+        ++count;
+
+        Field* fields = result->Fetch();
+
+        uint32 eventId         = fields[0].GetUInt32();
+        char const* scriptName = fields[1].GetCString();
+
+        std::set<uint32>::const_iterator itr = events.find(eventId);
+        if (itr == events.end())
+        {
+            sLog->outError(LOG_FILTER_SQL, "Table `event_scripts` has script (Id: %u) not referring to any gameobject_template type 10 data2 field, type 3 data6 field, type 13 data 2 field or any spell effect %u",
+                eventId, SPELL_EFFECT_SEND_EVENT);
+            //continue;
+        }
+        _eventScriptStore[eventId] = GetScriptId(scriptName);
+    }
+    while (result->NextRow());
+
+    sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u event scripts in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 //Load WP Scripts
@@ -8352,6 +8395,8 @@ void ObjectMgr::LoadScriptNames()
       "SELECT DISTINCT(ScriptName) FROM battleground_template WHERE ScriptName <> '' "
       "UNION "
       "SELECT DISTINCT(ScriptName) FROM creature_template WHERE ScriptName <> '' "
+      "UNION "
+      "SELECT DISTINCT(ScriptName) FROM event_scripts WHERE ScriptName <> '' "
       "UNION "
       "SELECT DISTINCT(ScriptName) FROM gameobject_template WHERE ScriptName <> '' "
       "UNION "

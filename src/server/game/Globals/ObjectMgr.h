@@ -640,7 +640,9 @@ class ObjectMgr
 
         typedef UNORDERED_MAP<uint32, AccessRequirement*> AccessRequirementContainer;
 
-        typedef UNORDERED_MAP<uint32, RepRewardRate > RepRewardRateContainer;
+        typedef UNORDERED_MAP<uint32, uint32> EventScriptContainer;
+
+        typedef UNORDERED_MAP<uint32, RepRewardRate> RepRewardRateContainer;
         typedef UNORDERED_MAP<uint32, ReputationOnKillEntry> RepOnKillContainer;
         typedef UNORDERED_MAP<uint32, RepSpilloverTemplate> RepSpilloverTemplateContainer;
 
@@ -865,6 +867,9 @@ class ObjectMgr
 
         void LoadGameObjectScripts();
         void LoadQuestEndScripts();
+
+        uint32 GetEventScriptId(uint32 eventId);
+
         void LoadEventScripts();
         void LoadSpellScripts();
         void LoadWaypointScripts();
@@ -1212,6 +1217,8 @@ class ObjectMgr
         AreaTriggerScriptContainer _areaTriggerScriptStore;
         AccessRequirementContainer _accessRequirementStore;
         DungeonEncounterContainer _dungeonEncounterStore;
+
+        EventScriptContainer _eventScriptStore;
 
         RepRewardRateContainer _repRewardRateStore;
         RepOnKillContainer _repOnKillStore;

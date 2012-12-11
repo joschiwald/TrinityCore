@@ -127,7 +127,7 @@ enum SMART_EVENT
     SMART_EVENT_TRANSPORT_REMOVE_PLAYER  = 43,      // NONE
     SMART_EVENT_TRANSPORT_RELOCATE       = 44,      // PointId
     SMART_EVENT_INSTANCE_PLAYER_ENTER    = 45,      // Team (0 any), CooldownMin, CooldownMax
-    SMART_EVENT_AREATRIGGER_ONTRIGGER    = 46,      // TriggerId(0 any)
+    SMART_EVENT_ONTRIGGER                = 46,      // none
     SMART_EVENT_QUEST_ACCEPTED           = 47,      // none
     SMART_EVENT_QUEST_OBJ_COPLETETION    = 48,      // none
     SMART_EVENT_QUEST_COMPLETION         = 49,      // none
@@ -309,11 +309,6 @@ struct SmartEvent
 
         struct
         {
-            uint32 id;
-        } areatrigger;
-
-        struct
-        {
             uint32 textGroupID;
             uint32 creatureEntry;
         } textOver;
@@ -354,7 +349,7 @@ struct SmartEvent
         struct
         {
             uint32 eventId;
-        } eventInform;
+        } goEventInform;
 
         struct
         {
@@ -1074,16 +1069,16 @@ enum eSmartAI
 
 enum SmartScriptType
 {
-    SMART_SCRIPT_TYPE_CREATURE = 0, //done
-    SMART_SCRIPT_TYPE_GAMEOBJECT = 1, //done
-    SMART_SCRIPT_TYPE_AREATRIGGER = 2, //done
-    SMART_SCRIPT_TYPE_EVENT = 3, //
-    SMART_SCRIPT_TYPE_GOSSIP = 4, //
-    SMART_SCRIPT_TYPE_QUEST = 5, //
-    SMART_SCRIPT_TYPE_SPELL = 6, //
-    SMART_SCRIPT_TYPE_TRANSPORT = 7, //
-    SMART_SCRIPT_TYPE_INSTANCE = 8, //
-    SMART_SCRIPT_TYPE_TIMED_ACTIONLIST = 9, //
+    SMART_SCRIPT_TYPE_CREATURE = 0,         // done
+    SMART_SCRIPT_TYPE_GAMEOBJECT = 1,       // done
+    SMART_SCRIPT_TYPE_AREATRIGGER = 2,      // done
+    SMART_SCRIPT_TYPE_EVENT = 3,            // done
+    SMART_SCRIPT_TYPE_GOSSIP = 4,           //
+    SMART_SCRIPT_TYPE_QUEST = 5,            //
+    SMART_SCRIPT_TYPE_SPELL = 6,            //
+    SMART_SCRIPT_TYPE_TRANSPORT = 7,        //
+    SMART_SCRIPT_TYPE_INSTANCE = 8,         //
+    SMART_SCRIPT_TYPE_TIMED_ACTIONLIST = 9, // done
     SMART_SCRIPT_TYPE_MAX = 10
 };
 
@@ -1163,7 +1158,7 @@ const uint32 SmartAIEventMask[SMART_EVENT_END][2] =
     {SMART_EVENT_TRANSPORT_REMOVE_PLAYER,   SMART_SCRIPT_TYPE_MASK_TRANSPORT },
     {SMART_EVENT_TRANSPORT_RELOCATE,        SMART_SCRIPT_TYPE_MASK_TRANSPORT },
     {SMART_EVENT_INSTANCE_PLAYER_ENTER,     SMART_SCRIPT_TYPE_MASK_INSTANCE },
-    {SMART_EVENT_AREATRIGGER_ONTRIGGER,     SMART_SCRIPT_TYPE_MASK_AREATRIGGER },
+    {SMART_EVENT_ONTRIGGER,                 SMART_SCRIPT_TYPE_MASK_AREATRIGGER + SMART_SCRIPT_TYPE_MASK_EVENT },
     {SMART_EVENT_QUEST_ACCEPTED,            SMART_SCRIPT_TYPE_MASK_QUEST },
     {SMART_EVENT_QUEST_OBJ_COPLETETION,     SMART_SCRIPT_TYPE_MASK_QUEST },
     {SMART_EVENT_QUEST_REWARDED,            SMART_SCRIPT_TYPE_MASK_QUEST },

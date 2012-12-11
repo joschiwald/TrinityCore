@@ -293,6 +293,7 @@ void ScriptMgr::Unload()
     SCR_CLEAR(PlayerScript);
     SCR_CLEAR(GuildScript);
     SCR_CLEAR(GroupScript);
+    SCR_CLEAR(EventScript);
 
     #undef SCR_CLEAR
 }
@@ -1416,6 +1417,13 @@ void ScriptMgr::OnGroupDisband(Group* group)
     FOREACH_SCRIPT(GroupScript)->OnDisband(group);
 }
 
+void ScriptMgr::OnEventInform(uint32 eventId, WorldObject* obj, WorldObject* invoker)
+{
+    ASSERT(obj);
+    GET_SCRIPT(EventScript, sObjectMgr->GetEventScriptId(eventId), tmpscript);
+    tmpscript->OnEventInform(eventId, obj, invoker);
+}
+
 SpellScriptLoader::SpellScriptLoader(const char* name)
     : ScriptObject(name)
 {
@@ -1569,6 +1577,12 @@ GroupScript::GroupScript(const char* name)
     ScriptRegistry<GroupScript>::AddScript(this);
 }
 
+EventScript::EventScript(const char* name)
+    : ScriptObject(name)
+{
+    ScriptRegistry<EventScript>::AddScript(this);
+}
+
 // Instantiate static members of ScriptRegistry.
 template<class TScript> std::map<uint32, TScript*> ScriptRegistry<TScript>::ScriptPointerList;
 template<class TScript> uint32 ScriptRegistry<TScript>::_scriptIdCounter = 0;
@@ -1598,6 +1612,7 @@ template class ScriptRegistry<AchievementCriteriaScript>;
 template class ScriptRegistry<PlayerScript>;
 template class ScriptRegistry<GuildScript>;
 template class ScriptRegistry<GroupScript>;
+template class ScriptRegistry<EventScript>;
 
 // Undefine utility macros.
 #undef GET_SCRIPT_RET

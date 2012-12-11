@@ -79,7 +79,7 @@ SmartScript::SmartScript()
 {
     go = NULL;
     me = NULL;
-    trigger = NULL;
+    mEntry = 0;
     mEventPhase = 0;
     mPathId = 0;
     mTargetStorage = new ObjectListMap();
@@ -911,7 +911,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
 
                 delete targets;
             }
-            else if (trigger && IsPlayer(unit))
+            else if (mScriptType == SMART_SCRIPT_TYPE_AREATRIGGER && IsPlayer(unit))
             {
                 unit->ToPlayer()->RewardPlayerAndGroupAtEvent(e.action.killedMonster.creature, unit);
                 sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::ProcessAction: SMART_ACTION_CALL_KILLEDMONSTER: (trigger == true) Player %u, Killcredit: %u",
@@ -2747,11 +2747,9 @@ void SmartScript::ProcessEvent(SmartScriptHolder& e, Unit* unit, uint32 var0, ui
             ProcessAction(e, unit, var0);
             break;
         }
-        case SMART_EVENT_AREATRIGGER_ONTRIGGER:
+        case SMART_EVENT_ONTRIGGER:
         {
-            if (e.event.areatrigger.id && var0 != e.event.areatrigger.id)
-                return;
-            ProcessAction(e, unit, var0);
+            ProcessAction(e, unit);
             break;
         }
         case SMART_EVENT_TEXT_OVER:
@@ -2816,9 +2814,9 @@ void SmartScript::ProcessEvent(SmartScriptHolder& e, Unit* unit, uint32 var0, ui
         }
         case SMART_EVENT_GO_EVENT_INFORM:
         {
-            if (e.event.eventInform.eventId != var0)
+            if (e.event.goEventInform.eventId != var0)
                 return;
-            ProcessAction(e, NULL, var0);
+            ProcessAction(e, unit, var0);
             break;
         }
         case SMART_EVENT_ACTION_DONE:
@@ -2997,14 +2995,14 @@ void SmartScript::OnUpdate(uint32 const diff)
     }
 }
 
-void SmartScript::FillScript(SmartAIEventList e, WorldObject* obj, AreaTriggerEntry const* at)
+void SmartScript::FillScript(SmartAIEventList e, WorldObject* obj, uint32 entry /* = 0*/)
 {
     if (e.empty())
     {
-        if (obj)
-            sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript: EventMap for Entry %u is empty but is using SmartScript.", obj->GetEntry());
-        if (at)
-            sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript: EventMap for AreaTrigger %u is empty but is using SmartScript.", at->id);
+        if (entry)
+            sLog->outError(LOG_FILTER_DATABASE_AI, "SmartScript: EventMap for Source %u Entry: %u is empty but is using SmartScript.", mScriptType, entry);
+        else if (obj)
+            sLog->outError(LOG_FILTER_DATABASE_AI, "SmartScript: EventMap for Entry %u is empty but is using SmartScript.", obj->GetEntry()); 
         return;
     }
     for (SmartAIEventList::iterator i = e.begin(); i != e.end(); ++i)
@@ -3025,12 +3023,15 @@ void SmartScript::FillScript(SmartAIEventList e, WorldObject* obj, AreaTriggerEn
             }
             continue;
         }
-        mEvents.push_back((*i));//NOTE: 'world(0)' events still get processed in ANY instance mode
+        mEvents.push_back((*i)); // NOTE: 'world(0)' events still get processed in ANY instance mode
     }
-    if (mEvents.empty() && obj)
-        sLog->outError(LOG_FILTER_SQL, "SmartScript: Entry %u has events but no events added to list because of instance flags.", obj->GetEntry());
-    if (mEvents.empty() && at)
-        sLog->outError(LOG_FILTER_SQL, "SmartScript: AreaTrigger %u has events but no events added to list because of instance flags. NOTE: triggers can not handle any instance flags.", at->id);
+    if (mEvents.empty())
+    {
+        if (entry)
+            sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript: Source %u Entry %u has events but no events added to list because of instance flags.", mScriptType, entry);
+        if (obj)
+            sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript: Entry %u has events but no events added to list because of instance flags.", obj->GetEntry());
+    }
 }
 
 void SmartScript::GetScript()
@@ -3041,25 +3042,25 @@ void SmartScript::GetScript()
         e = sSmartScriptMgr->GetScript(-((int32)me->GetDBTableGUIDLow()), mScriptType);
         if (e.empty())
             e = sSmartScriptMgr->GetScript((int32)me->GetEntry(), mScriptType);
-        FillScript(e, me, NULL);
+        FillScript(e, me);
     }
     else if (go)
     {
         e = sSmartScriptMgr->GetScript(-((int32)go->GetDBTableGUIDLow()), mScriptType);
         if (e.empty())
             e = sSmartScriptMgr->GetScript((int32)go->GetEntry(), mScriptType);
-        FillScript(e, go, NULL);
+        FillScript(e, go);
     }
-    else if (trigger)
+    else if (mEntry)
     {
-        e = sSmartScriptMgr->GetScript((int32)trigger->id, mScriptType);
-        FillScript(e, NULL, trigger);
+        e = sSmartScriptMgr->GetScript(int32(mEntry), mScriptType);
+        FillScript(e, GetBaseObject(), mEntry);
     }
 }
 
-void SmartScript::OnInitialize(WorldObject* obj, AreaTriggerEntry const* at)
+void SmartScript::OnInitialize(WorldObject* obj)
 {
-    if (obj)//handle object based scripts
+    if (obj) // handle object based scripts
     {
         switch (obj->GetTypeId())
         {
@@ -3077,11 +3078,6 @@ void SmartScript::OnInitialize(WorldObject* obj, AreaTriggerEntry const* at)
                 sLog->outError(LOG_FILTER_GENERAL, "SmartScript::OnInitialize: Unhandled TypeID !WARNING!");
                 return;
         }
-    } else if (at)
-    {
-        mScriptType = SMART_SCRIPT_TYPE_AREATRIGGER;
-        trigger = at;
-        sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::OnInitialize: source is AreaTrigger %u", trigger->id);
     }
     else
     {
@@ -3097,6 +3093,50 @@ void SmartScript::OnInitialize(WorldObject* obj, AreaTriggerEntry const* at)
     ProcessEventsFor(SMART_EVENT_AI_INIT);
     InstallEvents();
     ProcessEventsFor(SMART_EVENT_JUST_CREATED);
+}
+
+void SmartScript::OnInitialize(SmartScriptType type, WorldObject* obj, uint32 entry)
+{
+    switch (type)
+    {
+        case SMART_SCRIPT_TYPE_AREATRIGGER:
+        case SMART_SCRIPT_TYPE_EVENT:
+            mScriptType = type;
+            mEntry = entry;
+            sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::OnInitialize: source is %u.", entry);
+            break;
+        default:
+            sLog->outError(LOG_FILTER_DATABASE_AI, "SmartScript::OnInitialize: Unhandled SmartScriptType %u !WARNING!", type);
+            return;
+    }
+
+    if (obj) // handle object based scripts
+    {
+        switch (obj->GetTypeId())
+        {
+            case TYPEID_UNIT:
+                me = obj->ToCreature();
+                sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::OnInitialize: baseObject is Creature %u", me->GetEntry());
+                break;
+            case TYPEID_GAMEOBJECT:
+                go = obj->ToGameObject();
+                sLog->outDebug(LOG_FILTER_DATABASE_AI, "SmartScript::OnInitialize: baseObject is GameObject %u", go->GetEntry());
+                break;
+            default:
+                break;
+        }
+    }
+
+    GetScript(); // load copy of script
+
+    /*
+    for (SmartAIEventList::iterator i = mEvents.begin(); i != mEvents.end(); ++i)
+        InitTimer((*i));//calculate timers for first time use
+
+    ProcessEventsFor(SMART_EVENT_AI_INIT);
+    InstallEvents();
+    ProcessEventsFor(SMART_EVENT_JUST_CREATED);
+    */
 }
 
 void SmartScript::OnMoveInLineOfSight(Unit* who)

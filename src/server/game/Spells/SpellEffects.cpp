@@ -1419,6 +1419,8 @@ void Spell::EffectSendEvent(SpellEffIndex effIndex)
         instanceScript->ProcessEvent(target, m_spellInfo->Effects[effIndex].MiscValue);
 
     m_caster->GetMap()->ScriptsStart(sEventScripts, m_spellInfo->Effects[effIndex].MiscValue, m_caster, target);
+
+    sScriptMgr->OnEventInform(m_spellInfo->Effects[effIndex].MiscValue, target ? target : m_caster, m_caster);
 }
 
 void Spell::EffectPowerBurn(SpellEffIndex effIndex)

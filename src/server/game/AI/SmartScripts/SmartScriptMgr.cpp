@@ -168,8 +168,9 @@ void SmartAIMgr::LoadSmartAIFromDB()
                     }
                     break;
                 }
+                case SMART_SCRIPT_TYPE_EVENT:
                 case SMART_SCRIPT_TYPE_TIMED_ACTIONLIST:
-                    break;//nothing to check, really
+                    break; // nothing to check, really
                 default:
                     sLog->outError(LOG_FILTER_SQL, "SmartAIMgr::LoadSmartAIFromDB: not yet implemented source_type %u", (uint32)source_type);
                     continue;
@@ -495,12 +496,6 @@ bool SmartAIMgr::IsEventValid(SmartScriptHolder& e)
                     return false;
                 break;
             }
-            case SMART_EVENT_AREATRIGGER_ONTRIGGER:
-            {
-                if (e.event.areatrigger.id && !IsAreaTriggerValid(e, e.event.areatrigger.id))
-                    return false;
-                break;
-            }
             case SMART_EVENT_TEXT_OVER:
                 //if (e.event.textOver.textGroupID && !IsTextValid(e, e.event.textOver.textGroupID)) return false;// 0 is a valid text group!
                 break;
@@ -545,6 +540,7 @@ bool SmartAIMgr::IsEventValid(SmartScriptHolder& e)
                 }
                 break;
             }
+            case SMART_EVENT_ONTRIGGER:
             case SMART_EVENT_GO_STATE_CHANGED:
             case SMART_EVENT_GO_EVENT_INFORM:
             case SMART_EVENT_TIMED_EVENT_TRIGGERED:

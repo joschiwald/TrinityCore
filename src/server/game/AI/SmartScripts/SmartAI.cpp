@@ -923,6 +923,20 @@ void SmartGameObjectAI::EventInform(uint32 eventId)
     GetScript()->ProcessEventsFor(SMART_EVENT_GO_EVENT_INFORM, NULL, eventId);
 }
 
+class SmartWorldEvent : public EventScript
+{
+    public:
+        SmartWorldEvent() : EventScript("SmartEvent") { }
+
+        void OnEventInform(uint32 eventId, WorldObject* obj, WorldObject* invoker)
+        {
+            sLog->outError(LOG_FILTER_DATABASE_AI, "Event %u is using SmartEvent script", eventId);
+            SmartScript script;
+            script.OnInitialize(SMART_SCRIPT_TYPE_EVENT, obj, eventId);
+            script.ProcessEventsFor(SMART_EVENT_ONTRIGGER, invoker ? invoker->ToUnit() : NULL);
+        }
+};
+
 class SmartTrigger : public AreaTriggerScript
 {
     public:
@@ -936,13 +950,14 @@ class SmartTrigger : public AreaTriggerScript
 
             sLog->outDebug(LOG_FILTER_DATABASE_AI, "AreaTrigger %u is using SmartTrigger script", trigger->id);
             SmartScript script;
-            script.OnInitialize(NULL, trigger);
-            script.ProcessEventsFor(SMART_EVENT_AREATRIGGER_ONTRIGGER, player, trigger->id);
+            script.OnInitialize(SMART_SCRIPT_TYPE_AREATRIGGER, player, trigger->id);
+            script.ProcessEventsFor(SMART_EVENT_ONTRIGGER, player);
             return true;
         }
 };
 
 void AddSC_SmartSCripts()
 {
+    new SmartWorldEvent();
     new SmartTrigger();
 }
