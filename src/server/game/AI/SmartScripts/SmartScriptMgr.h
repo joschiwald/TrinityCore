@@ -1069,17 +1069,17 @@ enum eSmartAI
 
 enum SmartScriptType
 {
-    SMART_SCRIPT_TYPE_CREATURE = 0,         // done
-    SMART_SCRIPT_TYPE_GAMEOBJECT = 1,       // done
-    SMART_SCRIPT_TYPE_AREATRIGGER = 2,      // done
-    SMART_SCRIPT_TYPE_EVENT = 3,            // done
-    SMART_SCRIPT_TYPE_GOSSIP = 4,           //
-    SMART_SCRIPT_TYPE_QUEST = 5,            //
-    SMART_SCRIPT_TYPE_SPELL = 6,            //
-    SMART_SCRIPT_TYPE_TRANSPORT = 7,        //
-    SMART_SCRIPT_TYPE_INSTANCE = 8,         //
-    SMART_SCRIPT_TYPE_TIMED_ACTIONLIST = 9, // done
-    SMART_SCRIPT_TYPE_MAX = 10
+    SMART_SCRIPT_TYPE_CREATURE          = 0,    // done
+    SMART_SCRIPT_TYPE_GAMEOBJECT        = 1,    // done
+    SMART_SCRIPT_TYPE_AREATRIGGER       = 2,    // done
+    SMART_SCRIPT_TYPE_EVENT             = 3,    // done
+    SMART_SCRIPT_TYPE_GOSSIP            = 4,    //
+    SMART_SCRIPT_TYPE_QUEST             = 5,    //
+    SMART_SCRIPT_TYPE_SPELL             = 6,    //
+    SMART_SCRIPT_TYPE_TRANSPORT         = 7,    //
+    SMART_SCRIPT_TYPE_INSTANCE          = 8,    //
+    SMART_SCRIPT_TYPE_TIMED_ACTIONLIST  = 9,    // done
+    SMART_SCRIPT_TYPE_MAX               = 10
 };
 
 enum SmartAITypeMaskId

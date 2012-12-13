@@ -53,14 +53,28 @@ class SmartScript
         void AddEvent(SMART_EVENT e, uint32 event_flags, uint32 event_param1, uint32 event_param2, uint32 event_param3, uint32 event_param4, SMART_ACTION action, uint32 action_param1, uint32 action_param2, uint32 action_param3, uint32 action_param4, uint32 action_param5, uint32 action_param6, SMARTAI_TARGETS t, uint32 target_param1, uint32 target_param2, uint32 target_param3, uint32 phaseMask = 0);
         void SetPathId(uint32 id) { mPathId = id; }
         uint32 GetPathId() const { return mPathId; }
+
         WorldObject* GetBaseObject()
         {
-            WorldObject* obj = NULL;
-            if (me)
-                obj = me;
-            else if (go)
-                obj = go;
-            return obj;
+            return baseObject;
+        }
+        Unit* GetBaseUnit()
+        {
+            if (!baseObject)
+                return NULL;
+            return baseObject->ToUnit();
+        }
+        Creature* GetBaseCreature()
+        {
+            if (!baseObject)
+                return NULL;
+            return baseObject->ToCreature();
+        }
+        GameObject* GetBaseGameObject()
+        {
+            if (!baseObject)
+                return NULL;
+            return baseObject->ToGameObject();
         }
 
         bool IsUnit(WorldObject* obj)
@@ -109,31 +123,26 @@ class SmartScript
 
         bool IsSmart(Creature* c = NULL)
         {
-            bool smart = true;
-            if (c && c->GetAIName() != "SmartAI")
-                smart = false;
+            if (!c)
+                c = GetBaseCreature();
 
-            if (!me || me->GetAIName() != "SmartAI")
-                smart = false;
+            if (c && c->GetAIName() == "SmartAI")
+                return true;
 
-            if (!smart)
-                sLog->outError(LOG_FILTER_SQL, "SmartScript: Action target Creature(entry: %u) is not using SmartAI, action skipped to prevent crash.", c ? c->GetEntry() : (me ? me->GetEntry() : 0));
-
-            return smart;
+            sLog->outError(LOG_FILTER_SQL, "SmartScript: Action target Creature (entry: %u) is not using SmartAI, action skipped to prevent crash.", c ? c->GetEntry() : 0);
+            return false;
         }
 
         bool IsSmartGO(GameObject* g = NULL)
         {
-            bool smart = true;
-            if (g && g->GetAIName() != "SmartGameObjectAI")
-                smart = false;
+            if (!g)
+                g = GetBaseGameObject();
 
-            if (!go || go->GetAIName() != "SmartGameObjectAI")
-                smart = false;
-            if (!smart)
-                sLog->outError(LOG_FILTER_SQL, "SmartScript: Action target GameObject(entry: %u) is not using SmartGameObjectAI, action skipped to prevent crash.", g ? g->GetEntry() : (go ? go->GetEntry() : 0));
+            if (g && g->GetAIName() == "SmartGameObjectAI")
+                return true;
 
-            return smart;
+            sLog->outError(LOG_FILTER_SQL, "SmartScript: Action target GameObject(entry: %u) is not using SmartGameObjectAI, action skipped to prevent crash.", g ? g->GetEntry() : 0);
+            return false;
         }
 
         ObjectList* GetTargetList(uint32 id)
@@ -180,24 +189,21 @@ class SmartScript
         void OnReset();
         void ResetBaseObject()
         {
-            if (meOrigGUID)
+            if (originalGUID)
             {
-                if (Creature* m = HashMapHolder<Creature>::Find(meOrigGUID))
+                if (IS_CREATURE_GUID(originalGUID))
                 {
-                    me = m;
-                    go = NULL;
+                    if (Creature* c = HashMapHolder<Creature>::Find(originalGUID))
+                        baseObject = c;
                 }
-            }
-            if (goOrigGUID)
-            {
-                if (GameObject* o = HashMapHolder<GameObject>::Find(goOrigGUID))
+                else if (IS_GAMEOBJECT_GUID(originalGUID))
                 {
-                    me = NULL;
-                    go = o;
+                    if (GameObject* g = HashMapHolder<GameObject>::Find(originalGUID))
+                        baseObject = g;
                 }
+                // other types?
             }
-            goOrigGUID = 0;
-            meOrigGUID = 0;
+            originalGUID = 0;
         }
 
         //TIMED_ACTIONLIST (script type 9 aka script9)
@@ -221,10 +227,8 @@ class SmartScript
         SmartAIEventList mEvents;
         SmartAIEventList mInstallEvents;
         SmartAIEventList mTimedActionList;
-        Creature* me;
-        uint64 meOrigGUID;
-        GameObject* go;
-        uint64 goOrigGUID;
+        WorldObject* baseObject;
+        uint64 originalGUID;
         uint32 mEntry;
         SmartScriptType mScriptType;
         uint32 mEventPhase;
@@ -243,7 +247,7 @@ class SmartScript
         SMARTAI_TEMPLATE mTemplate;
         void InstallEvents();
 
-        void RemoveStoredEvent (uint32 id)
+        void RemoveStoredEvent(uint32 id)
         {
             if (!mStoredEvents.empty())
             {
@@ -257,7 +261,7 @@ class SmartScript
                 }
             }
         }
-        SmartScriptHolder FindLinkedEvent (uint32 link)
+        SmartScriptHolder FindLinkedEvent(uint32 link)
         {
             if (!mEvents.empty())
             {
