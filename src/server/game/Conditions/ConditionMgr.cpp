@@ -985,6 +985,9 @@ void ConditionMgr::LoadConditions(bool isReload)
 
     sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u conditions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 
+    #ifdef TRINITY_DEBUG
+        DoCheckMissingSpellImplicitTargetConditions();
+    #endif
 }
 
 bool ConditionMgr::addToLootTemplate(Condition* cond, LootTemplate* loot)
@@ -2032,4 +2035,75 @@ void ConditionMgr::Clean()
         delete *itr;
 
     AllocatedMemoryStore.clear();
+}
+
+void ConditionMgr::DoCheckMissingSpellImplicitTargetConditions()
+{
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "ConditionMgr: DoCheckMissingSpellImplicitTargetConditions START");
+    for (uint32 spellId = 0; spellId < sSpellMgr->GetSpellInfoStoreSize(); ++spellId)
+    {
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        if (!spellInfo)
+            continue;
+
+        if (spellInfo->AttributesEx3 & SPELL_ATTR3_ONLY_TARGET_PLAYERS)
+            continue;
+
+        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+        {
+            bool check = false;
+
+            if (spellInfo->Effects[i].TargetA.GetCheckType() == TARGET_CHECK_ENTRY)
+            {
+                switch (spellInfo->Effects[i].TargetA.GetSelectionCategory())
+                {
+                    case TARGET_SELECT_CATEGORY_NEARBY:
+                    case TARGET_SELECT_CATEGORY_CONE:
+                    case TARGET_SELECT_CATEGORY_AREA:
+                        check = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            if (spellInfo->Effects[i].TargetB.GetCheckType() == TARGET_CHECK_ENTRY)
+            {
+                switch (spellInfo->Effects[i].TargetB.GetSelectionCategory())
+                {
+                    case TARGET_SELECT_CATEGORY_NEARBY:
+                    case TARGET_SELECT_CATEGORY_CONE:
+                    case TARGET_SELECT_CATEGORY_AREA:
+                        check = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            if (spellInfo->Effects[i].IsEffect(SPELL_EFFECT_ACTIVATE_OBJECT))
+                check = true;
+
+            if (check)
+            {
+                ConditionList* condList = spellInfo->Effects[i].ImplicitTargetConditions;
+                if (!condList || condList->empty())
+                {
+                    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "ConditionMgr: Spell %u, effect %u, effectIndex: %u has no conditions for target (%u, %u)%s", spellId, spellInfo->Effects[i].Effect, i, spellInfo->Effects[i].TargetA.GetTarget(), spellInfo->Effects[i].TargetB.GetTarget(), spellInfo->RequiresSpellFocus ? ", RequestSpellFocus" : "");
+                }
+                else
+                {
+                    bool found = false;
+                    for (ConditionList::const_iterator cond = condList->begin(); cond != condList->end(); ++cond)
+                    {
+                        if ((*cond)->ConditionType == CONDITION_OBJECT_ENTRY)
+                            found = true;
+                    }
+                    if (!found)
+                        sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "ConditionMgr: Spell %u, effect %u has no conditions (Type: CONDITION_OBJECT_ENTRY) for target (%u, %u)%s", spellId, i, spellInfo->Effects[i].TargetA.GetTarget(), spellInfo->Effects[i].TargetB.GetTarget(), spellInfo->RequiresSpellFocus ? ", RequestSpellFocus" : "");
+                }
+            }
+        }
+    }
+    sLog->outDebug(LOG_FILTER_SPELLS_AURAS, "ConditionMgr: DoCheckMissingSpellImplicitTargetConditions END");
 }

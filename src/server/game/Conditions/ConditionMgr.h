@@ -246,6 +246,8 @@ class ConditionMgr
         ConditionList GetConditionsForVehicleSpell(uint32 creatureId, uint32 spellId);
         ConditionList GetConditionsForNpcVendorEvent(uint32 creatureId, uint32 itemId);
 
+        void DoCheckMissingSpellImplicitTargetConditions();
+
     private:
         bool isSourceTypeValid(Condition* cond);
         bool addToLootTemplate(Condition* cond, LootTemplate* loot);
