@@ -2198,7 +2198,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
             targetInfo.missCondition = SPELL_MISS_NONE;
     }
     else
-        targetInfo.missCondition = SPELL_MISS_EVADE; //SPELL_MISS_NONE;
+        targetInfo.missCondition = SPELL_MISS_EVADE;
 
     // Spell have speed - need calculate incoming time
     // Incoming time is zero for self casts. At least I think so.
@@ -2391,6 +2391,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
     // Reset damage/healing counter
     m_damage = target->damage;
     m_healing = -target->damage;
+    m_resist = 0;
 
     // Fill base trigger info
     uint32 procAttacker = m_procAttacker;
@@ -2514,7 +2515,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
         SpellNonMeleeDamage damageInfo(caster, unitTarget, m_spellInfo->Id, m_spellSchoolMask);
 
         // Add bonuses and fill damageInfo struct
-        caster->CalculateSpellDamageTaken(&damageInfo, m_damage, m_spellInfo, m_attackType,  target->crit);
+        caster->CalculateSpellDamageTaken(&damageInfo, m_damage, m_spellInfo, m_attackType, target->crit, m_resist);
         caster->DealDamageMods(damageInfo.target, damageInfo.damage, &damageInfo.absorb);
 
         // Send log damage message to client
@@ -2657,6 +2658,10 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
             /// @todo This is a hack. But we do not know what types of stealth should be interrupted by CC
             if ((m_spellInfo->AttributesCu & SPELL_ATTR0_CU_AURA_CC) && unit->IsControlledByPlayer())
                 unit->RemoveAurasByType(SPELL_AURA_MOD_STEALTH);
+
+            m_resist = m_caster->CalcSpellResistance(unit, m_spellSchoolMask, m_spellInfo);
+            if (m_resist >= 100)
+                return SPELL_MISS_RESIST;
         }
         else if (m_caster->IsFriendlyTo(unit))
         {
@@ -2679,6 +2684,12 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
                 unit->getHostileRefManager().threatAssist(m_caster, 0.0f);
             }
         }
+    }
+    else if (!m_spellInfo->IsPositive())
+    {
+        m_resist = m_caster->CalcSpellResistance(unit, m_spellSchoolMask, m_spellInfo);
+        if (m_resist >= 100)
+            return SPELL_MISS_RESIST;
     }
 
     // Get Data Needed for Diminishing Returns, some effects may have multiple auras, so this must be done on spell hit, not aura add

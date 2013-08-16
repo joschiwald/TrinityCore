@@ -1108,6 +1108,11 @@ bool SpellInfo::CanBeUsedInCombat() const
     return !(Attributes & SPELL_ATTR0_CANT_USED_IN_COMBAT);
 }
 
+bool SpellInfo::IsBinary() const
+{
+    return AttributesCu & SPELL_ATTR0_CU_BINARY;
+}
+
 bool SpellInfo::IsPositive() const
 {
     return !(AttributesCu & SPELL_ATTR0_CU_NEGATIVE);
