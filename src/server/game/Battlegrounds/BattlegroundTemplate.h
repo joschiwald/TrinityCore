@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,9 +26,12 @@ struct BattlegroundTemplate
     uint8 MinLevel;
     uint8 MaxLevel;
     Position StartLocation[BG_TEAMS_COUNT];
+    float MaxStartDistSq;
     uint8 Weight;
     uint32 ScriptId;
-    // std::string Comment;
+    BattlemasterListEntry const* BattlemasterEntry;
+
+    bool IsArena() const { return BattlemasterEntry->type == MAP_ARENA; }
 };
 
-#endif
+#endif // BATTLEGROUND_TEMPLATE_H

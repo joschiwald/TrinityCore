@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,7 +33,7 @@ enum BattlegroundStartingEventsIds
     BG_STARTING_EVENT_SECOND    = 1,
     BG_STARTING_EVENT_THIRD     = 2,
     BG_STARTING_EVENT_FOURTH    = 3,
-    BG_STARTING_EVENT_COUNT     = 4,
+    BG_STARTING_EVENT_COUNT     = 4
 };
 
 class BattlegroundMap : public Map
@@ -42,45 +42,45 @@ class BattlegroundMap : public Map
         BattlegroundMap(uint32 id, time_t expiry, uint32 instanceId, Map* parent, uint8 spawnMode);
         ~BattlegroundMap();
 
-        bool Add(Player* player);
-        void Remove(Player*, bool);
-        void Update(uint32 const& diff);
+        bool AddPlayerToMap(Player* player) override;
+        void RemovePlayerFromMap(Player*, bool) override;
+        void Update(uint32 diff) override;
 
-        bool CanEnter(Player* player);
+        bool CanEnter(Player* player) override;
         void SetUnload();
 
     protected:
-        uint32 GetMaxPlayers() const        { return _template.MaxPlayersPerTeam * 2; }
-        uint32 GetMinPlayers() const        { return _template.MinPlayersPerTeam * 2; }
-        uint32 GetMinLevel() const          { return _template.MinLevel; }
-        uint32 GetMaxLevel() const          { return _template.MaxLevel; }
+        uint32 GetMaxPlayers() const { return _template.MaxPlayersPerTeam * 2; }
+        uint32 GetMinPlayers() const { return _template.MinPlayersPerTeam * 2; }
+        uint32 GetMinLevel() const   { return _template.MinLevel; }
+        uint32 GetMaxLevel() const   { return _template.MaxLevel; }
 
     protected:
-        virtual void InitializeTextIds() {};    // Initializes text IDs that are used in the battleground at any possible phase.
-        virtual void StartBattleground() {};    // Initializes EndTimer and other bg-specific variables.
-        virtual void EndBattleground() {};      // Contains rules on which team wins.
-        virtual void DestroyBattleground() {};  // Contains battleground specific cleanup method calls.
+        virtual void InitializeTextIds() { }   // Initializes text IDs that are used in the battleground at any possible phase.
+        virtual void StartBattleground() { }   // Initializes EndTimer and other bg-specific variables.
+        virtual void EndBattleground() { }     // Contains rules on which team wins.
+        virtual void DestroyBattleground() { } // Contains battleground specific cleanup method calls.
 
         // Hooks called after Map methods
-        virtual void OnPlayerJoin(Player* player);  // Initialize battleground specific variables.
-        virtual void OnPlayerExit(Player* player);  // Remove battleground specific auras etc.
+        virtual void OnPlayerJoin(Player* player); // Initialize battleground specific variables.
+        virtual void OnPlayerExit(Player* player); // Remove battleground specific auras etc.
         
         virtual uint32 EndTimer = 0;        // Battleground specific time limit. Must be overwritten in subclass.
-        virtual uint32 PreparationPhaseTextIds[BG_STARTING_EVENT_COUNT] = {0,0,0,0};   // Must be initialized for each battleground
+        virtual uint32 PreparationPhaseTextIds[BG_STARTING_EVENT_COUNT] = {0, 0, 0, 0}; // Must be initialized for each battleground
 
     private:
-        void InitVisibilityDistance();  // Overwritten from class Map
+        void InitVisibilityDistance() override;
 
-        void ProcessPreparation(uint32 const& diff);
-        void ProcessInProgress(uint32 const& diff);
-        void ProcessEnded(uint32 const& diff);
+        void ProcessPreparation(uint32 diff);
+        void ProcessInProgress(uint32 diff);
+        void ProcessEnded(uint32 diff);
 
-        void RemoveAllPlayers();
+        void RemoveAllPlayers() override;
 
         void SendMessageToAll(int32 entry, ChatMsg type);
        
         bool AreTeamsInBalance() const;
-    
+
         BattlegroundTemplate _template;
         BattlegroundStatus _status;
 
@@ -93,4 +93,4 @@ class BattlegroundMap : public Map
         uint16 _invitedCount[BG_TEAMS_COUNT];       // Players invited to join the battleground
 };
 
-#endif
+#endif // TRINITY_BATTLEGROUND_MAP_H

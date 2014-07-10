@@ -40,22 +40,6 @@ struct BattlegroundData
     BGFreeSlotQueueContainer BGFreeSlotQueue;
 };
 
-struct BattlegroundTemplate
-{
-    BattlegroundTypeId Id;
-    uint16 MinPlayersPerTeam;
-    uint16 MaxPlayersPerTeam;
-    uint8 MinLevel;
-    uint8 MaxLevel;
-    Position StartLocation[BG_TEAMS_COUNT];
-    float MaxStartDistSq;
-    uint8 Weight;
-    uint32 ScriptId;
-    BattlemasterListEntry const* BattlemasterEntry;
-
-    bool IsArena() const { return BattlemasterEntry->type == MAP_ARENA; }
-};
-
 class BattlegroundMgr
 {
     friend class ACE_Singleton<BattlegroundMgr, ACE_Null_Mutex>;

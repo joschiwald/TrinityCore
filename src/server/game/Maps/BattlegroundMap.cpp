@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,7 +18,6 @@
 #include "BattlegroundMap.h"
 #include "BattlegroundMgr.h"
 #include "BattlegroundTemplate.h"
-#include "WorldSession.h"
 #include "WorldPacket.h"
 #include "ObjectMgr.h"
 #include "Player.h"
@@ -45,7 +44,7 @@ bool BattlegroundMap::CanEnter(Player* player)
 {
     if (player->GetMapRef().getTarget() == this)
     {
-        sLog->outError("BGMap::CanEnter - player %u is already in map!", player->GetGUIDLow());
+        TC_LOG_ERROR("maps", "BGMap::CanEnter - player %u is already in map!", player->GetGUIDLow());
         ASSERT(false);
         return false;
     }
@@ -58,18 +57,17 @@ bool BattlegroundMap::CanEnter(Player* player)
     return Map::CanEnter(player);
 }
 
-bool BattlegroundMap::Add(Player* player)
+bool BattlegroundMap::AddPlayerToMap(Player* player)
 {
-    bool ret = Map::Add(player);
+    bool ret = Map::AddPlayerToMap(player);
     OnPlayerJoin(player);
     return ret;
 }
 
-void BattlegroundMap::Remove(Player* player, bool remove)
+void BattlegroundMap::RemovePlayerFromMap(Player* player, bool remove)
 {
-    bool ret = Map::Remove(player, remove);
-    OnPlayerExit();
-    return ret;
+    Map::RemovePlayerFromMap(player, remove);
+    OnPlayerExit(player);
 }
 
 void BattlegroundMap::SetUnload()
@@ -77,7 +75,7 @@ void BattlegroundMap::SetUnload()
     m_unloadTimer = MIN_UNLOAD_DELAY;
 }
 
-void BattlegroundMap::Update(uint32 const& diff)
+void BattlegroundMap::Update(uint32 diff)
 {
     // If the battleground is empty
     if (GetPlayers().isEmpty())
@@ -109,20 +107,20 @@ void BattlegroundMap::Update(uint32 const& diff)
     Map::Update(diff);
 }
 
-void BattlegroundMap::ProcessPreparation(uint32 const& diff)
+void BattlegroundMap::ProcessPreparation(uint32 diff)
 {
     ASSERT(_preparationTimer);
     if (_preparationTimer <= diff)
         _preparationTimer = 0;
     else
         _preparationTimer -= diff;
-    
+
     // No timer has passed yet, nothing to do
     if (_preparationTimer)
         return;
-    
+
     // Send message to the players
-    SendMessageToAll(PreparationPhaseTextIds[_preparationPhase, 
+    SendMessageToAll(PreparationPhaseTextIds[_preparationPhase,
         _preparationPhase < BG_STARTING_EVENT_FOURTH ? CHAT_MSG_BG_SYSTEM_NEUTRAL : CHAT_MSG_RAID_BOSS_EMOTE);
 
     // Initialize timer for the next sub-phase of preparation.
@@ -147,7 +145,7 @@ void BattlegroundMap::ProcessPreparation(uint32 const& diff)
     }
 }
 
-void BattlegroundMap::ProcessInProgress(uint32 const& diff)
+void BattlegroundMap::ProcessInProgress(uint32 diff)
 {
     ASSERT(EndTimer);
     if (EndTimer <= diff)
@@ -160,7 +158,7 @@ void BattlegroundMap::ProcessInProgress(uint32 const& diff)
     break;
 }
 
-void BattlegroundMap::ProcessEnded(uint32 const& diff)
+void BattlegroundMap::ProcessEnded(uint32 diff)
 {
     ASSERT(_postEndTimer);
     if (_postEndTimer <= diff)
@@ -173,7 +171,7 @@ void BattlegroundMap::RemoveAllPlayers()
 {
     for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
     {
-        Player* player = itr->getSource();
+        Player* player = itr->GetSource();
         if (!player)
             continue;
 
@@ -186,33 +184,19 @@ void BattlegroundMap::RemoveAllPlayers()
 
 void BattlegroundMap::SendMessageToAll(int32 entry, ChatMsg type)
 {
-    const char *format = sObjectMgr->GetTrinityStringForDBCLocale(entry);
+    /*
+    if (!entry)
+        return;
 
-    char str[1024];
     va_list ap;
     va_start(ap, entry);
-    vsnprintf(str, 1024, format, ap);
+
+    Trinity::BattlegroundChatBuilder bg_builder(type, entry, source, &ap);
+    Trinity::LocalizedPacketDo<Trinity::BattlegroundChatBuilder> bg_do(bg_builder);
+    BroadcastWorker(bg_do);
+
     va_end(ap);
-
-    size_t stringLength = strlen(str) + 1;
-    size_t packetSize = 1 + 4 + 8 + 4 + 4 + 1 + 8 + 4 + stringLength + 1;
-
-    WorldPacket data(SMSG_MESSAGECHAT, packetSize);
-    data << uint8(type);
-    data << uint32(LANG_UNIVERSAL);
-    data << uint64(0);
-    data << uint32(0);                                // 2.1.0
-    data << uint32(1);
-    data << uint8(0);
-    data << uint64(0);
-    data << uint32(stringLength);
-    data << str;
-    data << uint8(0);
-
-    for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-        if (Player* player = itr->getSource())
-            if (plr->GetSession())
-                plr->GetSession()->SendPacket(&data);
+    */
 }
 
 void BattlegroundMap::OnPlayerJoin(Player* player)
