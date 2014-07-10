@@ -357,7 +357,7 @@ void BattlegroundEY::UpdatePointsIcons(uint32 Team, uint32 Point)
 
 void BattlegroundEY::OnPlayerJoin(Player* player)
 {
-    Battleground::OnPlayerJoin(player);
+    BattlegroundMap::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundEYScore(player->GetGUID());
 
     m_PlayersNearPoint[EY_POINTS_MAX].push_back(player->GetGUID());

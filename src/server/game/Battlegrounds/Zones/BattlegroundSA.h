@@ -562,7 +562,7 @@ class BattlegroundSA : public BattlegroundMap
 
         /* inherited from BattlegroundClass */
         /// Called when a player join battle
-        void OnPlayerJoin(Player* player);
+        void OnPlayerJoin(Player* player) override;
         /// Called when battle start
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();

@@ -191,7 +191,7 @@ class BattlegroundWS : public BattlegroundMap
         ~BattlegroundWS();
 
         /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player);
+        void OnPlayerJoin(Player* player) override;
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
 

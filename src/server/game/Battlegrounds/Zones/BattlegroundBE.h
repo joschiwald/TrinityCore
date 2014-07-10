@@ -19,7 +19,7 @@
 #ifndef __BATTLEGROUNDBE_H
 #define __BATTLEGROUNDBE_H
 
-#include "Battleground.h"
+#include "ArenaMap.h"
 
 enum BattlegroundBEObjectTypes
 {
@@ -51,7 +51,7 @@ class BattlegroundBE : public ArenaMap
         ~BattlegroundBE();
 
         /* inherited from BattlegroundClass */
-        void AddPlayer(Player* player);
+        void OnPlayerJoin(Player* player) override;
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
 

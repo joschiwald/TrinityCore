@@ -51,7 +51,7 @@ void BattlegroundNA::StartingEventOpenDoors()
 
 void BattlegroundNA::OnPlayerJoin(Player* player)
 {
-    Battleground::OnPlayerJoin(player);
+    ArenaMap::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new ArenaScore(player->GetGUID(), player->GetBGTeam());
     UpdateArenaWorldState();
 }

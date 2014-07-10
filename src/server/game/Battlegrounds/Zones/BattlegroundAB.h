@@ -283,7 +283,7 @@ class BattlegroundAB : public BattlegroundMap
 
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
-        void OnPlayerJoin(Player* player);
+        void OnPlayerJoin(Player* player) override;
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
         void RemovePlayer(Player* player, uint64 guid, uint32 team);

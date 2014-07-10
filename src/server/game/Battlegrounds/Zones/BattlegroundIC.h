@@ -893,7 +893,7 @@ class BattlegroundIC : public BattlegroundMap
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
 
         /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player);
+        void OnPlayerJoin(Player* player) override;
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
         void PostUpdateImpl(uint32 diff);

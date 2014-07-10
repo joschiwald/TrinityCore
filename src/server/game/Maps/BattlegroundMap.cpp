@@ -91,7 +91,7 @@ void BattlegroundMap::SetUnload()
     m_unloadTimer = MIN_UNLOAD_DELAY;
 }
 
-void BattlegroundMap::Update(uint32 diff)
+void BattlegroundMap::Update(uint32 const diff)
 {
     // If the battleground is empty
     if (GetPlayers().isEmpty())
@@ -389,44 +389,16 @@ bool BattlegroundMap::DeleteCreature(uint32 type)
     return true;
 }
 
-void BattlegroundMap::UpdatePlayerScore(Player* source, uint32 type, uint32 value, bool addHonor /*= true*/)
+bool BattlegroundMap::UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor /*= true*/)
 {
-    //this procedure is called from virtual function implemented in bg subclass
-    BattlegroundScoreMap::const_iterator itr = ScoreMap.find(Source->GetGUIDLow());
-    if (itr == ScoreMap.end())                         // player not found...
-        return;
+    BattlegroundScoreMap::const_iterator itr = PlayerScores.find(player->GetGUIDLow());
+    if (itr == PlayerScores.end()) // player not found...
+        return false;
 
-    switch (type)
-    {
-        case SCORE_KILLING_BLOWS:                           // Killing blows
-            itr->second->KillingBlows += value;
-            break;
-        case SCORE_DEATHS:                                  // Deaths
-            itr->second->Deaths += value;
-            break;
-        case SCORE_HONORABLE_KILLS:                         // Honorable kills
-            itr->second->HonorableKills += value;
-            break;
-        case SCORE_BONUS_HONOR:                             // Honor bonus
-            // do not add honor in arenas
-            if (!IsBattleArena())
-            {
-                // reward honor instantly
-                if (addHonor)
-                    source->RewardHonor(NULL, 1, value);    // RewardHonor calls UpdatePlayerScore with doAddHonor = false
-                else
-                    itr->second->BonusHonor += value;
-            }
-            break;
-        case SCORE_DAMAGE_DONE:                             // Damage Done
-            itr->second->DamageDone += value;
-            break;
-        case SCORE_HEALING_DONE:                            // Healing Done
-            itr->second->HealingDone += value;
-            break;
-        default:
-            sLog->outError("BattlegroundMap::UpdatePlayerScore: unknown score type (%u) for BG (map: %u)!",
-                type, GetId());
-            break;
-    }
+    if (type == SCORE_BONUS_HONOR && addHonor && !IsBattleArena())
+        player->RewardHonor(NULL, 1, value); // RewardHonor calls UpdatePlayerScore with doAddHonor = false
+    else
+        itr->second->UpdateScore(type, value);
+
+    return true;
 }

@@ -31,7 +31,6 @@ BattlegroundBE::BattlegroundBE()
 
 BattlegroundBE::~BattlegroundBE()
 {
-
 }
 
 void BattlegroundBE::StartingEventCloseDoors()
@@ -54,7 +53,7 @@ void BattlegroundBE::StartingEventOpenDoors()
 
 void BattlegroundBE::OnPlayerJoin(Player* player)
 {
-    Battleground::OnPlayerJoin(player);
+    ArenaMap::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new ArenaScore(player->GetGUID(), player->GetBGTeam());
     UpdateArenaWorldState();
 }

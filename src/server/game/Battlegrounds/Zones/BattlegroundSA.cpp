@@ -448,7 +448,7 @@ void BattlegroundSA::FillInitialWorldStates(WorldPacket& data)
 
 void BattlegroundSA::OnPlayerJoin(Player* player)
 {
-    Battleground::OnPlayerJoin(player);
+    BattlegroundMap::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundSAScore(player->GetGUID());
 
     SendTransportInit(player);

@@ -215,9 +215,9 @@ void BattlegroundAB::StartingEventOpenDoors()
     StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, AB_EVENT_START_BATTLE);
 }
 
-void BattlegroundAB::OnPlayerJoin(Player *plr)
+void BattlegroundAB::OnPlayerJoin(Player* player)
 {
-    Battleground::OnPlayerJoin(plr);
+    BattlegroundMap::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundABScore(player->GetGUID());
 }
 

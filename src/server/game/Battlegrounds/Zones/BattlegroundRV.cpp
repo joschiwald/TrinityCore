@@ -17,7 +17,6 @@
  */
 
 #include "ArenaScore.h"
-#include "BattlegroundMap.h"
 #include "BattlegroundRV.h"
 #include "ObjectAccessor.h"
 #include "Language.h"
@@ -90,7 +89,7 @@ void BattlegroundRV::StartingEventOpenDoors()
 
 void BattlegroundRV::OnPlayerJoin(Player* player)
 {
-    Battleground::OnPlayerJoin(player);
+    ArenaMap::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new ArenaScore(player->GetGUID(), player->GetBGTeam());
 
     UpdateWorldState(BG_RV_WORLD_STATE_A, GetAlivePlayersCountByTeam(ALLIANCE));

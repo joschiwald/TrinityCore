@@ -268,7 +268,7 @@ void BattlegroundIC::StartingEventOpenDoors()
 
 void BattlegroundIC::OnPlayerJoin(Player* player)
 {
-    Battleground::OnPlayerJoin(player);
+    BattlegroundMap::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundICScore(player->GetGUID());
 
     if (nodePoint[NODE_TYPE_QUARRY].nodeState == (player->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H))

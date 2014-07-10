@@ -86,7 +86,7 @@ class BattlegroundDS : public ArenaMap
         ~BattlegroundDS();
 
         /* inherited from BattlegroundClass */
-        void AddPlayer(Player* player);
+        void OnPlayerJoin(Player* player) override;
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
 

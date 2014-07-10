@@ -225,7 +225,7 @@ void BattlegroundWS::StartingEventOpenDoors()
 
 void BattlegroundWS::OnPlayerJoin(Player* player)
 {
-    Battleground::OnPlayerJoin(player);
+    BattlegroundMap::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new BattlegroundWGScore(player->GetGUID());
 }
 

@@ -48,7 +48,7 @@ class BattlegroundMap : public Map
 
         bool AddPlayerToMap(Player* player) override;
         void RemovePlayerFromMap(Player*, bool) override;
-        void Update(uint32 diff) override;
+        void Update(uint32 const diff) override;
 
         bool CanEnter(Player* player) override;
         void SetUnload();
@@ -72,12 +72,12 @@ class BattlegroundMap : public Map
         virtual void EndBattleground() { }     // Contains rules on which team wins.
         virtual void DestroyBattleground() { } // Contains battleground specific cleanup method calls.
 
-        virtual void UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true);
+        virtual bool UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true);
 
         // Private entity management - GameObject
         GameObject* AddObject(uint32 type, uint32 entry, Position const* pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0); // Adds GO's to the map but doesn't necessarily spawn them
         void SpawnObject(uint32 type, uint32 respawntime); // Spawns an already added gameobject
-        bool DeleteObject(uint32 type); // Deletes an object with specified type designation 
+        bool DeleteObject(uint32 type); // Deletes an object with specified type designation
 
         // Private entity management - Creature
         Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, Position const* pos, uint32 respawntime = 0); // Adds and spawns creatures to map
@@ -94,7 +94,7 @@ class BattlegroundMap : public Map
         BattlegroundScoreMap ScoreMap;             // Player scores
 
     private:
-        // Private initializers, non overridable 
+        // Private initializers, non overridable
         void InitVisibilityDistance() final;
         void InitializePreparationDelayTimer();
 

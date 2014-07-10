@@ -98,7 +98,7 @@ class BattlegroundRV : public ArenaMap
         ~BattlegroundRV();
 
         /* inherited from BattlegroundClass */
-        void OnPlayerJoin(Player* player);
+        void OnPlayerJoin(Player* player) override;
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
         void Reset();

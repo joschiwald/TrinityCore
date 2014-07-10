@@ -16,6 +16,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ArenaMap.h"
 #include "ArenaScore.h"
 #include "BattlegroundDS.h"
 #include "Creature.h"
@@ -39,7 +40,6 @@ BattlegroundDS::BattlegroundDS()
 
 BattlegroundDS::~BattlegroundDS()
 {
-
 }
 
 void BattlegroundDS::PostUpdateImpl(uint32 diff)
@@ -143,7 +143,7 @@ void BattlegroundDS::StartingEventOpenDoors()
 
 void BattlegroundDS::OnPlayerJoin(Player* player)
 {
-    Battleground::OnPlayerJoin(player);
+    ArenaMap::OnPlayerJoin(player);
     PlayerScores[player->GetGUIDLow()] = new ArenaScore(player->GetGUID(), player->GetBGTeam());
     UpdateArenaWorldState();
 }

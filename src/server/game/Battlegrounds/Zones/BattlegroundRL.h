@@ -46,7 +46,7 @@ class BattlegroundRL : public ArenaMap
         ~BattlegroundRL();
 
         /* inherited from BattlegroundClass */
-        void AddPlayer(Player* player);
+        void OnPlayerJoin(Player* player);
         void Reset();
         void FillInitialWorldStates(WorldPacket &d);
         void StartingEventCloseDoors();
