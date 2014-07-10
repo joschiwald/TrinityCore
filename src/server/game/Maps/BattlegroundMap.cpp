@@ -24,12 +24,11 @@
 
 BattlegroundMap::BattlegroundMap(uint32 id, time_t expiry, uint32 instanceId, Map* parent, uint8 spawnMode, BattlegroundTemplate* bgTemplate)
     : Map(id, expiry, instanceId, spawnMode, parent),
-    _template(bgTemplate),
-    _preparationPhase(BG_STARTING_EVENT_FIRST)
+    _template(bgTemplate), _preparationPhase(BG_STARTING_EVENT_FIRST)
 {
     InitializeTextIds();
-    InitializePreparationDelayTimes();  // Subclasses define timers or choose default
-    InitializePreparationDelayTimer();  // Assign value to the current timer
+    InitializePreparationDelayTimes(); // Subclasses define timers or choose default
+    InitializePreparationDelayTimer(); // Assign value to the current timer
 }
 
 BattlegroundMap::~BattlegroundMap()
@@ -254,6 +253,3 @@ bool BattlegroundMap::AreTeamsInBalance() const
     return !(_participantCount[BG_TEAM_HORDE] < _template.MinPlayersPerTeam ||
              _participantCount[BG_TEAM_ALLIANCE] < _template.MinPlayersPerTeam);
 }
-
-
-

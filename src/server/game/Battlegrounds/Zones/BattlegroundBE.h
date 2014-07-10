@@ -42,6 +42,8 @@ enum BattlegroundBEObjects
     BG_BE_OBJECT_TYPE_BUFF_2    = 184664
 };
 
+class ArenaMap;
+
 class BattlegroundBE : public ArenaMap
 {
     public:
@@ -60,4 +62,5 @@ class BattlegroundBE : public ArenaMap
         void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player* killer);
 };
+
 #endif
