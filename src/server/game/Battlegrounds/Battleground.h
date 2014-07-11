@@ -588,52 +588,6 @@ class Battleground
 
         uint32 m_ArenaTeamMMR[BG_TEAMS_COUNT];
 
-        struct ArenaTeamScore
-        {
-            friend class Battleground;
-
-        protected:
-            ArenaTeamScore() : RatingChange(0), MatchmakerRating(0) { }
-
-            virtual ~ArenaTeamScore() { }
-
-            void Assign(int32 ratingChange, uint32 matchMakerRating, std::string const& teamName)
-            {
-                RatingChange = ratingChange;
-                MatchmakerRating = matchMakerRating;
-                TeamName = teamName;
-            }
-
-            void BuildRatingInfoBlock(WorldPacket& data)
-            {
-                uint32 ratingLost = std::abs(std::min(RatingChange, 0));
-                uint32 ratingWon = std::max(RatingChange, 0);
-
-                // should be old rating, new rating, and client will calculate rating change itself
-                data << uint32(ratingLost);
-                data << uint32(ratingWon);
-                data << uint32(MatchmakerRating);
-            }
-
-            void BuildTeamInfoBlock(WorldPacket& data)
-            {
-                data << TeamName;
-            }
-
-            void Reset()
-            {
-                RatingChange = 0;
-                MatchmakerRating = 0;
-                TeamName.clear();
-            }
-
-            int32 RatingChange;
-            uint32 MatchmakerRating;
-            std::string TeamName;
-        };
-
-        ArenaTeamScore _arenaTeamScores[BG_TEAMS_COUNT];
-
         // Limits
         uint32 m_LevelMin;
         uint32 m_LevelMax;

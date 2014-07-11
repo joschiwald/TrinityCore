@@ -87,7 +87,7 @@ class BattlegroundDS : public ArenaMap
         BattlegroundDS();
         ~BattlegroundDS();
 
-        void Update(uint32 const& diff);
+        void Update(uint32 const diff);
 
         void InitializeObjects();
 

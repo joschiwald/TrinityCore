@@ -85,6 +85,8 @@ enum BattlegroundQueueTypeId
 };
 */
 
+struct BattlegroundScore;
+
 class BattlegroundMap : public Map
 {
     friend class WorldSession;
