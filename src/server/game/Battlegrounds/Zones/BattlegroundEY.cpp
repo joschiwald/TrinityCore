@@ -783,14 +783,14 @@ void BattlegroundEY::EventPlayerCapturedFlag(Player* player, uint32 BgObjectType
     }
 
     if (TeamScores[team_id] > 0)
-        AddPoints(Source->GetTeam(), BG_EY_FlagPoints[TeamScores[team_id] - 1]);
+        AddPoints(player->GetTeam(), BG_EY_FlagPoints[TeamScores[team_id] - 1]);
 
     UpdatePlayerScore(player, SCORE_FLAG_CAPTURES, 1);
 }
 
 bool BattlegroundEY::UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool doAddHonor)
 {
-    if (!Battleground::UpdatePlayerScore(player, type, value, doAddHonor))
+    if (!BattlegroundMap::UpdatePlayerScore(player, type, value, doAddHonor))
         return false;
 
     switch (type)
