@@ -440,22 +440,22 @@ void BattlegroundMap::UpdateWorldState(uint32 type, uint32 value)
     SendPacketToAll(&data);
 }
 
-void BattlegroundMap::BuildPVPLogDataPacket(WorldPacket& data)
+void BattlegroundMap::BuildPvPLogDataPacket(WorldPacket& data)
 {
-    data->Initialize(MSG_PVP_LOG_DATA, (1+1+4+40*bg->GetPlayerScoresSize()));
-    *data << uint8(0);                                      // 1 for arena's
+    data.Initialize(MSG_PVP_LOG_DATA, 1 + 1 + 4 + 40 * GetPlayerScoresSize());
+    data << uint8(0);                           // type (battleground = 0 / arena = 1)
 
-    if (GetStatus() != STATUS_WAIT_LEAVE)
-        *data << uint8(0);                                  // bg not ended
-    else
+    if (GetStatus() == STATUS_WAIT_LEAVE)
     {
-        *data << uint8(1);                                  // bg ended
-        *data << uint8(GetWinningTeam());                   // who won
+        data << uint8(1);                       // bg ended
+        data << uint8(GetWinner());             // who win
     }
+    else
+        data << uint8(0);                       // bg not ended
 
-    *data << uint32(PlayerScores.size());
-    for (BattlegroundScoreMap::const_iterator itr = PlayerScores.begin(); itr != PlayerScores.end(); ++itr)
-        itr->second->AppendToPacket(&data);
+    data << uint32(GetPlayerScoresSize());
+    for (auto const& score : PlayerScores)
+        score.second->AppendToPacket(data);
 }
 
 void BattlegroundMap::SendPacketToAll(WorldPacket* data)

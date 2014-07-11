@@ -3448,6 +3448,7 @@ enum DuelCompleteType
     DUEL_WON         = 1,
     DUEL_FLED        = 2
 };
+
 // handle the queue types and bg types separately to enable joining queue for different sized arenas at the same time
 enum BattlegroundQueueTypeId
 {

@@ -1344,35 +1344,6 @@ bool Battleground::HasFreeSlots() const
     return GetPlayersSize() < GetMaxPlayers();
 }
 
-void Battleground::BuildPvPLogDataPacket(WorldPacket& data)
-{
-    uint8 type = (isArena() ? 1 : 0);
-
-    data.Initialize(MSG_PVP_LOG_DATA, 1 + 1 + 4 + 40 * GetPlayerScoresSize());
-    data << uint8(type);                                // type (battleground = 0 / arena = 1)
-
-    if (type)                                           // arena
-    {
-        for (uint8 i = 0; i < BG_TEAMS_COUNT; ++i)
-            _arenaTeamScores[i].BuildRatingInfoBlock(data);
-
-        for (uint8 i = 0; i < BG_TEAMS_COUNT; ++i)
-            _arenaTeamScores[i].BuildTeamInfoBlock(data);
-    }
-
-    if (GetStatus() == STATUS_WAIT_LEAVE)
-    {
-        data << uint8(1);                      // bg ended
-        data << uint8(GetWinner());            // who win
-    }
-    else
-        data << uint8(0);                      // bg not ended
-
-    data << uint32(GetPlayerScoresSize());
-    for (auto const& score : PlayerScores)
-        score.second->AppendToPacket(data);
-}
-
 void Battleground::AddPlayerToResurrectQueue(uint64 npc_guid, uint64 player_guid)
 {
     m_ReviveQueue[npc_guid].push_back(player_guid);

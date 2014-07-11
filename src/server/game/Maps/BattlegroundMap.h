@@ -66,24 +66,24 @@ enum BattlegroundTimeIntervals
     BUFF_RESPAWN_TIME               = 180,                  // secs
 };
 
+/*
 // handle the queue types and bg types separately to enable joining queue for different sized arenas at the same time
 enum BattlegroundQueueTypeId
 {
-    BATTLEGROUND_QUEUE_NONE,
-    BATTLEGROUND_QUEUE_AV,
-    BATTLEGROUND_QUEUE_WS,
-    BATTLEGROUND_QUEUE_AB,
-    BATTLEGROUND_QUEUE_EY,
-    BATTLEGROUND_QUEUE_SA,
-    BATTLEGROUND_QUEUE_IC,
-    BATTLEGROUND_QUEUE_RB,
-    BATTLEGROUND_QUEUE_2v2,
-    BATTLEGROUND_QUEUE_3v3,
-    BATTLEGROUND_QUEUE_5v5,
+    BATTLEGROUND_QUEUE_NONE     = 0,
+    BATTLEGROUND_QUEUE_AV       = 1,
+    BATTLEGROUND_QUEUE_WS       = 2,
+    BATTLEGROUND_QUEUE_AB       = 3,
+    BATTLEGROUND_QUEUE_EY       = 4,
+    BATTLEGROUND_QUEUE_SA       = 5,
+    BATTLEGROUND_QUEUE_IC       = 6,
+    BATTLEGROUND_QUEUE_RB       = 7,
+    BATTLEGROUND_QUEUE_2v2      = 8,
+    BATTLEGROUND_QUEUE_3v3      = 9,
+    BATTLEGROUND_QUEUE_5v5      = 10,
     MAX_BATTLEGROUND_QUEUE_TYPES
 };
-
-class BattlegroundScore;
+*/
 
 class BattlegroundMap : public Map
 {
@@ -133,7 +133,7 @@ class BattlegroundMap : public Map
         GameObject* AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float r0, float r1, float r2, float r3, uint32 respawnTime = 0);   // Adds GO's to the map but doesn't necessarily spawn them
         GameObject* AddObject(uint32 type, uint32 entry, Position const* pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0);   // Adds GO's to the map but doesn't necessarily spawn them
         void SpawnObject(uint32 type, uint32 respawntime);  // Spawns an already added gameobject
-        bool DeleteObject(uint32 type); // Deletes an object with specified type designation 
+        bool DeleteObject(uint32 type); // Deletes an object with specified type designation
 
         // Entity management - Creature
         Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o, uint32 respawntime = 0); // Adds and spawns creatures to map
