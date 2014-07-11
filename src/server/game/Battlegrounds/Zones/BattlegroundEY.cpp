@@ -39,7 +39,7 @@ void BattlegroundEY::InstallBattleground()
     _pointsTrigger[BLOOD_ELF] = TR_BLOOD_ELF_BUFF;
     _pointsTrigger[DRAENEI_RUINS] = TR_DRAENEI_RUINS_BUFF;
     _pointsTrigger[MAGE_TOWER] = TR_MAGE_TOWER_BUFF;
-    
+
     TeamScores[BG_TEAM_ALLIANCE] = 0;
     TeamScores[BG_TEAM_HORDE] = 0;
     _honorScoreTicks[BG_TEAM_ALLIANCE] = 0;
@@ -130,7 +130,7 @@ void BattlegroundEY::InitializeObjects()
     AddGameObject(BG_EY_OBJECT_TOWER_CAP_BLOOD_ELF, BG_OBJECT_BE_TOWER_CAP_EY_ENTRY, 2050.493164f, 1372.235962f, 1194.563477f, 1.710423f, 0, 0, 0.754710f, 0.656059f, RESPAWN_ONE_DAY);
     AddGameObject(BG_EY_OBJECT_TOWER_CAP_DRAENEI_RUINS, BG_OBJECT_DR_TOWER_CAP_EY_ENTRY, 2301.010498f, 1386.931641f, 1197.183472f, 1.570796f, 0, 0, 0.707107f, 0.707107f, RESPAWN_ONE_DAY);
     AddGameObject(BG_EY_OBJECT_TOWER_CAP_MAGE_TOWER, BG_OBJECT_HU_TOWER_CAP_EY_ENTRY, 2282.121582f, 1760.006958f, 1189.707153f, 1.919862f, 0, 0, 0.819152f, 0.573576f, RESPAWN_ONE_DAY);
-    
+
     //buffs
     for (int i = 0; i < EY_POINTS_MAX; ++i)
     {
@@ -488,24 +488,24 @@ void BattlegroundEY::HandleAreaTrigger(Player* player, uint32 trigger)
     switch (trigger)
     {
         case TR_BLOOD_ELF_POINT:
-            if (_pointState[BLOOD_ELF] == EY_POINT_UNDER_CONTROL && _pointOwnedByTeam[BLOOD_ELF] == Source->GetTeam())
-                if (_flagState && GetFlagPickerGUID() == Source->GetGUID())
-                    EventPlayerCapturedFlag(Source, BG_EY_OBJECT_FLAG_BLOOD_ELF);
+            if (_pointState[BLOOD_ELF] == EY_POINT_UNDER_CONTROL && _pointOwnedByTeam[BLOOD_ELF] == player->GetTeam())
+                if (_flagState && GetFlagPickerGUID() == player->GetGUID())
+                    EventPlayerCapturedFlag(player, BG_EY_OBJECT_FLAG_BLOOD_ELF);
             break;
         case TR_FEL_REAVER_POINT:
-            if (_pointState[FEL_REAVER] == EY_POINT_UNDER_CONTROL && _pointOwnedByTeam[FEL_REAVER] == Source->GetTeam())
-                if (_flagState && GetFlagPickerGUID() == Source->GetGUID())
-                    EventPlayerCapturedFlag(Source, BG_EY_OBJECT_FLAG_FEL_REAVER);
+            if (_pointState[FEL_REAVER] == EY_POINT_UNDER_CONTROL && _pointOwnedByTeam[FEL_REAVER] == player->GetTeam())
+                if (_flagState && GetFlagPickerGUID() == player->GetGUID())
+                    EventPlayerCapturedFlag(player, BG_EY_OBJECT_FLAG_FEL_REAVER);
             break;
         case TR_MAGE_TOWER_POINT:
-            if (_pointState[MAGE_TOWER] == EY_POINT_UNDER_CONTROL && _pointOwnedByTeam[MAGE_TOWER] == Source->GetTeam())
-                if (_flagState && GetFlagPickerGUID() == Source->GetGUID())
-                    EventPlayerCapturedFlag(Source, BG_EY_OBJECT_FLAG_MAGE_TOWER);
+            if (_pointState[MAGE_TOWER] == EY_POINT_UNDER_CONTROL && _pointOwnedByTeam[MAGE_TOWER] == player->GetTeam())
+                if (_flagState && GetFlagPickerGUID() == player->GetGUID())
+                    EventPlayerCapturedFlag(player, BG_EY_OBJECT_FLAG_MAGE_TOWER);
             break;
         case TR_DRAENEI_RUINS_POINT:
-            if (_pointState[DRAENEI_RUINS] == EY_POINT_UNDER_CONTROL && _pointOwnedByTeam[DRAENEI_RUINS] == Source->GetTeam())
-                if (_flagState && GetFlagPickerGUID() == Source->GetGUID())
-                    EventPlayerCapturedFlag(Source, BG_EY_OBJECT_FLAG_DRAENEI_RUINS);
+            if (_pointState[DRAENEI_RUINS] == EY_POINT_UNDER_CONTROL && _pointOwnedByTeam[DRAENEI_RUINS] == player->GetTeam())
+                if (_flagState && GetFlagPickerGUID() == player->GetGUID())
+                    EventPlayerCapturedFlag(player, BG_EY_OBJECT_FLAG_DRAENEI_RUINS);
             break;
         case 4512:
         case 4515:
@@ -520,7 +520,7 @@ void BattlegroundEY::HandleAreaTrigger(Player* player, uint32 trigger)
         case 5866:
             break;
         default:
-            Battleground::HandleAreaTrigger(player, trigger);
+            BattlegroundMap::HandleAreaTrigger(player, trigger);
             break;
     }
 }
