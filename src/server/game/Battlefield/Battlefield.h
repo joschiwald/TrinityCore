@@ -23,8 +23,9 @@
 #include "ZoneScript.h"
 #include "WorldPacket.h"
 #include "GameObject.h"
-#include "Battleground.h"
 #include "ObjectAccessor.h"
+
+#define BG_TEAMS_COUNT  2
 
 enum BattlefieldTypes
 {

@@ -389,7 +389,7 @@ bool AchievementCriteriaData::Meets(uint32 criteria_id, Player const* source, Un
             if (!bg)
                 return false;
 
-            return bg->IsTeamScoreInRange(source->GetTeam() == ALLIANCE ? HORDE : ALLIANCE, bg_loss_team_score.min_score, bg_loss_team_score.max_score);
+            return bg->IsTeamScoreInRange(source->GetBGTeamId() == BG_TEAM_ALLIANCE ? BG_TEAM_HORDE : BG_TEAM_ALLIANCE, bg_loss_team_score.min_score, bg_loss_team_score.max_score);
         }
         case ACHIEVEMENT_CRITERIA_DATA_TYPE_INSTANCE_SCRIPT:
         {

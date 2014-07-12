@@ -49,28 +49,28 @@ void BattlegroundDS::InitializeObjects()
     AddGameObject(BG_DS_OBJECT_BUFF_1, BG_DS_OBJECT_TYPE_BUFF_1, 1291.7f, 813.424f, 7.11472f, 4.64562f, 0, 0, 0.730314f, -0.683111f, BUFF_RESPAWN_TIME);
     AddGameObject(BG_DS_OBJECT_BUFF_2, BG_DS_OBJECT_TYPE_BUFF_2, 1291.7f, 768.911f, 7.11472f, 1.55194f, 0, 0, 0.700409f, 0.713742f, BUFF_RESPAWN_TIME);
     // knockback creatures
-    AddCreature(BG_DS_NPC_TYPE_WATER_SPOUT, BG_DS_NPC_WATERFALL_KNOCKBACK, 1292.587f, 790.2205f, 7.19796f, 3.054326f, TEAM_NEUTRAL, RESPAWN_IMMEDIATELY);
-    AddCreature(BG_DS_NPC_TYPE_WATER_SPOUT, BG_DS_NPC_PIPE_KNOCKBACK_1, 1369.977f, 817.2882f, 16.08718f, 3.106686f, TEAM_NEUTRAL, RESPAWN_IMMEDIATELY);
-    AddCreature(BG_DS_NPC_TYPE_WATER_SPOUT, BG_DS_NPC_PIPE_KNOCKBACK_2, 1212.833f, 765.3871f, 16.09484f, 0.0f, TEAM_NEUTRAL, RESPAWN_IMMEDIATELY);
+    AddCreature(BG_DS_NPC_TYPE_WATER_SPOUT, BG_DS_NPC_WATERFALL_KNOCKBACK, 1292.587f, 790.2205f, 7.19796f, 3.054326f, RESPAWN_IMMEDIATELY);
+    AddCreature(BG_DS_NPC_TYPE_WATER_SPOUT, BG_DS_NPC_PIPE_KNOCKBACK_1, 1369.977f, 817.2882f, 16.08718f, 3.106686f, RESPAWN_IMMEDIATELY);
+    AddCreature(BG_DS_NPC_TYPE_WATER_SPOUT, BG_DS_NPC_PIPE_KNOCKBACK_2, 1212.833f, 765.3871f, 16.09484f, 0.0f, RESPAWN_IMMEDIATELY);
 }
 
-void BattlegroundDS::ProcessInProgress(uint32 const& diff)
+void BattlegroundDS::ProcessInProgress(uint32 diff)
 {
     ArenaMap::ProcessInProgress(diff);
 
-    if (getPipeKnockBackCount() < BG_DS_PIPE_KNOCKBACK_TOTAL_COUNT)
+    if (_pipeKnockBackCount < BG_DS_PIPE_KNOCKBACK_TOTAL_COUNT)
     {
-        if (getPipeKnockBackTimer() < diff)
+        if (_pipeKnockBackTimer < diff)
         {
             for (uint32 i = BG_DS_NPC_PIPE_KNOCKBACK_1; i <= BG_DS_NPC_PIPE_KNOCKBACK_2; ++i)
                 if (Creature* waterSpout = GetBgMap()->GetCreature(BgCreatures[i]))
                     waterSpout->CastSpell(waterSpout, BG_DS_SPELL_FLUSH, true);
 
-            setPipeKnockBackCount(getPipeKnockBackCount() + 1);
-            setPipeKnockBackTimer(BG_DS_PIPE_KNOCKBACK_DELAY);
+            ++_pipeKnockBackCount;
+            _pipeKnockBackTimer = BG_DS_PIPE_KNOCKBACK_DELAY;
         }
         else
-            setPipeKnockBackTimer(getPipeKnockBackTimer() - diff);
+            _pipeKnockBackTimer -= diff;
     }
 
     if (getWaterFallStatus() == BG_DS_WATERFALL_STATUS_ON) // Repeat knockback while the waterfall still active
@@ -135,24 +135,24 @@ void BattlegroundDS::StartBattleground()
     setWaterFallTimer(urand(BG_DS_WATERFALL_TIMER_MIN, BG_DS_WATERFALL_TIMER_MAX));
     setWaterFallStatus(BG_DS_WATERFALL_STATUS_OFF);
 
-    setPipeKnockBackTimer(BG_DS_PIPE_KNOCKBACK_FIRST_DELAY);
-    setPipeKnockBackCount(0);
+    _pipeKnockBackTimer = BG_DS_PIPE_KNOCKBACK_FIRST_DELAY;
+    _pipeKnockBackCount = 0;
 
-    SpawnObject(BG_DS_OBJECT_WATER_2, RESPAWN_IMMEDIATELY);
+    SpawnGameObject(BG_DS_OBJECT_WATER_2, RESPAWN_IMMEDIATELY);
     DoorOpen(BG_DS_OBJECT_WATER_2);
 
     // Turn off collision
-    if (GameObject* gob = GetBgMap()->GetGameObject(BgObjects[BG_DS_OBJECT_WATER_1]))
+    if (GameObject* gob = GetGameObject(BG_DS_OBJECT_WATER_1))
         gob->SetGoState(GO_STATE_ACTIVE);
 
     // Remove effects of Demonic Circle Summon
-    for (BattlegroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
-        if (Player* player = ObjectAccessor::FindPlayer(itr->first))
+    for (auto& i : GetPlayers())
+        if (Player* player = i.GetSource())
             if (player->HasAura(48018))
                 player->RemoveAurasDueToSpell(48018);
 }
 
-void BattlegroundDS::HandleAreaTrigger(Player *Source, uint32 Trigger)
+void BattlegroundDS::HandleAreaTrigger(Player* player, uint32 trigger)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
@@ -171,12 +171,12 @@ void BattlegroundDS::HandleAreaTrigger(Player *Source, uint32 Trigger)
                 setPipeKnockBackCount(0);
             break;
         default:
-            Battleground::HandleAreaTrigger(player, trigger);
+            BattlegroundMap::HandleAreaTrigger(player, trigger);
             break;
     }
 }
 
-void BattlegroundDS::FillInitialWorldStates(WorldPacket &data)
+void BattlegroundDS::FillInitialWorldStates(WorldPacket& data)
 {
     data << uint32(3610) << uint32(1);                                              // 9 show
     UpdateArenaWorldState();

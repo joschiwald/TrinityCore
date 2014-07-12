@@ -35,7 +35,7 @@ struct GroupQueueInfo;                                      // type predefinitio
 struct PlayerQueueInfo                                      // stores information for players in queue
 {
     uint32  LastOnlineTime;                                 // for tracking and removing offline players from queue after 5 minutes
-    GroupQueueInfo* GroupInfo;                             // pointer to the associated groupqueueinfo
+    GroupQueueInfo* GroupInfo;                              // pointer to the associated groupqueueinfo
 };
 
 struct GroupQueueInfo                                       // stores information about the group in queue (also used when joined as solo!)
@@ -139,13 +139,15 @@ class BattlegroundQueue
 class BGQueueInviteEvent : public BasicEvent
 {
     public:
-        BGQueueInviteEvent(uint64 pl_guid, uint32 BgInstanceGUID, BattlegroundTypeId BgTypeId, uint8 arenaType, uint32 removeTime) :
-          m_PlayerGuid(pl_guid), m_BgInstanceGUID(BgInstanceGUID), m_BgTypeId(BgTypeId), m_ArenaType(arenaType), m_RemoveTime(removeTime)
+        BGQueueInviteEvent(uint64 playerGUID, uint32 bgInstanceGUID, BattlegroundTypeId bgTypeId, uint8 arenaType, uint32 removeTime) :
+          _playerGUID(playerGUID), _bgInstanceGUID(bgInstanceGUID), _bgTypeId(bgTypeId), _arenaType(arenaType), _removeTime(removeTime)
           { }
+
         virtual ~BGQueueInviteEvent() { }
 
-        virtual bool Execute(uint64 e_time, uint32 p_time);
-        virtual void Abort(uint64 e_time);
+        virtual bool Execute(uint64 execTime, uint32 diff);
+        virtual void Abort(uint64 execTime);
+
     private:
         uint64 _playerGUID;
         uint32 _bgInstanceGUID;
@@ -162,14 +164,15 @@ class BGQueueInviteEvent : public BasicEvent
 class BGQueueRemoveEvent : public BasicEvent
 {
     public:
-        BGQueueRemoveEvent(uint64 pl_guid, uint32 bgInstanceGUID, BattlegroundTypeId BgTypeId, BattlegroundQueueTypeId bgQueueTypeId, uint32 removeTime)
-            : m_PlayerGuid(pl_guid), m_BgInstanceGUID(bgInstanceGUID), m_RemoveTime(removeTime), m_BgTypeId(BgTypeId), m_BgQueueTypeId(bgQueueTypeId)
+        BGQueueRemoveEvent(uint64 playerGUID, uint32 bgInstanceGUID, BattlegroundTypeId bgTypeId, BattlegroundQueueTypeId bgQueueTypeId, uint32 removeTime)
+            : _playerGUID(playerGUID), _bgInstanceGUID(bgInstanceGUID), _removeTime(removeTime), _bgTypeId(bgTypeId), _bgQueueTypeId(bgQueueTypeId)
         { }
 
         virtual ~BGQueueRemoveEvent() { }
 
-        virtual bool Execute(uint64 e_time, uint32 p_time);
-        virtual void Abort(uint64 e_time);
+        virtual bool Execute(uint64 execTime, uint32 diff);
+        virtual void Abort(uint64 execTime);
+
     private:
         uint64 _playerGUID;
         uint32 _bgInstanceGUID;

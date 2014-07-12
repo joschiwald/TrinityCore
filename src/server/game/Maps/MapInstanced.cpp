@@ -44,10 +44,10 @@ void MapInstanced::InitVisibilityDistance()
         i->second->InitVisibilityDistance();
 }
 
-void MapInstanced::Update(const uint32 t)
+void MapInstanced::Update(uint32 t_diff)
 {
     // take care of loaded GridMaps (when unused, unload it!)
-    Map::Update(t);
+    Map::Update(t_diff);
 }
 
 void MapInstanced::UnloadAll()

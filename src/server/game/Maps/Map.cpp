@@ -17,7 +17,6 @@
  */
 
 #include "Map.h"
-#include "Battleground.h"
 #include "MMapFactory.h"
 #include "CellImpl.h"
 #include "DynamicTree.h"
@@ -621,7 +620,7 @@ void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::Obj
     }
 }
 
-void Map::Update(const uint32 t_diff)
+void Map::Update(uint32 t_diff)
 {
     _dynamicTree.update(t_diff);
     /// update worldsessions for existing players
@@ -3001,7 +3000,7 @@ bool InstanceMap::AddPlayerToMap(Player* player)
     return true;
 }
 
-void InstanceMap::Update(const uint32 t_diff)
+void InstanceMap::Update(uint32 t_diff)
 {
     Map::Update(t_diff);
 

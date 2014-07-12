@@ -23,7 +23,6 @@
  */
 
 #include "ScriptMgr.h"
-#include "Battleground.h"
 #include "Cell.h"
 #include "CellImpl.h"
 #include "GridNotifiers.h"

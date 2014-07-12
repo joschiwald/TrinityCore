@@ -32,7 +32,7 @@ class MapInstanced : public Map
         MapInstanced(uint32 id, time_t expiry);
         ~MapInstanced() { }
 
-        void Update(const uint32);
+        void Update(uint32 diff) override;
 
         void UnloadAll();
         bool CanEnter(Player* player);

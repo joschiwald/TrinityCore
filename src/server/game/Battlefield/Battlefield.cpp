@@ -526,25 +526,20 @@ bool Battlefield::AddOrSetPlayerToCorrectBfGroup(Player* player)
     if (!player->IsInWorld())
         return false;
 
-    if (Group* group = player->GetGroup())
-        group->RemoveMember(player->GetGUID());
-
     Group* group = GetFreeBfRaid(player->GetTeamId());
     if (!group)
     {
-        group = new Group;
-        group->SetBattlefieldGroup(this);
+        group = new Group();
+        group->ConvertToBG();
         group->Create(player);
         sGroupMgr->AddGroup(group);
         m_Groups[player->GetTeamId()].insert(group->GetGUID());
     }
-    else if (group->IsMember(player->GetGUID()))
-    {
-        uint8 subgroup = group->GetMemberGroup(player->GetGUID());
-        player->SetBattlegroundOrBattlefieldRaid(group, subgroup);
-    }
     else
-        group->AddMember(player);
+    {
+        if (!group->IsMember(player->GetGUID()))
+            group->AddMember(player);
+    }
 
     return true;
 }

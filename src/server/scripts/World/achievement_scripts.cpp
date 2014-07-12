@@ -16,8 +16,7 @@
  */
 
 #include "ScriptMgr.h"
-#include "BattlegroundSA.h"
-#include "BattlegroundIC.h"
+#include "BattlegroundMap.h"
 #include "Vehicle.h"
 #include "Player.h"
 #include "Creature.h"
@@ -29,7 +28,7 @@ class achievement_resilient_victory : public AchievementCriteriaScript
 
         bool OnCheck(Player* source, Unit* target) override
         {
-            if (Battleground* bg = source->GetBattleground())
+            if (BattlegroundMap* bg = source->GetBattleground())
                 return bg->CheckAchievementCriteriaMeet(BG_CRITERIA_CHECK_RESILIENT_VICTORY, source, target);
 
             return false;

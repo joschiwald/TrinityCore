@@ -19,7 +19,7 @@
 #ifndef __BATTLEGROUNDSA_H
 #define __BATTLEGROUNDSA_H
 
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "BattlegroundScore.h"
 #include "Object.h"
 
@@ -570,12 +570,12 @@ class BattlegroundSA : public BattlegroundMap
         void EventPlayerClickedOnFlag(Player *Source, GameObject* target_obj);  /// Called when a player click on flag (graveyard flag)
         void EventPlayerUsedGO(Player* Source, GameObject* object);        /// Called when a player use a gamobject (relic)
 
-        void ProcessPreparation(uint32 const& diff);    // Both warmup rounds
-        void ProcessInProgress(uint32 const& diff);
+        void ProcessPreparation(uint32 diff);    // Both warmup rounds
+        void ProcessInProgress(uint32 diff);
 
         void FillInitialWorldStates(WorldPacket& data);
 
-        void UpdatePlayerScore(Player* source, uint32 type, uint32 value, bool adHonor = true); /// Called for generate packet contain worldstate data
+        bool UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true); /// Called for generate packet contain worldstate data
 
         WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);  /// Return the nearest graveyard where player can respawn
 
@@ -631,18 +631,18 @@ class BattlegroundSA : public BattlegroundMap
          * \param Source : Player who capture gy
          */
         void CaptureGraveyard(BG_SA_Graveyards i, Player *Source);
-        
+
         void ToggleTimer(); /// Switch on/off timer worldstate
-        
+
         void UpdateDemolisherSpawns();  /// Respawn dead demolisher
-        
+
         void SendTransportInit(Player* player); /// Send packet to player for create boats (client part)
         void SendTransportsRemove(Player* player);  /// Send packet to player for destroy boats (client part)
 
-        
-        BattlegroundTeamId _attackers;  /// Id of attacker team (BattlegroundTeamId)        
+
+        BattlegroundTeamId _attackers;  /// Id of attacker team (BattlegroundTeamId)
         bool _shipsStarted; /// For know if boats has start moving or not yet
-        BG_SA_GateState _gateStatus[BG_SA_GATE_COUNT];  /// Status of each gate (Destroy/Damage/Intact)
+        BG_SA_GateState _gateStatus[MAX_GATES];  /// Status of each gate (Destroy/Damage/Intact)
         uint32 _graveyardStatus[BG_SA_MAX_GY];  /// Team witch conntrol each graveyard (BattlegroundTeamId)
         BG_SA_RoundScore _roundScores[2];   /// Score of each round
         bool _timerEnabled;  /// used for know we are in timer phase or not (used for worldstate update)

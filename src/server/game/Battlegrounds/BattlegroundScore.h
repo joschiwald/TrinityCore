@@ -49,7 +49,7 @@ enum ScoreType
     SCORE_DESTROYED_WALL        = 17
 };
 
-struct BattlegroundScore
+class BattlegroundScore
 {
     friend class BattlegroundMap;
     friend class ArenaMap;

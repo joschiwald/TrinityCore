@@ -26,7 +26,6 @@
 #include "ObjectMgr.h"
 #include "Vehicle.h"
 #include "Transport.h"
-#include "WorldSession.h"
 
 void BattlegroundIC::InstallBattleground()
 {
@@ -305,7 +304,7 @@ void BattlegroundIC::ProcessInProgress(uint32 const& diff)
         _resourceTimer -= diff;
 }
 
-void BattlegroundIC::StartingEventOpenDoors()
+bool BattlegroundIC::IsAllNodesConrolledByTeam(uint32 team) const
 {
     uint32 count = 0;
     ICNodeState controlledState = team == BG_TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H;
@@ -314,6 +313,8 @@ void BattlegroundIC::StartingEventOpenDoors()
         if (_nodePoint[i].nodeState == controlledState)
             count++;
     }
+
+    return count == NODE_TYPE_WORKSHOP;
 }
 
 void BattlegroundIC::OnPlayerJoin(Player* player)
@@ -451,7 +452,6 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
                 _nodePoint[i].needChange = true;
 
                 RelocateDeadPlayers(BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1 + nodePoint[i].nodeType - 2]);
-
 
                 // if we are here means that the point has been lost, or it is the first capture
 
@@ -606,28 +606,45 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
         CastSpellOnTeam(SPELL_OIL_REFINERY, (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_TEAM_ALLIANCE : BG_TEAM_HORDE));
         break;
     case BG_IC_GO_DOCKS_BANNER:
+
+        if (recapture)
+            break;
+
         if (_docksTimer < DOCKS_UPDATE_TIME)
             _docksTimer = DOCKS_UPDATE_TIME;
 
         // we must del opposing faction vehicles when the node is captured (unused ones)
+        for (uint8 i = (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_GLAIVE_THROWER_1_H : BG_IC_NPC_GLAIVE_THROWER_1_A); i < (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_GLAIVE_THROWER_2_H : BG_IC_NPC_GLAIVE_THROWER_2_A); i++)
+        {
+            if (Creature* glaiveThrower = GetCreature(i))
+            {
+                if (Vehicle* vehicleGlaive = glaiveThrower->GetVehicleKit())
+                {
+                    if (!vehicleGlaive->GetPassenger(0))
+                        DeleteCreature(i);
+                }
+            }
+        }
+
         for (uint8 i = (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_CATAPULT_1_H : BG_IC_NPC_CATAPULT_1_A); i < (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_CATAPULT_4_H  : BG_IC_NPC_CATAPULT_4_A); i++)
         {
             if (Creature* catapult = GetCreature(i))
             {
-                if (Creature* catapult = GetCreature(i, false))
+                if (Vehicle* vehicleGlaive = catapult->GetVehicleKit())
                 {
-                    if (Vehicle* vehicleGlaive = catapult->GetVehicleKit())
-                    {
-                        if (!vehicleGlaive->GetPassenger(0))
-                            DeleteCreature(i);
-                    }
+                    if (!vehicleGlaive->GetPassenger(0))
+                        DeleteCreature(i);
                 }
             }
+        }
 
         // spawning glaive throwers
         for (uint8 i = 0; i < MAX_GLAIVE_THROWERS_SPAWNS_PER_FACTION; i++)
         {
             uint8 type = (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_GLAIVE_THROWER_1_A : BG_IC_NPC_GLAIVE_THROWER_1_H)+i;
+
+            if (GetCreature(type) && GetCreature(type)->isAlive())
+                continue;
 
             if (AddCreature(nodePoint->faction == BG_TEAM_ALLIANCE ? NPC_GLAIVE_THROWER_A : NPC_GLAIVE_THROWER_H, type, nodePoint->faction,
                     BG_IC_DocksVehiclesGlaives[i].GetPositionX(), BG_IC_DocksVehiclesGlaives[i].GetPositionY(),
@@ -641,8 +658,8 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
         {
             uint8 type = (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_CATAPULT_1_A : BG_IC_NPC_CATAPULT_1_H)+i;
 
-                if (GetCreature(type, false) && GetBGCreature(type)->IsAlive())
-                    continue;
+            if (GetCreature(type) && GetCreature(type)->isAlive())
+                continue;
 
             if (AddCreature(NPC_CATAPULT, type, nodePoint->faction,
                     BG_IC_DocksVehiclesCatapults[i].GetPositionX(), BG_IC_DocksVehiclesCatapults[i].GetPositionY(),
@@ -661,24 +678,23 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                 // we must del opposing faction vehicles when the node is captured (unused ones)
                 for (uint8 i = (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_DEMOLISHER_1_H : BG_IC_NPC_DEMOLISHER_1_A); i < (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_DEMOLISHER_4_H : BG_IC_NPC_DEMOLISHER_4_A); i++)
                 {
+                    if (Creature* demolisher = GetCreature(i))
                     {
-                        if (Creature* demolisher = GetCreature(i, false))
+                        if (Vehicle* vehicleDemolisher = demolisher->GetVehicleKit())
                         {
-                            if (Vehicle* vehicleDemolisher = demolisher->GetVehicleKit())
-                            {
-                                // is IsVehicleInUse working as expected?
-                                if (!vehicleDemolisher->IsVehicleInUse())
-                                    DeleteCreature(i);
-                            }
+                            // is IsVehicleInUse working as expected?
+                            if (!vehicleDemolisher->IsVehicleInUse())
+                                DeleteCreature(i);
                         }
                     }
+                }
 
                 for (uint8 i = 0; i < MAX_DEMOLISHERS_SPAWNS_PER_FACTION; i++)
                 {
                     uint8 type = (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_DEMOLISHER_1_A : BG_IC_NPC_DEMOLISHER_1_H)+i;
 
-                        if (GetCreature(type, false) && GetBGCreature(type)->IsAlive())
-                            continue;
+                    if (GetCreature(type) && GetCreature(type)->isAlive())
+                        continue;
 
                     if (AddCreature(NPC_DEMOLISHER, type, nodePoint->faction,
                         BG_IC_WorkshopVehicles[i].GetPositionX(), BG_IC_WorkshopVehicles[i].GetPositionY(),
@@ -690,15 +706,15 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                 // we check if the opossing siege engine is in use
                 int8 enemySiege = (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_SIEGE_ENGINE_H : BG_IC_NPC_SIEGE_ENGINE_A);
 
-                    if (Creature* siegeEngine = GetCreature(enemySiege, false))
+                if (Creature* siegeEngine = GetCreature(enemySiege))
+                {
+                    if (Vehicle* vehicleSiege = siegeEngine->GetVehicleKit())
                     {
-                        if (Vehicle* vehicleSiege = siegeEngine->GetVehicleKit())
-                        {
-                            // is VehicleInUse working as expected ?
-                            if (!vehicleSiege->IsVehicleInUse())
-                                DeleteCreature(enemySiege);
-                        }
+                        // is VehicleInUse working as expected ?
+                        if (!vehicleSiege->IsVehicleInUse())
+                            DeleteCreature(enemySiege);
                     }
+                }
 
                 uint8 siegeType = (nodePoint->faction == BG_TEAM_ALLIANCE ? BG_IC_NPC_SIEGE_ENGINE_A : BG_IC_NPC_SIEGE_ENGINE_H);
                 if (!GetCreature(siegeType) || !GetCreature(siegeType)->isAlive())
@@ -714,16 +730,25 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
                         siegeEngine->setFaction(BG_IC_Factions[(nodePoint->faction == BG_TEAM_ALLIANCE ? 0 : 1)]);
                     }
                 }
+            }
 
-                for (uint8 i = 0; i < MAX_WORKSHOP_BOMBS_SPAWNS_PER_FACTION; ++i)
+            for (uint8 i = 0; i < MAX_WORKSHOP_BOMBS_SPAWNS_PER_FACTION; i++)
+            {
+                AddGameObject(BG_IC_GO_SEAFORIUM_BOMBS_1+i, GO_SEAFORIUM_BOMBS,
+                workshopBombs[i].GetPositionX(), workshopBombs[i].GetPositionY(),
+                workshopBombs[i].GetPositionZ(), workshopBombs[i].GetOrientation(),
+                0, 0, 0, 0, 10);
+
+                if (GameObject* seaforiumBombs = GetGameObject(BG_IC_GO_SEAFORIUM_BOMBS_1+i))
                 {
                     seaforiumBombs->SetRespawnTime(10);
                     seaforiumBombs->SetUInt32Value(GAMEOBJECT_FACTION, BG_IC_Factions[(nodePoint->faction == BG_TEAM_ALLIANCE ? 0 : 1)]);
                 }
-                break;
             }
-        default:
             break;
+        }
+    default:
+        break;
     }
 }
 
@@ -840,5 +865,5 @@ bool BattlegroundIC::IsSpellAllowed(uint32 spellId, Player const* player) const
            break;
     }
 
-    return true;
+    return BattlegroundMap::IsSpellAllowed(spellId, player);
 }

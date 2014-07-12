@@ -27,7 +27,6 @@
 #include "SpellScript.h"
 #include "SpellAuraEffects.h"
 #include "SkillDiscovery.h"
-#include "Battleground.h"
 
 // Generic script for handling item dummy effects which trigger another spell.
 class spell_item_trigger_spell : public SpellScriptLoader

@@ -19,10 +19,8 @@
 #include "ArenaScore.h"
 #include "ArenaTeam.h"
 #include "ArenaTeamMgr.h"
-#include "ArenaScore.h"
 #include "BattlegroundScore.h"
 #include "Player.h"
-#include "Log.h"
 
 void ArenaMap::InstallBattleground()
 {
@@ -90,6 +88,7 @@ void ArenaMap::EndBattleground(BattlegroundWinner winner)
 
 Group* ArenaMap::GetGroupForTeam(uint32 team) const
 {
+    // Teams in arena's are in the same group
     PlayerList const& players = GetPlayers();
     for (MapRefManager::iterator itr = players.begin(); itr != players.end(); ++itr)
         if (Player* player = itr->getSource())

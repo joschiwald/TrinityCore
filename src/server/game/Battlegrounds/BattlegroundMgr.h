@@ -70,7 +70,6 @@ class BattlegroundMgr
 
         void AddBattleground(uint32 InstanceID, BattlegroundTypeId bgTypeId, Battleground* BG) { _battlegrounds[bgTypeId][InstanceID] = BG; };
         void RemoveBattleground(uint32 instanceID, BattlegroundTypeId bgTypeId) { _battlegrounds[bgTypeId].erase(instanceID); }
-        uint32 CreateClientVisibleInstanceId(BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket_id);
 
         void LoadBattlegroundTemplates();
         void DeleteAllBattlegrounds();

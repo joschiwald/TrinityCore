@@ -22338,6 +22338,11 @@ void Player::SetBGTeam(uint32 team)
     SetByteValue(PLAYER_BYTES_3, 3, uint8(team == ALLIANCE ? 1 : 0));
 }
 
+BattlegroundTeamId Player::GetBGTeamId() const
+{
+    return GetByteValue(PLAYER_BYTES_3, 3);
+}
+
 uint32 Player::GetBGTeam() const
 {
     return m_bgData.bgTeam ? m_bgData.bgTeam : GetTeam();
@@ -22367,17 +22372,17 @@ void Player::LeaveBattleground(bool teleportToEntryPoint)
     }
 }
 
-bool Player::CanJoinToBattleground(Battleground const* bg) const
+bool Player::CanJoinToBattleground(BattlegroundTemplate const* bg) const
 {
     // check Deserter debuff
     if (HasAura(26013))
         return false;
 
-    if (bg->isArena() && !GetSession()->HasPermission(rbac::RBAC_PERM_JOIN_ARENAS))
+    if (bg->IsArena() && !GetSession()->HasPermission(rbac::RBAC_PERM_JOIN_ARENAS))
         return false;
 
-    if (bg->IsRandom() && !GetSession()->HasPermission(rbac::RBAC_PERM_JOIN_RANDOM_BG))
-        return false;
+    //if (bg->IsRandom() && !GetSession()->HasPermission(rbac::RBAC_PERM_JOIN_RANDOM_BG))
+    //    return false;
 
     if (!GetSession()->HasPermission(rbac::RBAC_PERM_JOIN_NORMAL_BG))
         return false;
@@ -23425,7 +23430,7 @@ void Player::ResetMonthlyQuestStatus()
 
 BattlegroundMap* Player::GetBattleground() const
 {
-    return dynamic_cast<BattlegroundMap*>(GetMap());
+    return GetMap()->ToBattlegroundMap();
 }
 
 bool Player::InBattlegroundQueue() const
@@ -23520,13 +23525,13 @@ bool Player::IsInvitedForBattlegroundInstance(uint32 instanceId) const
 
 bool Player::InArena() const
 {
-    return dynamic_cast<ArenaMap*>(GetMap()) == NULL ? false : true;
+    return GetMap()->IsBattleArena();
 }
 
 bool Player::GetBGAccessByLevel(BattlegroundTypeId bgTypeId) const
 {
     // get a template bg instead of running one
-    Battleground* bg = sBattlegroundMgr->GetBattleground(bgTypeId);
+    BattlegroundMap* bg = sBattlegroundMgr->GetBattleground(bgTypeId);
     if (!bg)
         return false;
 
@@ -24305,9 +24310,9 @@ bool Player::inRandomLfgDungeon()
     return false;
 }
 
-void Player::SetBattlegroundOrBattlefieldRaid(Group* group, int8 subgroup)
+void Player::SetSecondaryGroup(Group* group, int8 subgroup)
 {
-    //we must move references from m_group to m_originalGroup
+    // we must move references from m_group to m_originalGroup
     SetOriginalGroup(GetGroup(), GetSubGroup());
 
     m_group.unlink();
@@ -24315,7 +24320,7 @@ void Player::SetBattlegroundOrBattlefieldRaid(Group* group, int8 subgroup)
     m_group.setSubGroup((uint8)subgroup);
 }
 
-void Player::RemoveFromBattlegroundOrBattlefieldRaid()
+void Player::RemoveFromSecondaryGroup()
 {
     //remove existing reference
     m_group.unlink();

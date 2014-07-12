@@ -33,20 +33,9 @@ class WorldObject;
 class WorldPacket;
 class BattlegroundMap;
 
-struct BattlegroundScore;
 struct Position;
 struct PvPDifficultyEntry;
 struct WorldSafeLocsEntry;
-
-enum BattlegroundCriteriaId
-{
-    BG_CRITERIA_CHECK_RESILIENT_VICTORY,
-    BG_CRITERIA_CHECK_SAVE_THE_DAY,
-    BG_CRITERIA_CHECK_EVERYTHING_COUNTS,
-    BG_CRITERIA_CHECK_AV_PERFECTION,
-    BG_CRITERIA_CHECK_DEFENSE_OF_THE_ANCIENTS,
-    BG_CRITERIA_CHECK_NOT_EVEN_A_SCRATCH,
-};
 
 enum BattlegroundSounds
 {
@@ -85,12 +74,6 @@ enum BattlegroundMarks
     ITEM_SA_MARK_OF_HONOR           = 42425
 };
 
-enum BattlegroundCreatures
-{
-    BG_CREATURE_ENTRY_A_SPIRITGUIDE      = 13116,           // alliance
-    BG_CREATURE_ENTRY_H_SPIRITGUIDE      = 13117            // horde
-};
-
 enum BattlegroundTimeIntervals
 {
     CHECK_PLAYER_POSITION_INVERVAL  = 1000,                 // ms
@@ -103,24 +86,6 @@ enum BattlegroundTimeIntervals
     RESPAWN_IMMEDIATELY             = 0,                    // secs
     BUFF_RESPAWN_TIME               = 180                   // secs
 };
-
-enum BattlegroundStartTimeIntervals
-{
-    BG_START_DELAY_2M               = 120000,               // ms (2 minutes)
-    BG_START_DELAY_1M               = 60000,                // ms (1 minute)
-    BG_START_DELAY_30S              = 30000,                // ms (30 seconds)
-    BG_START_DELAY_15S              = 15000,                // ms (15 seconds) Used only in arena
-    BG_START_DELAY_NONE             = 0                     // ms
-};
-
-enum BattlegroundBuffObjects
-{
-    BG_OBJECTID_SPEEDBUFF_ENTRY     = 179871,
-    BG_OBJECTID_REGENBUFF_ENTRY     = 179904,
-    BG_OBJECTID_BERSERKERBUFF_ENTRY = 179905
-};
-
-const uint32 Buff_Entries[3] = { BG_OBJECTID_SPEEDBUFF_ENTRY, BG_OBJECTID_REGENBUFF_ENTRY, BG_OBJECTID_BERSERKERBUFF_ENTRY };
 
 struct BattlegroundPlayer
 {
@@ -137,35 +102,6 @@ struct BattlegroundObjectInfo
     uint32      spellid;
 };
 
-enum ArenaType
-{
-    ARENA_TYPE_2v2          = 2,
-    ARENA_TYPE_3v3          = 3,
-    ARENA_TYPE_5v5          = 5
-};
-
-enum BattlegroundType
-{
-    TYPE_BATTLEGROUND     = 3,
-    TYPE_ARENA            = 4
-};
-
-enum BattlegroundWinner
-{
-    WINNER_HORDE            = 0,
-    WINNER_ALLIANCE         = 1,
-    WINNER_NONE             = 2
-};
-
-#define BG_TEAMS_COUNT  2
-
-enum BattlegroundTeamId
-{
-    BG_TEAM_ALLIANCE        = 0,
-    BG_TEAM_HORDE           = 1,
-    BG_TEAMS_COUNT          = 2
-};
-
 enum BattlegroundStartingEvents
 {
     BG_STARTING_EVENT_NONE  = 0x00,
@@ -173,22 +109,6 @@ enum BattlegroundStartingEvents
     BG_STARTING_EVENT_2     = 0x02,
     BG_STARTING_EVENT_3     = 0x04,
     BG_STARTING_EVENT_4     = 0x08
-};
-
-enum BattlegroundStartingEventsIds
-{
-    BG_STARTING_EVENT_FIRST     = 0,
-    BG_STARTING_EVENT_SECOND    = 1,
-    BG_STARTING_EVENT_THIRD     = 2,
-    BG_STARTING_EVENT_FOURTH    = 3
-};
-#define BG_STARTING_EVENT_COUNT 4
-
-enum BGHonorMode
-{
-    BG_NORMAL = 0,
-    BG_HOLIDAY,
-    BG_HONOR_MODE_NUM
 };
 
 #define BG_AWARD_ARENA_POINTS_MIN_LEVEL 71
@@ -223,7 +143,6 @@ class Battleground
         /* achievement req. */
         virtual bool IsAllNodesControlledByTeam(uint32 /*team*/) const { return false; }
         void StartTimedAchievement(AchievementCriteriaTimedTypes type, uint32 entry);
-        virtual bool CheckAchievementCriteriaMeet(uint32 /*criteriaId*/, Player const* /*player*/, Unit const* /*target*/ = NULL, uint32 /*miscvalue1*/ = 0);
 
         /* Battleground */
         // Get methods:
@@ -231,7 +150,6 @@ class Battleground
         BattlegroundTypeId GetTypeID(bool GetRandom = false) const { return GetRandom ? m_RandomTypeID : m_TypeID; }
         BattlegroundBracketId GetBracketId() const { return m_BracketId; }
         uint32 GetInstanceID() const        { return m_InstanceID; }
-        BattlegroundStatus GetStatus() const { return m_Status; }
         uint32 GetClientInstanceID() const  { return m_ClientInstanceID; }
         uint32 GetStartTime() const         { return m_StartTime; }
         uint32 GetEndTime() const           { return m_EndTime; }
@@ -259,7 +177,6 @@ class Battleground
         //here we can count minlevel and maxlevel for players
         void SetBracket(PvPDifficultyEntry const* bracketEntry);
         void SetInstanceID(uint32 InstanceID) { m_InstanceID = InstanceID; }
-        void SetStatus(BattlegroundStatus Status) { m_Status = Status; }
         void SetClientInstanceID(uint32 InstanceID) { m_ClientInstanceID = InstanceID; }
         void SetStartTime(uint32 Time)      { m_StartTime = Time; }
         void SetEndTime(uint32 Time)        { m_EndTime = Time; }
@@ -297,9 +214,6 @@ class Battleground
         typedef std::map<uint64, BattlegroundPlayer> BattlegroundPlayerMap;
         BattlegroundPlayerMap const& GetPlayers() const { return m_Players; }
         uint32 GetPlayersSize() const { return m_Players.size(); }
-
-        typedef std::map<uint32, BattlegroundScore*> BattlegroundScoreMap;
-        uint32 GetPlayerScoresSize() const { return PlayerScores.size(); }
 
         uint32 GetReviveQueueSize() const { return m_ReviveQueue.size(); }
 
@@ -456,8 +370,6 @@ class Battleground
         virtual void SetDroppedFlagGUID(uint64 /*guid*/, int32 /*team*/ = -1) { }
         virtual void HandleQuestComplete(uint32 /*questid*/, Player* /*player*/) { }
         virtual bool CanActivateGO(int32 /*entry*/, uint32 /*team*/) const { return true; }
-        virtual bool IsSpellAllowed(uint32 /*spellId*/, Player const* /*player*/) const { return true; }
-        uint32 GetTeamScore(uint32 TeamID) const;
 
         virtual uint32 GetPrematureWinner();
 
@@ -478,8 +390,6 @@ class Battleground
         void _ProcessJoin(uint32 diff);
         void _CheckSafePositions(uint32 diff);
 
-        // Scorekeeping
-        BattlegroundScoreMap PlayerScores;                // Player scores
         // must be implemented in BG subclass
         virtual void RemovePlayer(Player* /*player*/, uint64 /*guid*/, uint32 /*team*/) { }
 
@@ -498,7 +408,6 @@ class Battleground
         bool   m_IsRandom;
 
         BGHonorMode m_HonorMode;
-        int32 m_TeamScores[BG_TEAMS_COUNT];
 
     private:
         // Battleground

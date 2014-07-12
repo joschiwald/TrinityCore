@@ -49,9 +49,10 @@ class CreatureGroup;
 struct ScriptInfo;
 struct ScriptAction;
 struct Position;
-class MapInstanced;
+class ArenaMap;
 class BattlegroundMap;
 class InstanceMap;
+class MapInstanced;
 class Transport;
 namespace Trinity { struct ObjectUpdater; }
 
@@ -285,7 +286,7 @@ class Map : public GridRefManager<NGridType>
         template<class T> void RemoveFromMap(T *, bool);
 
         void VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::ObjectUpdater, GridTypeMapContainer> &gridVisitor, TypeContainerVisitor<Trinity::ObjectUpdater, WorldTypeMapContainer> &worldVisitor);
-        virtual void Update(const uint32);
+        virtual void Update(uint32 t_diff);
 
         float GetVisibilityRange() const { return _visibleDistance; }
         //function for setting up visibility distance for maps on per-type/per-Id basis
@@ -323,8 +324,8 @@ class Map : public GridRefManager<NGridType>
         time_t GetGridExpiry(void) const { return i_gridExpiry; }
         uint32 GetId(void) const { return i_mapEntry->MapID; }
 
-        static bool ExistMap(uint32 mapid, int gx, int gy);
-        static bool ExistVMap(uint32 mapid, int gx, int gy);
+        static bool ExistMap(uint32 mapId, int gx, int gy);
+        static bool ExistVMap(uint32 mapId, int gx, int gy);
 
         static void InitStateMachine();
         static void DeleteStateMachine();
@@ -462,8 +463,11 @@ class Map : public GridRefManager<NGridType>
         InstanceMap* ToInstanceMap() { if (IsDungeon()) return reinterpret_cast<InstanceMap*>(this); else return NULL;  }
         InstanceMap const* ToInstanceMap() const { if (IsDungeon()) return reinterpret_cast<InstanceMap const*>(this); return NULL; }
 
-        BattlegroundMap* ToBattlegroundMap() { if (IsBattlegroundOrArena()) return reinterpret_cast<BattlegroundMap*>(this); else return NULL;  }
-        BattlegroundMap const* ToBattlegroundMap() const { if (IsBattlegroundOrArena()) return reinterpret_cast<BattlegroundMap const*>(this); return NULL; }
+        BattlegroundMap* ToBattlegroundMap() { if (IsBattlegroundOrArena()) return reinterpret_cast<BattlegroundMap*>(this); else return nullptr;  }
+        BattlegroundMap const* ToBattlegroundMap() const { if (IsBattlegroundOrArena()) return reinterpret_cast<BattlegroundMap const*>(this); return nullptr; }
+
+        ArenaMap* ToArenaMap() { if (IsBattleArena()) return reinterpret_cast<ArenaMap*>(this); else return nullptr; }
+        ArenaMap const* ToArenaMap() const { if (IsBattleArena()) return reinterpret_cast<ArenaMap const*>(this); return nullptr; }
 
         float GetWaterOrGroundLevel(float x, float y, float z, float* ground = NULL, bool swim = false) const;
         float GetHeight(uint32 phasemask, float x, float y, float z, bool vmap = true, float maxSearchDist = DEFAULT_HEIGHT_SEARCH) const;
@@ -680,7 +684,7 @@ class InstanceMap : public Map
         ~InstanceMap();
         bool AddPlayerToMap(Player*);
         void RemovePlayerFromMap(Player*, bool);
-        void Update(const uint32);
+        void Update(uint32);
         void CreateInstanceData(bool load);
         bool Reset(uint8 method);
         uint32 GetScriptId() { return i_script_id; }

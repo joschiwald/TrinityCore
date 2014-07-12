@@ -20,10 +20,12 @@
 
 enum BattlegroundTeamId
 {
-    BG_TEAM_ALLIANCE        = 0,
-    BG_TEAM_HORDE           = 1,
-    BG_TEAMS_COUNT          = 2
+    BG_TEAM_HORDE           = 0,
+    BG_TEAM_ALLIANCE        = 1,
+    BG_TEAM_NEUTRAL         = 2
 };
+
+#define BG_TEAMS_COUNT      2
 
 #include "BattlegroundTemplate.h"
 #include "MapInstanced.h"
@@ -60,6 +62,12 @@ enum BattlegroundWinner
     WINNER_HORDE            = 0,
     WINNER_ALLIANCE         = 1,
     WINNER_NONE             = 2
+};
+
+enum BattlegroundCreatures
+{
+    BG_CREATURE_SPIRITGUIDE_ALLIANCE    = 13116,
+    BG_CREATURE_SPIRITGUIDE_HORDE       = 13117
 };
 
 enum BattlegroundTimeIntervals
@@ -100,6 +108,16 @@ enum BGHonorMode
     BG_HONOR_MODE_NUM
 };
 
+enum BattlegroundAchievementCriteriaId
+{
+    BG_CRITERIA_CHECK_RESILIENT_VICTORY,
+    BG_CRITERIA_CHECK_SAVE_THE_DAY,
+    BG_CRITERIA_CHECK_EVERYTHING_COUNTS,
+    BG_CRITERIA_CHECK_AV_PERFECTION,
+    BG_CRITERIA_CHECK_DEFENSE_OF_THE_ANCIENTS,
+    BG_CRITERIA_CHECK_NOT_EVEN_A_SCRATCH,
+};
+
 enum BattlegroundBuffObjects
 {
     BG_OBJECTID_SPEEDBUFF_ENTRY     = 179871,
@@ -107,10 +125,10 @@ enum BattlegroundBuffObjects
     BG_OBJECTID_BERSERKERBUFF_ENTRY = 179905
 };
 
-const uint32 BuffEntries[3] =
+uint32 const BuffEntries[3] =
 {
-    BG_OBJECTID_SPEEDBUFF_ENTRY, 
-    BG_OBJECTID_REGENBUFF_ENTRY, 
+    BG_OBJECTID_SPEEDBUFF_ENTRY,
+    BG_OBJECTID_REGENBUFF_ENTRY,
     BG_OBJECTID_BERSERKERBUFF_ENTRY
 };
 
@@ -134,8 +152,6 @@ enum BattlegroundSpells
     SPELL_THE_LAST_STANDING         = 26549                 // Arena achievement related
 };
 
-
-// Todo: IN MGR?
 enum ArenaType
 {
     ARENA_TYPE_2v2          = 2,
@@ -150,7 +166,6 @@ class BattlegroundMap : public MapInstanced
     friend class WorldSession;
     friend class MapManager;
 
-    public:
     protected:
         // Typedefs here
         typedef std::map<uint32, BattlegroundScore*> BattlegroundScoreMap;
@@ -162,26 +177,26 @@ class BattlegroundMap : public MapInstanced
         uint32 GetMinLevel() const { return _template.MinLevel; }
         uint32 GetMaxLevel() const { return _template.MaxLevel; }
 
-        uint32 GetStatus() const { return Status; }
+        BattlegroundStatus GetStatus() const { return Status; }
 
         uint32 GetBonusHonorFromKill(uint32 kills) const;
 
     protected:
         /* Methods called by upper level code */
-        BattlegroundMap(uint32 id, time_t expiry, uint32 instanceId, BattlegroundTemplate* bgtemplate);
+        BattlegroundMap(uint32 id, time_t expiry, uint32 instanceId, BattlegroundTemplate* bgTemplate);
         virtual ~BattlegroundMap();
 
         bool AddPlayerToMap(Player* player) override;
-        void RemovePlayerFromMap(Player*, bool) override;
+        void RemovePlayerFromMap(Player*, bool remove) override;
 
-        void Update(uint32 const& diff);
+        void Update(uint32 diff) override;
 
         // processing methods
-        virtual void ProcessPreparation(uint32 const& diff);
-        virtual void ProcessInProgress(uint32 const& diff);
-        virtual void ProcessEnded(uint32 const& diff);
+        virtual void ProcessPreparation(uint32 diff);
+        virtual void ProcessInProgress(uint32 diff);
+        virtual void ProcessEnded(uint32 diff);
 
-        bool CanEnter(Player* player);
+        bool CanEnter(Player* player) override;
         void SetUnload();
 
         // Packet builders
@@ -190,53 +205,61 @@ class BattlegroundMap : public MapInstanced
         // Achievement related methods
         void StartTimedAchievement(AchievementCriteriaTimedTypes type, uint32 entry);
 
+    public:
+        // Public Hooks
+        virtual bool CheckAchievementCriteriaMeet(uint32 /*criteriaId*/, Player const* /*player*/, Unit const* /*target*/ = NULL, uint32 /*miscValue*/ = 0);
+        virtual bool IsSpellAllowed(uint32 /*spellId*/, Player const* /*player*/) const { return true; }
+        bool IsTeamScoreInRange(BattlegroundTeamId teamId, uint32 minScore, uint32 maxScore) const;
+
+    protected:
         // Team event related methods
-        void RewardHonorToTeam(uint32 amount, BattlegroundTeamId team);
-        void RewardReputationToTeam(uint32 targetFaction, uint32 amount, BattlegroundTeamId team);
-        void CastSpellOnTeam(uint32 spell, BattlegroundTeamId team);
-        void RemoveAuraOnTeam(uint32 spell, BattlegroundTeamId team);
+        int32 GetTeamScore(BattlegroundTeamId teamId) const;
+        void RewardHonorToTeam(uint32 amount, BattlegroundTeamId teamId);
+        void RewardReputationToTeam(uint32 targetFaction, uint32 amount, BattlegroundTeamId teamId);
+        void CastSpellOnTeam(uint32 spellId, BattlegroundTeamId teamId);
+        void RemoveAuraOnTeam(uint32 spellId, BattlegroundTeamId teamId);
 
         /* Methods and attributes accessed by subclasses */
         // Initialization
-        virtual void InitializeObjects() {}                 // Resize ObjectGUIDsByType and spawn objects
-        virtual void InitializeTextIds() {};                // Initializes text IDs that are used in the battleground at any possible phase.
-        virtual void InitializePreparationDelayTimes() {};  // Initializes preparation delay timers.
-        virtual void FillInitialWorldStates(WorldPacket& data) {};
+        virtual void InitializeObjects() { }               // Resize ObjectGUIDsByType and spawn objects
+        virtual void InitializeTextIds() { }               // Initializes text IDs that are used in the battleground at any possible phase.
+        virtual void InitializePreparationDelayTimes() { } // Initializes preparation delay timers.
+        virtual void FillInitialWorldStates(WorldPacket& data) { }
 
-        virtual void InstallBattleground() {};  // Calls all overridable InitializeXX() methods and other variables
-        virtual void StartBattleground() {};    // Initializes EndTimer and opens gameobjects
-        virtual void EndBattleground(BattlegroundWinner winner) {};  // Handles out rewards etc
-        virtual void DestroyBattleground() {};  // Contains battleground specific cleanup method calls.
+        virtual void InstallBattleground() { }  // Calls all overridable InitializeXX() methods and other variables
+        virtual void StartBattleground() { }    // Initializes EndTimer and opens gameobjects
+        virtual void EndBattleground(BattlegroundWinner winner) { } // Handles out rewards etc
+        virtual void DestroyBattleground() { }  // Contains battleground specific cleanup method calls.
         uint32 GetWinningTeam() const { return _winner; }  // Returns winning team (for packet)
 
         virtual bool UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true);
         void UpdateWorldState(uint32 type, uint32 value);
         void SendMessageToAll(int32 entry, ChatMsg type, Unit* source = NULL, Language language = LANG_UNIVERSAL);
-        void SendMessageToAll(char const* string, ChatMsg type, Unit* source = NULL, Language language = LANG_UNIVERSAL);
         void PlaySoundToAll(uint32 soundId);
 
         char const* ParseStrings(int32 mainEntry, int32 args1, int32 args2 = 0);
         char const* ParseStrings(int32 mainEntry, char const* args1, char const* args2 = NULL);
         char const* ParseStrings(int32 mainEntry, int32 args1, const char* args2);
-        char const* ParseStrings(char* const mainString, int32 args);
+        char const* ParseStrings(char const* mainString, int32 args);
 
         // Entity management - GameObject
-        GameObject* AddGameObject(uint32 type, uint32 entry, float x, float y, float z, float o, float r0, float r1, float r2, float r3, uint32 respawnTime = 0);   // Adds GO's to the map but doesn't necessarily spawn them
-        GameObject* AddGameObject(uint32 type, uint32 entry, Position* pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0);   // Adds GO's to the map but doesn't necessarily spawn them
+        GameObject* AddGameObject(uint32 type, uint32 entry, float x, float y, float z, float o, float r0, float r1, float r2, float r3, uint32 respawnTime = 0); // Adds GO's to the map but doesn't necessarily spawn them
+        GameObject* AddGameObject(uint32 type, uint32 entry, Position const& pos, float r0, float r1, float r2, float r3, uint32 respawnTime = 0); // Adds GO's to the map but doesn't necessarily spawn them
         GameObject* GetGameObject(uint32 type);
-        void SpawnGameObject(uint32 type, uint32 respawntime);  // Spawns an already added gameobject
-        bool DeleteGameObject(uint32 type); // Deletes an object with specified type designation 
+        void SpawnGameObject(uint32 type, uint32 respawnTime); // Spawns an already added gameobject
+        bool DeleteGameObject(uint32 type); // Deletes an object with specified type designation
         void DoorOpen(uint32 type);
         void DoorClose(uint32 type);
 
         // Entity management - Creature
-        void AddSpiritGuide(uint32 type, float x, float y, float z, float o, uint32 team);
-        Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o, uint32 respawntime = 0); // Adds and spawns creatures to map
-        Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, Position* pos, uint32 respawntime = 0); // Adds and spawns creatures to map
+        void AddSpiritGuide(uint32 type, float x, float y, float z, float o, BattlegroundTeamId teamId);
+        void AddSpiritGuide(uint32 type, Position const& pos, BattlegroundTeamId teamId);
+        Creature* AddCreature(uint32 entry, uint32 type, float x, float y, float z, float o, uint32 respawnTime = 0); // Adds and spawns creatures to map
+        Creature* AddCreature(uint32 entry, uint32 type, Position const& pos, uint32 respawnTime = 0); // Adds and spawns creatures to map
         Creature* GetCreature(uint32 type);
         bool DeleteCreature(uint32 type);
 
-        int32 GetObjectType(uint64 const& guid) const;
+        int32 GetObjectType(uint64 guid) const;
         std::vector<uint64> ObjectGUIDsByType;      // Stores object GUIDs per enum-defined arbitrary type
 
         // Hooks called after Map methods
@@ -244,11 +267,11 @@ class BattlegroundMap : public MapInstanced
         virtual void OnPlayerExit(Player* player);  // Remove battleground specific auras etc.
 
         // Misc. hooks
-        virtual void OnPlayerKill(Player* victim, Player* killer) {};
-        virtual void OnUnitKill(Creature* victim, Player* killer) {};
-        virtual void OnPlayerResurrect(Player* player) {};
-        virtual void OnTimeoutReached() { EndBattleground(WINNER_NONE); };        // Must be overwritten for subclasses with bg-specific rules on who wins on a draw
-        
+        virtual void OnPlayerKill(Player* victim, Player* killer) { }
+        virtual void OnUnitKill(Creature* victim, Player* killer) { }
+        virtual void OnPlayerResurrect(Player* player) { }
+        virtual void OnTimeoutReached() { EndBattleground(WINNER_NONE); } // Must be overwritten for subclasses with bg-specific rules on who wins on a draw
+
         // Status and overridable timers
         BattlegroundStatus Status;
         uint8 PreparationPhase;
@@ -265,6 +288,7 @@ class BattlegroundMap : public MapInstanced
         uint16 ParticipantCount[BG_TEAMS_COUNT];            // Players actually in the battleground
 
         std::map<uint64, std::vector<uint64>>  ReviveQueue; // Spirit Guide guid + Player list GUIDS
+
     private:
         // Private initializers, non overridable
         void InitVisibilityDistance() final;
@@ -274,7 +298,7 @@ class BattlegroundMap : public MapInstanced
 
         // Packet senders
         void SendPacketToAll(WorldPacket* data);
-        void SendPacketToTeam(WorldPacket* data, uint32 team, Player* exclude);
+        void SendPacketToTeam(WorldPacket* data, BattlegroundTeamId teamId, Player* exclude);
         void SendPlayerJoinedPacket(Player* player);
         void SendPlayerLeftPacket(Player* player);
 

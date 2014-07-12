@@ -97,7 +97,7 @@ class BattlegroundRV : public ArenaMap
         BattlegroundRV();
         ~BattlegroundRV();
 
-        void ProcessInProgress(uint32 const& diff);
+        void ProcessInProgress(uint32 diff) override;
 
         void StartBattleground();
         void InitializeObjects();

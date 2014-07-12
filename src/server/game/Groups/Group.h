@@ -25,7 +25,6 @@
 #include "QueryResult.h"
 #include "SharedDefines.h"
 
-class Battlefield;
 class BattlegroundMap;
 class Creature;
 class GroupReference;
@@ -37,6 +36,7 @@ class WorldObject;
 class WorldPacket;
 class WorldSession;
 
+struct BattlegroundTemplate;
 struct MapEntry;
 
 #define MAXGROUPSIZE 5
@@ -87,8 +87,8 @@ enum GroupType
     GROUPTYPE_RAID   = 0x02,
     GROUPTYPE_BGRAID = GROUPTYPE_BG | GROUPTYPE_RAID,       // mask
     GROUPTYPE_UNK1   = 0x04,
-    GROUPTYPE_LFG    = 0x08
-    // 0x10, leave/change group?, I saw this flag when leaving group and after leaving BG while in group
+    GROUPTYPE_LFG    = 0x08,
+    GROUPTYPE_UNK2   = 0x10  // leave/change group?, I saw this flag when leaving group and after leaving BG while in group
 };
 
 enum GroupUpdateFlags
@@ -203,11 +203,11 @@ class Group
 
         // properties accessories
         bool IsFull() const;
-        bool isLFGGroup()  const;
-        bool isRaidGroup() const;
-        bool isBGGroup()   const;
-        bool isBFGroup()   const;
-        bool IsCreated()   const;
+        bool IsLFGGroup()  const;
+        bool IsRaidGroup() const;
+        bool IsBattleGroup() const;
+        bool IsTempGroup() const;
+        bool IsCreated() const;
         uint64 GetLeaderGUID() const;
         uint64 GetGUID() const;
         uint32 GetLowGUID() const;
@@ -240,12 +240,11 @@ class Group
 
         uint8 GetMemberGroup(uint64 guid) const;
 
+        void ConvertToBG();
         void ConvertToLFG();
         void ConvertToRaid();
 
-        void SetBattlegroundGroup(Battleground* bg);
-        void SetBattlefieldGroup(Battlefield* bf);
-        GroupJoinBattlegroundResult CanJoinBattlegroundQueue(Battleground const* bgOrTemplate, BattlegroundQueueTypeId bgQueueTypeId, uint32 MinPlayerCount, uint32 MaxPlayerCount, bool isRated, uint32 arenaSlot);
+        GroupJoinBattlegroundResult CanJoinBattlegroundQueue(BattlegroundTemplate const* bgTemplate, BattlegroundQueueTypeId bgQueueTypeId, PvPDifficultyEntry const* bracket, uint32 MinPlayerCount, uint32 MaxPlayerCount, bool isRated, uint32 arenaSlot);
 
         void ChangeMembersGroup(uint64 guid, uint8 group);
         void ChangeMembersGroup(Player* player, uint8 group);
@@ -328,8 +327,6 @@ class Group
         GroupType           m_groupType;
         Difficulty          m_dungeonDifficulty;
         Difficulty          m_raidDifficulty;
-        Battleground*       m_bgGroup;
-        Battlefield*        m_bfGroup;
         uint64              m_targetIcons[TARGETICONCOUNT];
         LootMethod          m_lootMethod;
         ItemQualities       m_lootThreshold;

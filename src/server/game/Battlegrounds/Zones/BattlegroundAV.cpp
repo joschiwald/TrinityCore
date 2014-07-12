@@ -31,8 +31,6 @@
 
 void BattlegroundAV::InstallBattleground()
 {
-    _maxLevel = 0;
-
     for (uint8 i = 0; i < BG_TEAMS_COUNT; ++i) //forloop for both teams (it just make 0 == alliance and 1 == horde also for both mines 0=north 1=south
     {
         for (uint8 j = 0; j < 9; ++j)
@@ -347,7 +345,7 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
         Creature* creature = GetCreature(AV_CPLACE_HERALD);
         if (creature)
             SendMessageToAll(LANG_BG_AV_H_CAPTAIN_DEAD, CHAT_MSG_MONSTER_YELL, creature);
-            
+
         DeleteCreature(AV_CPLACE_TRIGGER18);
     }
     else if (entry == BG_AV_CreatureInfo[AV_NPC_N_MINE_N_4][0] || entry == BG_AV_CreatureInfo[AV_NPC_N_MINE_A_4][0] || entry == BG_AV_CreatureInfo[AV_NPC_N_MINE_H_4][0])
@@ -872,7 +870,7 @@ void BattlegroundAV::PopulateNode(AVNodeId node)
             creatureid = (owner == BG_TEAM_ALLIANCE) ? AV_NPC_A_GRAVEDEFENSE2 : AV_NPC_H_GRAVEDEFENSE2;
         else
             creatureid = (owner == BG_TEAM_ALLIANCE) ? AV_NPC_A_GRAVEDEFENSE3 : AV_NPC_H_GRAVEDEFENSE3;
-        
+
         //spiritguide
         DeleteCreature(node);
 
@@ -912,7 +910,7 @@ void BattlegroundAV::DePopulateNode(AVNodeId node)
     uint32 c_place = AV_CPLACE_DEFENSE_STORM_AID + (4 * node);
     for (uint8 i=0; i<4; i++)
             DeleteCreature(c_place+i);
-    
+
     //spiritguide
     if (!IsTower(node))
         DeleteCreature(node);

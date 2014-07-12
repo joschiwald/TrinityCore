@@ -206,9 +206,6 @@ Battleground::~Battleground()
     }
     // remove from bg free slot queue
     RemoveFromBGFreeSlotQueue();
-
-    for (BattlegroundScoreMap::const_iterator itr = PlayerScores.begin(); itr != PlayerScores.end(); ++itr)
-        delete itr->second;
 }
 
 void Battleground::Update(uint32 diff)
@@ -1912,23 +1909,8 @@ void Battleground::RewardXPAtKill(Player* killer, Player* victim)
         killer->RewardPlayerAndGroupAtKill(victim, true);
 }
 
-uint32 Battleground::GetTeamScore(uint32 teamId) const
-{
-    if (teamId == TEAM_ALLIANCE || teamId == TEAM_HORDE)
-        return m_TeamScores[teamId];
-
-    TC_LOG_ERROR("bg.battleground", "GetTeamScore with wrong Team %u for BG %u", teamId, GetTypeID());
-    return 0;
-}
-
 void Battleground::HandleAreaTrigger(Player* player, uint32 trigger)
 {
     TC_LOG_DEBUG("bg.battleground", "Unhandled AreaTrigger %u in Battleground %u. Player coords (x: %f, y: %f, z: %f)",
                    trigger, player->GetMapId(), player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
-}
-
-bool Battleground::CheckAchievementCriteriaMeet(uint32 criteriaId, Player const* /*source*/, Unit const* /*target*/, uint32 /*miscvalue1*/)
-{
-    TC_LOG_ERROR("bg.battleground", "Battleground::CheckAchievementCriteriaMeet: No implementation for criteria %u", criteriaId);
-    return false;
 }

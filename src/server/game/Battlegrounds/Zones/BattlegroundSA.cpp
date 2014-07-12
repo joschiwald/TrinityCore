@@ -20,10 +20,7 @@
 #include "BattlegroundScore.h"
 #include "BattlegroundSA.h"
 #include "GameObject.h"
-#include "Language.h"
 #include "ObjectMgr.h"
-#include "Player.h"
-#include "ScriptedCreature.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
 
@@ -140,7 +137,7 @@ void BattlegroundSA::ResetObjectsAndWorldstates()
     }
 
     //GY capture points
-    for (uint8 i = BG_SA_CENTRAL_FLAG; i <= BG_SA_LEFT_FLAG; i++)
+    for (uint8 i = BG_SA_CENTRAL_FLAG; i < BG_SA_PORTAL_DEFFENDER_BLUE; i++)
     {
         AddGameObject(i, (BG_SA_ObjEntries[i] - (_attackers == BG_TEAM_ALLIANCE ? 1:0)),
             BG_SA_ObjSpawnlocs[i][0], BG_SA_ObjSpawnlocs[i][1],
@@ -212,9 +209,6 @@ void BattlegroundSA::ResetObjectsAndWorldstates()
             if (Player* player = itr->getSource())
                 SendTransportInit(player);
 
-    // set status manually so preparation is cast correctly in 2nd round too
-    SetStatus(STATUS_WAIT_JOIN);
-
     TeleportPlayers();
 }
 
@@ -256,9 +250,9 @@ void BattlegroundSA::StartShips()
 
     for (int i = BG_SA_BOAT_ONE; i <= BG_SA_BOAT_TWO; i++)
     {
-        for (BattlegroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
+        for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
         {
-            if (Player* p = ObjectAccessor::FindPlayer(itr->first))
+            if (Player* player = itr->getSource())
             {
                 UpdateData data;
                 WorldPacket pkt;
@@ -468,7 +462,6 @@ void BattlegroundSA::ProcessEvent(WorldObject* obj, uint32 eventId, WorldObject*
 {
     if (GameObject* go = obj->ToGameObject())
     {
-<<<<<<< HEAD
         switch (go->GetGoType())
         {
             case GAMEOBJECT_TYPE_GOOBER:
@@ -664,14 +657,13 @@ void BattlegroundSA::EventPlayerClickedOnFlag(Player* source, GameObject* go)
         case 191309:
             if ((_gateStatus[BG_SA_GREEN_GATE] == BG_SA_GATE_DESTROYED || _gateStatus[BG_SA_BLUE_GATE] == BG_SA_GATE_DESTROYED) && (_gateStatus[BG_SA_RED_GATE] == BG_SA_GATE_DESTROYED || _gateStatus[BG_SA_PURPLE_GATE] == BG_SA_GATE_DESTROYED))
                 CaptureGraveyard(BG_SA_CENTRAL_CAPTURABLE_GY, Source);
->>>>>>> Misc fixes, BattlegroundSA compiles now
             break;
         default:
             return;
     };
 }
 
-void BattlegroundSA::CaptureGraveyard(BG_SA_Graveyards i, Player* Source)
+void BattlegroundSA::CaptureGraveyard(BG_SA_Graveyards i, Player *Source)
 {
     if (_graveyardStatus[i] == _attackers)
         return;
@@ -766,7 +758,7 @@ void BattlegroundSA::TitanRelicActivated(Player* clicker)
         (GateStatus[BG_SA_PURPLE_GATE] == BG_SA_GATE_DESTROYED || GateStatus[BG_SA_RED_GATE] == BG_SA_GATE_DESTROYED) &&
         (GateStatus[BG_SA_GREEN_GATE] == BG_SA_GATE_DESTROYED || GateStatus[BG_SA_BLUE_GATE] == BG_SA_GATE_DESTROYED))
     {
-        if (clicker->GetTeamId() == Attackers)
+        if (source->GetBGTeam() == _attackers)
         {
             if (source->GetBGTeam() == BG_TEAM_ALLIANCE)
                 SendMessageToAll(LANG_BG_SA_ALLIANCE_CAPTURED_RELIC, CHAT_MSG_BG_SYSTEM_NEUTRAL);
@@ -829,14 +821,13 @@ void BattlegroundSA::TitanRelicActivated(Player* clicker)
 
 void BattlegroundSA::ToggleTimer()
 {
-
-    TimerEnabled = !TimerEnabled;
-    UpdateWorldState(BG_SA_ENABLE_TIMER, TimerEnabled);
+    _timerEnabled = !_timerEnabled;
+    UpdateWorldState(BG_SA_ENABLE_TIMER, _timerEnabled);
 }
 
 void BattlegroundSA::UpdateDemolisherSpawns()
 {
-    for (uint8 i = BG_SA_DEMOLISHER_1; i <= BG_SA_DEMOLISHER_8; i++)
+    for (uint8 i = BG_SA_DEMOLISHER_1; i <= BG_SA_DEMOLISHER_4; i++)
     {
         if (Creature *Demolisher = GetCreature(i))
         {
@@ -847,12 +838,16 @@ void BattlegroundSA::UpdateDemolisherSpawns()
                     DemoliserRespawnList[i] = getMSTime() + 30000;
                 else if (DemoliserRespawnList[i] < getMSTime())
                 {
-                        if (DemoliserRespawnList[i] < getMSTime())
-                        {
-                            Demolisher->Relocate(BG_SA_NpcSpawnlocs[i]);
-                            Demolisher->Respawn();
-                            DemoliserRespawnList.erase(i);
-                        }
+                    uint8 gy = (i >= BG_SA_DEMOLISHER_3 ? 3 : 2);
+                    if (_graveyardStatus[gy] == _attackers)
+                        Demolisher->Relocate(BG_SA_NpcSpawnlocs[i + 11][0], BG_SA_NpcSpawnlocs[i + 11][1],
+                        BG_SA_NpcSpawnlocs[i + 11][2], BG_SA_NpcSpawnlocs[i + 11][3]);
+                    else
+                        Demolisher->Relocate(BG_SA_NpcSpawnlocs[i][0], BG_SA_NpcSpawnlocs[i][1],
+                        BG_SA_NpcSpawnlocs[i][2], BG_SA_NpcSpawnlocs[i][3]);
+
+                    Demolisher->Respawn();
+                    DemoliserRespawnList.erase(i);
                 }
             }
         }
@@ -902,7 +897,7 @@ bool BattlegroundSA::CheckAchievementCriteriaMeet(uint32 criteriaId, Player cons
     return Battleground::CheckAchievementCriteriaMeet(criteriaId, source, target, miscValue);
 }
 
-bool BattlegroundSA::IsSpellAllowed(uint32 spellId, Player const* /*player*/) const
+bool BattlegroundSA::IsSpellAllowed(uint32 spellId, Player const* player) const
 {
     switch (spellId)
     {
@@ -916,5 +911,5 @@ bool BattlegroundSA::IsSpellAllowed(uint32 spellId, Player const* /*player*/) co
            break;
     }
 
-    return true;
+    return BattlegroundMap::IsSpellAllowed(spellId, player);
 }

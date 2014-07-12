@@ -882,14 +882,12 @@ struct BattlegroundICScore final : public BattlegroundScore
         uint32 BasesDefended;
 };
 
-class BattlegroundMap;
-
 class BattlegroundIC : public BattlegroundMap
 {
     friend class BattlegroundMgr;
 
     protected:
-        void ProcessInProgress(uint32 const& diff);
+        void ProcessInProgress(uint32 diff) override;
 
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
         void InitializeObjects();
@@ -897,7 +895,7 @@ class BattlegroundIC : public BattlegroundMap
         void InstallBattleground();
         void StartBattleground();
         void EndBattleground(BattlegroundWinner winner);
-        
+
         void OnPlayerJoin(Player *plr);
         void OnPlayerExit(Player *plr);
         void OnUnitKill(Creature* unit, Player* killer);

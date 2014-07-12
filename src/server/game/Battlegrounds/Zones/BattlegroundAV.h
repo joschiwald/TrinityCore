@@ -1579,7 +1579,7 @@ class BattlegroundMap;
 class BattlegroundAV : public BattlegroundMap
 {
     public:
-        void ProcessInProgress(uint32 const& diff);
+        void ProcessInProgress(uint32 diff) override;
 
         void InitializeTextIds();       // Initializes text IDs that are used in the battleground at any possible phase.
         void InitializeObjects();

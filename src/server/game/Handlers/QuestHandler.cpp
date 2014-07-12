@@ -28,7 +28,6 @@
 #include "QuestDef.h"
 #include "ObjectAccessor.h"
 #include "Group.h"
-#include "Battleground.h"
 #include "ScriptMgr.h"
 #include "GameObjectAI.h"
 

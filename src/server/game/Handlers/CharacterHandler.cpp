@@ -19,7 +19,7 @@
 #include "AccountMgr.h"
 #include "ArenaTeam.h"
 #include "ArenaTeamMgr.h"
-#include "Battleground.h"
+#include "BattlegroundMap.h"
 #include "CalendarMgr.h"
 #include "Chat.h"
 #include "Common.h"

@@ -45,19 +45,20 @@ class ArenaMap;
 
 class BattlegroundNA : public ArenaMap
 {
+    friend class BattlegroundMgr;
+
     public:
         BattlegroundNA();
         ~BattlegroundNA();
 
         /* inherited from BattlegroundClass */
-        void StartingEventCloseDoors();
-        void StartingEventOpenDoors();
+        void StartBattleground();
+        void InitializeObjects();
 
-        void HandleAreaTrigger(Player* Source, uint32 Trigger);
-
+        void HandleAreaTrigger(Player *Source, uint32 Trigger);
         bool SetupBattleground();
-        void Reset();
-        void FillInitialWorldStates(WorldPacket &d);
+        virtual void Reset();
+        virtual void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player* killer);
 };
 #endif

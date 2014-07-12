@@ -352,8 +352,6 @@ struct BattlegroundEYScore final : public BattlegroundScore
         uint32 FlagCaptures;
 };
 
-class BattlegroundMap;
-
 class BattlegroundEY : public BattlegroundMap
 {
     friend class BattlegroundMgr;
@@ -362,7 +360,7 @@ class BattlegroundEY : public BattlegroundMap
         BattlegroundEY();
         ~BattlegroundEY();
 
-        void ProcessInProgress(uint32 const& diff);
+        void ProcessInProgress(uint32 diff) override;
 
         void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
         void InitializeObjects();

@@ -28,7 +28,7 @@ void BattlegroundRV::InitializeObjects()
 {
     ObjectGUIDsByType.resize(BG_RV_OBJECT_MAX);
 
-// elevators
+    // elevators
     AddGameObject(BG_RV_OBJECT_ELEVATOR_1, BG_RV_OBJECT_TYPE_ELEVATOR_1, 763.536377f, -294.535767f, 0.505383f, 3.141593f, 0, 0, 0, RESPAWN_IMMEDIATELY);
     AddGameObject(BG_RV_OBJECT_ELEVATOR_2, BG_RV_OBJECT_TYPE_ELEVATOR_2, 763.506348f, -273.873352f, 0.505383f, 0.000000f, 0, 0, 0, RESPAWN_IMMEDIATELY);
     // buffs
@@ -59,11 +59,12 @@ void BattlegroundRV::InitializeObjects()
 */
 }
 
-void BattlegroundRV::StartingEventOpenDoors()
+void BattlegroundRV::StartBattleground()
 {
     // Buff respawn
     SpawnGameObject(BG_RV_OBJECT_BUFF_1, 90);
-    SpawnvObject(BG_RV_OBJECT_BUFF_2, 90);
+    SpawnGameObject(BG_RV_OBJECT_BUFF_2, 90);
+
     // Elevators
     DoorOpen(BG_RV_OBJECT_ELEVATOR_1);
     DoorOpen(BG_RV_OBJECT_ELEVATOR_2);
@@ -141,8 +142,8 @@ void BattlegroundRV::HandleAreaTrigger(Player *Source, uint32 Trigger)
 void BattlegroundRV::FillInitialWorldStates(WorldPacket &data)
 {
     data << uint32(BG_RV_WORLD_STATE) << uint32(1);
+    UpdateArenaWorldState();
 }
-
 
 void BattlegroundRV::TogglePillarCollision()
 {

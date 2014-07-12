@@ -18,6 +18,7 @@
 #ifndef BATTLEFIELD_WG_
 #define BATTLEFIELD_WG_
 
+#include "BattlegroundMap.h"
 #include "ObjectAccessor.h"
 #include "WorldPacket.h"
 #include "Battlefield.h"

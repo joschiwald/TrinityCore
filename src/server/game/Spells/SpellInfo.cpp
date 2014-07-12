@@ -22,7 +22,6 @@
 #include "DBCStores.h"
 #include "ConditionMgr.h"
 #include "Player.h"
-#include "Battleground.h"
 #include "Vehicle.h"
 #include "Pet.h"
 

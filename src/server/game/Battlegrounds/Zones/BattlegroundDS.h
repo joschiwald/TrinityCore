@@ -87,7 +87,7 @@ class BattlegroundDS : public ArenaMap
         BattlegroundDS();
         ~BattlegroundDS();
 
-        void ProcessInProgress(uint32 const& diff);
+        void ProcessInProgress(uint32 diff);
 
         void InitializeObjects();
 
@@ -98,6 +98,7 @@ class BattlegroundDS : public ArenaMap
         virtual void Reset();
         virtual void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player* killer);
+
     private:
         uint32 _waterfallTimer;
         uint8 _waterfallStatus;

@@ -225,7 +225,7 @@ class BattlegroundWS : public BattlegroundMap
         void EventPlayerClickedOnFlag(Player *Source, GameObject* target_obj);
         void EventPlayerCapturedFlag(Player *Source);
 
-        
+
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         void OnPlayerKill(Player* player, Player* killer);
         bool SetupBattleground();
@@ -236,7 +236,7 @@ class BattlegroundWS : public BattlegroundMap
         void SetLastFlagCapture(uint32 team)                { _lastFlagCaptureTime = team; }
         void UpdateTeamScore(uint32 team);
 
-        void UpdatePlayerScore(Player *source, uint32 type, uint32 value, bool doAddHonor = true);
+        bool UpdatePlayerScore(Player* source, uint32 type, uint32 value, bool addHonor = true) override;
         void SetDroppedFlagGUID(uint64 guid, uint32 teamId)  { m_DroppedFlagGUID[teamId] = guid;}
         uint64 GetDroppedFlagGUID(uint32 teamId)             { return m_DroppedFlagGUID[teamId];}
         virtual void FillInitialWorldStates(WorldPacket& data);
@@ -250,7 +250,7 @@ class BattlegroundWS : public BattlegroundMap
         uint32 GetPrematureWinner();
 
         /* Achievements*/
-        bool CheckAchievementCriteriaMeet(uint32 criteriaId, Player const* source, Unit const* target = NULL, uint32 miscvalue1 = 0);
+        bool CheckAchievementCriteriaMeet(uint32 criteriaId, Player const* source, Unit const* target = NULL, uint32 miscValue = 0) override;
 
     private:
         uint64 _flagKeepers[2];                            // 0 - alliance, 1 - horde

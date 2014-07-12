@@ -281,33 +281,33 @@ class BattlegroundAB : public BattlegroundMap
         BattlegroundAB();
         ~BattlegroundAB();
 
-        void ProcessInProgress(uint32 const& diff);
+        void ProcessInProgress(uint32 diff) override;
 
-        void InitializeObjects();
-        void InitializeTextIds();    // Initializes text IDs that are used in the battleground at any possible phase.
+        void InitializeObjects() override;
+        void InitializeTextIds() override;
 
-        void InstallBattleground();
-        void StartBattleground();
-        void EndBattleground(BattlegroundWinner winner);
+        void InstallBattleground() override;
+        void StartBattleground() override;
+        void EndBattleground(BattlegroundWinner winner) override;
 
-        void UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true);
-        void FillInitialWorldStates(WorldPacket& data);
+        bool UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool addHonor = true) override;
+        void FillInitialWorldStates(WorldPacket& data) override;
 
         void OnPlayerJoin(Player* player) override;
 
     public:
-        void HandleAreaTrigger(Player *Source, uint32 Trigger);
-        
-        virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
+        void HandleAreaTrigger(Player* player, uint32 trigger) override;
+
+        WorldSafeLocsEntry const* GetClosestGraveYard(Player* player) override;
 
         /* Nodes occupying */
-        void EventPlayerClickedOnFlag(Player* source, GameObject* target_obj);
+        void EventPlayerClickedOnFlag(Player* player, GameObject* go) override;
 
         /* achievement req. */
-        bool IsAllNodesConrolledByTeam(uint32 team) const;  // overwrited
-        bool CheckAchievementCriteriaMeet(uint32 /*criteriaId*/, Player const* /*player*/, Unit const* /*target*/ = NULL, uint32 /*miscvalue1*/ = 0);
+        bool IsAllNodesConrolledByTeam(BattlegroundTeamId teamId) const override;
+        bool CheckAchievementCriteriaMeet(uint32 /*criteriaId*/, Player const* /*player*/, Unit const* /*target*/ = NULL, uint32 /*miscValue*/ = 0) override;
 
-        uint32 GetPrematureWinner();
+        uint32 GetPrematureWinner() override;
 
     private:
         /* Gameobject spawning/despawning */

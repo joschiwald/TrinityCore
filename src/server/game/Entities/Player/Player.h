@@ -29,6 +29,8 @@
 #include "SpellMgr.h"
 #include "Unit.h"
 
+#include "BattlegroundMap.h"
+
 #include <limits>
 #include <string>
 #include <vector>
@@ -2053,10 +2055,11 @@ class Player : public Unit, public GridObject<Player>
         void SetBattlegroundEntryPoint();
 
         void SetBGTeam(uint32 team);
+        BattlegroundTeamId GetBGTeamId() const;
         uint32 GetBGTeam() const;
 
         void LeaveBattleground(bool teleportToEntryPoint = true);
-        bool CanJoinToBattleground(Battleground const* bg) const;
+        bool CanJoinToBattleground(BattlegroundTemplate const* bg) const;
         bool CanReportAfkDueToLimit();
         void ReportedAfkBy(Player* reporter);
         void ClearAfkReports() { m_bgData.bgAfkReporter.clear(); }
@@ -2237,9 +2240,9 @@ class Player : public Unit, public GridObject<Player>
         Player* GetNextRandomRaidMember(float radius);
         PartyResult CanUninviteFromGroup() const;
 
-        // Battleground / Battlefield Group System
-        void SetBattlegroundOrBattlefieldRaid(Group* group, int8 subgroup = -1);
-        void RemoveFromBattlegroundOrBattlefieldRaid();
+        // Multiple Group System
+        void SetSecondaryGroup(Group* group, int8 subgroup = -1);
+        void RemoveFromSecondaryGroup();
         Group* GetOriginalGroup() { return m_originalGroup.getTarget(); }
         GroupReference& GetOriginalGroupRef() { return m_originalGroup; }
         uint8 GetOriginalSubGroup() const { return m_originalGroup.getSubGroup(); }

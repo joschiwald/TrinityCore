@@ -1146,7 +1146,7 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
 
     if (player)
     {
-        if (Battleground* bg = player->GetBattleground())
+        if (BattlegroundMap* bg = player->GetBattleground())
             return bg->IsSpellAllowed(spellId, player);
     }
 

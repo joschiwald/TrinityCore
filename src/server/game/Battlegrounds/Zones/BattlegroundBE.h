@@ -44,6 +44,8 @@ enum BattlegroundBEObjects
 
 class BattlegroundBE : public ArenaMap
 {
+    friend class BattlegroundMgr;
+
     public:
         BattlegroundBE();
         ~BattlegroundBE();
