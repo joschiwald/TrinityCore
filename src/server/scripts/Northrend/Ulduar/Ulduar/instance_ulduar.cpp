@@ -36,6 +36,7 @@ static DoorData const doorData[] =
     { GO_MIMIRON_DOOR_1,                BOSS_MIMIRON,           DOOR_TYPE_ROOM,         BOUNDARY_W      },
     { GO_MIMIRON_DOOR_2,                BOSS_MIMIRON,           DOOR_TYPE_ROOM,         BOUNDARY_E      },
     { GO_MIMIRON_DOOR_3,                BOSS_MIMIRON,           DOOR_TYPE_ROOM,         BOUNDARY_S      },
+    { GO_THORIM_ENCOUNTER_DOOR,         DATA_THORIM,            DOOR_TYPE_ROOM,         BOUNDARY_NONE   },
     { GO_VEZAX_DOOR,                    BOSS_VEZAX,             DOOR_TYPE_PASSAGE,      BOUNDARY_E      },
     { GO_YOGG_SARON_DOOR,               BOSS_YOGG_SARON,        DOOR_TYPE_ROOM,         BOUNDARY_S      },
     { GO_DOODAD_UL_SIGILDOOR_03,        BOSS_ALGALON,           DOOR_TYPE_ROOM,         BOUNDARY_W      },
@@ -103,7 +104,6 @@ class instance_ulduar : public InstanceMapScript
             ObjectGuid KologarnGUID;
             ObjectGuid AuriayaGUID;
             ObjectGuid HodirGUID;
-            ObjectGuid ThorimGUID;
             ObjectGuid FreyaGUID;
             ObjectGuid ElderGUIDs[3];
             ObjectGuid FreyaAchieveTriggerGUID;
@@ -125,7 +125,6 @@ class instance_ulduar : public InstanceMapScript
             ObjectGuid RazorHarpoonGUIDs[4];
             ObjectGuid KologarnChestGUID;
             ObjectGuid KologarnBridgeGUID;
-            ObjectGuid ThorimChestGUID;
             ObjectGuid HodirRareCacheGUID;
             ObjectGuid HodirChestGUID;
             ObjectGuid MimironTramGUID;
@@ -182,7 +181,7 @@ class instance_ulduar : public InstanceMapScript
                     _summonObservationRingKeeper[1] = false;
                     instance->SummonCreature(NPC_HODIR_OBSERVATION_RING, ObservationRingKeepersPos[1]);
                 }
-                if (GetBossState(BOSS_THORIM) == DONE && _summonObservationRingKeeper[2] && !KeeperGUIDs[2])
+                if (GetBossState(DATA_THORIM) == DONE && _summonObservationRingKeeper[2] && !KeeperGUIDs[2])
                 {
                     _summonObservationRingKeeper[2] = false;
                     instance->SummonCreature(NPC_THORIM_OBSERVATION_RING, ObservationRingKeepersPos[2]);
@@ -310,8 +309,18 @@ class instance_ulduar : public InstanceMapScript
                             creature->UpdateEntry(NPC_BATTLE_PRIEST_GINA);
                         break;
 
+                    // Thorim
                     case NPC_THORIM:
                         ThorimGUID = creature->GetGUID();
+                        break;
+                    case NPC_RUNIC_COLOSSUS:
+                        RunicColossusGUID = creature->GetGUID();
+                        break;
+                    case NPC_RUNE_GIANT:
+                        RuneGiantGUID = creature->GetGUID();
+                        break;
+                    case NPC_SIF:
+                        SifGUID = creature->GetGUID();
                         break;
 
                     // Freya
@@ -461,9 +470,22 @@ class instance_ulduar : public InstanceMapScript
                         if (GetBossState(BOSS_KOLOGARN) == DONE)
                             HandleGameObject(ObjectGuid::Empty, false, gameObject);
                         break;
-                    case GO_THORIM_CHEST_HERO:
-                    case GO_THORIM_CHEST:
-                        ThorimChestGUID = gameObject->GetGUID();
+                    case GO_THORIM_LEVER:
+                        ThorimLeverGUID = gameObject->GetGUID();
+                        break;
+                    case GO_CACHE_OF_STORMS_10:
+                    case GO_CACHE_OF_STORMS_25:
+                        CacheOfStormsGUID = gameObject->GetGUID();
+                        break;
+                    case GO_CACHE_OF_STORMS_HARDMODE_10:
+                    case GO_CACHE_OF_STORMS_HARDMODE_25:
+                        CacheOfStormsHardmodeGUID = gameObject->GetGUID();
+                        break;
+                    case GO_THORIM_STONE_DOOR:
+                        StoneDoorGUID = gameObject->GetGUID();
+                        break;
+                    case GO_THORIM_RUNIC_DOOR:
+                        RunicDoorGUID = gameObject->GetGUID();
                         break;
                     case GO_HODIR_RARE_CACHE_OF_WINTER_HERO:
                     case GO_HODIR_RARE_CACHE_OF_WINTER:
@@ -497,6 +519,7 @@ class instance_ulduar : public InstanceMapScript
                     case GO_MIMIRON_DOOR_1:
                     case GO_MIMIRON_DOOR_2:
                     case GO_MIMIRON_DOOR_3:
+                    case GO_THORIM_ENCOUNTER_DOOR:
                     case GO_VEZAX_DOOR:
                     case GO_YOGG_SARON_DOOR:
                         AddDoor(gameObject, true);
@@ -584,6 +607,7 @@ class instance_ulduar : public InstanceMapScript
                     case GO_MIMIRON_DOOR_1:
                     case GO_MIMIRON_DOOR_2:
                     case GO_MIMIRON_DOOR_3:
+                    case GO_THORIM_ENCOUNTER_DOOR:
                     case GO_VEZAX_DOOR:
                     case GO_YOGG_SARON_DOOR:
                     case GO_DOODAD_UL_SIGILDOOR_03:
@@ -738,11 +762,20 @@ class instance_ulduar : public InstanceMapScript
                             instance->SummonCreature(NPC_HODIR_OBSERVATION_RING, ObservationRingKeepersPos[1]);
                         }
                         break;
-                    case BOSS_THORIM:
+                    case DATA_THORIM:
                         if (state == DONE)
                         {
-                            if (GameObject* gameObject = instance->GetGameObject(ThorimChestGUID))
-                                gameObject->SetRespawnTime(gameObject->GetRespawnDelay());
+                            if (Creature* thorim = instance->GetCreature(ThorimGUID))
+                            {
+                                if (GameObject* cache = instance->GetGameObject(thorim->AI()->GetData(DATA_THORIM_HARDMODE) ? CacheOfStormsHardmodeGUID : CacheOfStormsGUID))
+                                {
+                                    cache->SetLootRecipient(thorim->GetLootRecipient());
+                                    cache->SetRespawnTime(cache->GetRespawnDelay());
+                                    cache->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_LOCKED | GO_FLAG_NOT_SELECTABLE | GO_FLAG_NODESPAWN);
+                                }
+                            }
+
+                            //CheckGateOfTheKeepers();
 
                             instance->SummonCreature(NPC_THORIM_OBSERVATION_RING, ObservationRingKeepersPos[2]);
                         }
@@ -898,8 +931,6 @@ class instance_ulduar : public InstanceMapScript
                         return AuriayaGUID;
                     case BOSS_HODIR:
                         return HodirGUID;
-                    case BOSS_THORIM:
-                        return ThorimGUID;
 
                     // Freya
                     case BOSS_FREYA:
@@ -910,6 +941,22 @@ class instance_ulduar : public InstanceMapScript
                         return ElderGUIDs[1];
                     case BOSS_STONEBARK:
                         return ElderGUIDs[2];
+
+                    // Thorim
+                    case DATA_THORIM:
+                        return ThorimGUID;
+                    case DATA_SIF:
+                        return SifGUID;
+                    case DATA_THORIM_LEVER:
+                        return ThorimLeverGUID;
+                    case DATA_RUNIC_COLOSSUS:
+                        return RunicColossusGUID;
+                    case DATA_RUNE_GIANT:
+                        return RuneGiantGUID;
+                    case DATA_RUNIC_DOOR:
+                        return RunicDoorGUID;
+                    case DATA_STONE_DOOR:
+                        return StoneDoorGUID;
 
                     // Mimiron
                     case BOSS_MIMIRON:
@@ -1057,7 +1104,7 @@ class instance_ulduar : public InstanceMapScript
                         return (_CoUAchivePlayerDeathMask & (1 << BOSS_HODIR)) == 0;
                     case CRITERIA_C_O_U_THORIM_10:
                     case CRITERIA_C_O_U_THORIM_25:
-                        return (_CoUAchivePlayerDeathMask & (1 << BOSS_THORIM)) == 0;
+                        return (_CoUAchivePlayerDeathMask & (1 << DATA_THORIM)) == 0;
                     case CRITERIA_C_O_U_FREYA_10:
                     case CRITERIA_C_O_U_FREYA_25:
                         return (_CoUAchivePlayerDeathMask & (1 << BOSS_FREYA)) == 0;
@@ -1117,7 +1164,7 @@ class instance_ulduar : public InstanceMapScript
                     _summonObservationRingKeeper[0] = true;
                 if (GetBossState(BOSS_HODIR) == DONE && !_summonYSKeeper[1])
                     _summonObservationRingKeeper[1] = true;
-                if (GetBossState(BOSS_THORIM) == DONE && !_summonYSKeeper[2])
+                if (GetBossState(DATA_THORIM) == DONE && !_summonYSKeeper[2])
                     _summonObservationRingKeeper[2] = true;
                 if (GetBossState(BOSS_MIMIRON) == DONE && !_summonYSKeeper[3])
                     _summonObservationRingKeeper[3] = true;
@@ -1197,7 +1244,18 @@ class instance_ulduar : public InstanceMapScript
                     InstanceScript::AddDoor(door, add);
             }
 
-        private:
+        protected:
+            // Thorim
+            ObjectGuid ThorimGUID;
+            ObjectGuid SifGUID;
+            ObjectGuid ThorimLeverGUID;
+            ObjectGuid RunicColossusGUID;
+            ObjectGuid RuneGiantGUID;
+            ObjectGuid RunicDoorGUID;
+            ObjectGuid StoneDoorGUID;
+            ObjectGuid CacheOfStormsGUID;
+            ObjectGuid CacheOfStormsHardmodeGUID;
+
             EventMap _events;
             uint32 _algalonTimer;
             bool _summonAlgalon;
