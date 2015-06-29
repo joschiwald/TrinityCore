@@ -313,6 +313,9 @@ class instance_ulduar : public InstanceMapScript
                     case NPC_THORIM:
                         ThorimGUID = creature->GetGUID();
                         break;
+                    case NPC_THORIM_CONTROLLER:
+                        ThorimControllerGUID = creature->GetGUID();
+                        break;
                     case NPC_RUNIC_COLOSSUS:
                         RunicColossusGUID = creature->GetGUID();
                         break;
@@ -321,6 +324,14 @@ class instance_ulduar : public InstanceMapScript
                         break;
                     case NPC_SIF:
                         SifGUID = creature->GetGUID();
+                        break;
+                    case NPC_MERCENARY_CAPTAIN_A:
+                        if (TeamInInstance == ALLIANCE)
+                            creature->UpdateEntry(NPC_MERCENARY_CAPTAIN_H);
+                        break;
+                    case NPC_MERCENARY_SOLDIER_A:
+                        if (TeamInInstance == ALLIANCE)
+                            creature->UpdateEntry(NPC_MERCENARY_SOLDIER_H);
                         break;
 
                     // Freya
@@ -945,6 +956,8 @@ class instance_ulduar : public InstanceMapScript
                     // Thorim
                     case DATA_THORIM:
                         return ThorimGUID;
+                    case DATA_THORIM_CONTROLLER:
+                        return ThorimControllerGUID;
                     case DATA_SIF:
                         return SifGUID;
                     case DATA_THORIM_LEVER:
@@ -1247,6 +1260,7 @@ class instance_ulduar : public InstanceMapScript
         protected:
             // Thorim
             ObjectGuid ThorimGUID;
+            ObjectGuid ThorimControllerGUID;
             ObjectGuid SifGUID;
             ObjectGuid ThorimLeverGUID;
             ObjectGuid RunicColossusGUID;
