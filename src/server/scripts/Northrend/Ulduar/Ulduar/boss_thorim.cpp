@@ -20,6 +20,10 @@
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
+#include "SpellAuraEffects.h"
+#include "TypeContainerVisitor.h"
+#include "CellImpl.h"
+#include "GridNotifiersImpl.h"
 #include "ulduar.h"
 
 enum Spells
@@ -262,7 +266,7 @@ enum Actions
     ACTION_ACTIVATE_ADDS,
     ACTION_PILLAR_CHARGED,
     ACTION_START_HARD_MODE,
-    ACTION_BERSERK,
+    ACTION_BERSERK
 };
 
 #define IN_ARENA(who) (who->GetPositionX() < 2181.19f && who->GetPositionY() > -299.12f)
@@ -534,17 +538,26 @@ class boss_thorim : public CreatureScript
                 me->RemoveAllAttackers();
                 me->AttackStop();
                 me->setFaction(35);
+                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_RENAME);
 
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_THORIM_CONTROLLER)))
                     controller->RemoveAllAuras();
                 if (Creature* pillar = ObjectAccessor::GetCreature(*me, _activePillarGUID))
                     pillar->RemoveAllAuras();
 
-                if (Creature* sif = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_SIF)))
+                if (_hardMode)
                 {
-                    summons.Despawn(sif);
-                    sif->DespawnOrUnsummon(10000);
+                    if (Creature* Sif = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_SIF)))
+                    {
+                        summons.Despawn(Sif);
+                        Sif->DespawnOrUnsummon(10000);
+                    }
                 }
+
+                if (_hardMode)
+                    me->SummonGameObject(RAID_MODE(GO_CACHE_OF_STORMS_HARDMODE_10, GO_CACHE_OF_STORMS_HARDMODE_25), 2134.948f, -286.436f, 419.5051f, 1.588249f, 0.f, 0.f, 0.7132502f, 0.7009096f, 604800);
+                else
+                    me->SummonGameObject(RAID_MODE(GO_CACHE_OF_STORMS_10, GO_CACHE_OF_STORMS_25), 2134.948f, -286.436f, 419.5051f, 1.588249f, 0.f, 0.f, 0.7132502f, 0.7009096f, 604800);
 
                 _JustDied();
 
@@ -577,8 +590,8 @@ class boss_thorim : public CreatureScript
 
                 if (Creature* runic = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_RUNIC_COLOSSUS)))
                 {
-                    runic->AI()->DoAction(ACTION_ACTIVATE_ADDS);
                     runic->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
+                    runic->AI()->DoAction(ACTION_ACTIVATE_ADDS);
                 }
 
                 if (GameObject* go = ObjectAccessor::GetGameObject(*me, instance->GetGuidData(DATA_THORIM_LEVER)))
@@ -743,11 +756,14 @@ class boss_thorim : public CreatureScript
                             break;
                         case EVENT_OUTRO_1:
                             Talk(_hardMode ? SAY_END_HARD_1 : SAY_END_NORMAL_1);
-                            if (Creature* sif = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_SIF)))
-                                DoCast(sif, SPELL_STORMHAMMER_SIF);
+                            if (_hardMode)
+                                DoCast(me, SPELL_STORMHAMMER_SIF);
                             break;
                         case EVENT_OUTRO_2:
                             Talk(_hardMode ? SAY_END_HARD_2 : SAY_END_NORMAL_2);
+                            if (_hardMode)
+                                if (Creature* Sif = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_SIF)))
+                                    Sif->SetStandState(UNIT_STAND_STATE_DEAD);
                             break;
                         case EVENT_OUTRO_3:
                             Talk(_hardMode ? SAY_END_HARD_3 : SAY_END_NORMAL_3);
@@ -1053,7 +1069,7 @@ struct npc_thorim_trashAI : public ScriptedAI
         return false;
     }
 
-    void UpdateAI(uint32 diff) override
+    void UpdateAI(uint32 diff) final override
     {
         if (!UpdateVictim())
             return;
@@ -1274,12 +1290,10 @@ struct npc_thorim_minibossAI : public ScriptedAI
     void JustSummoned(Creature* summon) final override
     {
         _summons.Summon(summon);
-        ScriptedAI::JustSummoned(summon);
     }
 
     void SummonedCreatureDespawn(Creature* summon) final override
     {
-        ScriptedAI::SummonedCreatureDespawn(summon);
         _summons.Despawn(summon);
     }
 
@@ -1310,7 +1324,7 @@ class npc_runic_colossus : public CreatureScript
 
             void Reset() override
             {
-                runicActive = false;
+                _runicActive = false;
 
                 _events.Reset();
 
@@ -1332,12 +1346,12 @@ class npc_runic_colossus : public CreatureScript
             {
                 npc_thorim_minibossAI::DoAction(action);
 
-                if (runicActive)
+                if (_runicActive)
                     return;
 
                 if (action == ACTION_ACTIVATE_RUNIC_SMASH)
                 {
-                    runicActive = true;
+                    _runicActive = true;
                     _events.ScheduleEvent(EVENT_RUNIC_SMASH, 7000);
                 }
             }
@@ -1410,7 +1424,8 @@ class npc_runic_colossus : public CreatureScript
                 DoMeleeAttackIfReady();
             }
 
-            bool runicActive;
+        private:
+            bool _runicActive;
         };
 
         CreatureAI* GetAI(Creature* creature) const override
@@ -1510,6 +1525,7 @@ class npc_sif : public CreatureScript
             npc_sifAI(Creature* creature) : ScriptedAI(creature), _summons(me)
             {
                 SetCombatMovement(false);
+                _instance = creature->GetInstanceScript();
             }
 
             void Reset() override
@@ -1534,6 +1550,10 @@ class npc_sif : public CreatureScript
             {
                 if (spellInfo->Id == SPELL_STORMHAMMER_SIF)
                 {
+                    if (Creature* blizzard = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_SIF_BLIZZARD)))
+                        blizzard->RemoveAllAuras();
+
+                    me->InterruptSpell(CURRENT_GENERIC_SPELL);
                     me->SetReactState(REACT_PASSIVE);
                     me->AttackStop();
                 }
@@ -1601,6 +1621,7 @@ class npc_sif : public CreatureScript
         private:
             EventMap _events;
             SummonList _summons;
+            InstanceScript* _instance;
         };
 
         CreatureAI* GetAI(Creature* creature) const override
@@ -1634,17 +1655,25 @@ class spell_thorim_blizzard : public SpellScriptLoader
         {
             PrepareSpellScript(spell_thorim_blizzard_SpellScript);
 
-            void FilterTargets(std::list<WorldObject*>& targets)
+            void SelectTarget(std::list<WorldObject*>& targets)
             {
-                targets.remove_if([](WorldObject* target) -> bool
-                {
-                    return target->ToCreature()->GetWaypointPath() == 0;
-                });
+                targets.clear();
+
+                if (Creature* blizzard = ObjectAccessor::GetCreature(*GetCaster(), _instance->GetGuidData(DATA_SIF_BLIZZARD)))
+                    targets.push_back(blizzard);
             }
+
+            bool Load() override
+            {
+                _instance = GetCaster()->GetInstanceScript();
+                return _instance != nullptr;
+            }
+
+            InstanceScript* _instance;
 
             void Register() override
             {
-                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_thorim_blizzard_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENTRY);
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_thorim_blizzard_SpellScript::SelectTarget, EFFECT_0, TARGET_UNIT_SRC_AREA_ENTRY);
             }
         };
 
@@ -2150,7 +2179,13 @@ class condition_thorim_arena_leap : public ConditionScript
 
         bool OnConditionCheck(Condition* condition, ConditionSourceInfo& sourceInfo) override
         {
-            return _check(sourceInfo.mConditionTargets[condition->ConditionTarget]);
+            WorldObject* target = sourceInfo.mConditionTargets[condition->ConditionTarget];
+            InstanceScript* instance = target->GetInstanceScript();
+
+            if (!instance)
+                return false;
+
+            return target->GetGUID() != instance->GetGuidData(DATA_SIF_BLIZZARD) && _check(target);
         }
 
     private:

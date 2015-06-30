@@ -325,6 +325,10 @@ class instance_ulduar : public InstanceMapScript
                     case NPC_SIF:
                         SifGUID = creature->GetGUID();
                         break;
+                    case NPC_THORIM_EVENT_BUNNY:
+                        if (creature->GetWaypointPath())
+                            SifBlizzardGUID = creature->GetGUID();
+                        break;
                     case NPC_MERCENARY_CAPTAIN_A:
                         if (TeamInInstance == ALLIANCE)
                             creature->UpdateEntry(NPC_MERCENARY_CAPTAIN_H);
@@ -960,6 +964,8 @@ class instance_ulduar : public InstanceMapScript
                         return ThorimControllerGUID;
                     case DATA_SIF:
                         return SifGUID;
+                    case DATA_SIF_BLIZZARD:
+                        return SifBlizzardGUID;
                     case DATA_THORIM_LEVER:
                         return ThorimLeverGUID;
                     case DATA_RUNIC_COLOSSUS:
@@ -1262,6 +1268,7 @@ class instance_ulduar : public InstanceMapScript
             ObjectGuid ThorimGUID;
             ObjectGuid ThorimControllerGUID;
             ObjectGuid SifGUID;
+            ObjectGuid SifBlizzardGUID;
             ObjectGuid ThorimLeverGUID;
             ObjectGuid RunicColossusGUID;
             ObjectGuid RuneGiantGUID;

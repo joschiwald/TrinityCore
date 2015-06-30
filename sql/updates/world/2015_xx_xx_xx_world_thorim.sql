@@ -38,6 +38,20 @@ DELETE FROM `smart_scripts` WHERE `entryorguid`=194264 AND `source_type`=1;
 INSERT INTO `smart_scripts` (`entryorguid`,`source_type`,`id`,`link`,`event_type`,`event_phase_mask`,`event_chance`,`event_flags`,`event_param1`,`event_param2`,`event_param3`,`event_param4`,`action_type`,`action_param1`,`action_param2`,`action_param3`,`action_param4`,`action_param5`,`action_param6`,`target_type`,`target_param1`,`target_param2`,`target_param3`,`target_x`,`target_y`,`target_z`,`target_o`,`comment`) VALUES
 (194264,1,0,0,70,0,100,0,2,0,0,0,9,0,0,0,0,0,0,14,34155,0,0,0,0,0,0, 'Lever - On activate - Activate Dark Iron Portcullis');
 
+-- Thorim Trap Bunny SAI
+SET @ENTRY := 33054;
+UPDATE `creature_template` SET `AIName`='SmartAI', `flags_extra`=2 WHERE `entry`=@ENTRY;
+DELETE FROM `smart_scripts` WHERE `entryorguid`=@ENTRY AND `source_type`=0;
+INSERT INTO `smart_scripts` (`entryorguid`,`source_type`,`id`,`link`,`event_type`,`event_phase_mask`,`event_chance`,`event_flags`,`event_param1`,`event_param2`,`event_param3`,`event_param4`,`action_type`,`action_param1`,`action_param2`,`action_param3`,`action_param4`,`action_param5`,`action_param6`,`target_type`,`target_param1`,`target_param2`,`target_param3`,`target_x`,`target_y`,`target_z`,`target_o`,`comment`) VALUES
+(@ENTRY,0,0,0,10,0,100,0,0,12,17000,17000,11,62241,0,0,0,0,0,1,0,0,0,0,0,0,0,'Thorim Trap Bunny - Within 0-12 Range Out of Combat LoS - Cast Paralytic Field');
+
+SET @ENTRY := 33725;
+UPDATE `creature_template` SET `AIName`='SmartAI', `flags_extra`=2 WHERE `entry`=@ENTRY;
+DELETE FROM `smart_scripts` WHERE `entryorguid`=@ENTRY AND `source_type`=0;
+INSERT INTO `smart_scripts` (`entryorguid`,`source_type`,`id`,`link`,`event_type`,`event_phase_mask`,`event_chance`,`event_flags`,`event_param1`,`event_param2`,`event_param3`,`event_param4`,`action_type`,`action_param1`,`action_param2`,`action_param3`,`action_param4`,`action_param5`,`action_param6`,`target_type`,`target_param1`,`target_param2`,`target_param3`,`target_x`,`target_y`,`target_z`,`target_o`,`comment`) VALUES
+(@ENTRY,0,0,0,10,0,100,0,0,12,17000,17000,11,63540,0,0,0,0,0,1,0,0,0,0,0,0,0,'Thorim Trap Bunny - Within 0-12 Range Out of Combat LoS - Cast Paralytic Field');
+
+
 DELETE FROM `spell_script_names` WHERE `spell_id` IN (62577,62603,62576,62602,62580,62604,62016,62057,62058,62042,62184,62466,64767,64909,62184,62331,62418,61934);
 INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (62577,'spell_thorim_blizzard'),
@@ -59,6 +73,9 @@ INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
 (61934,'spell_thorim_arena_leap');
 
 DELETE FROM `spell_linked_spell` WHERE `spell_trigger`=62042;
+DELETE FROM `spell_linked_spell` WHERE `spell_trigger` = -62320;
+INSERT INTO `spell_linked_spell` (`spell_trigger`, `spell_effect`, `type`, `comment`) VALUES
+(-62320, -62398, 0, 'Aura of Celerity - Remove Visual');
 
 -- Add dummy effect to kill credit so it actually selects targets
 UPDATE `spell_dbc` SET `EffectImplicitTargetA1`=18, `EffectImplicitTargetB1`=16, `EffectRadiusIndex1`=28, `SchoolMask`=0, `Effect1`=3 WHERE `Id`=64980;
@@ -82,13 +99,20 @@ INSERT INTO `spelldifficulty_dbc` (`id`, `spellid0`, `spellid1`) VALUES
 (62597,62597,62605), -- Frost Nova
 (62580,62580,62604); -- Frostbolt Volley
 
+UPDATE `creature_template` SET `ScriptName`='boss_thorim' WHERE `entry`=32865;
+UPDATE `creature_template` SET `ScriptName`='npc_sif' WHERE `entry`=33196;
+UPDATE `creature_template` SET `ScriptName`='npc_thorim_pre_phase' WHERE `entry` IN (32885,32883,32908,32907,32882,32886);
+UPDATE `creature_template` SET `ScriptName`='npc_thorim_arena_phase' WHERE `entry` IN (32876,32904,32878,32877,32874,32875,33110);
+UPDATE `creature_template` SET `ScriptName`='npc_runic_colossus' WHERE `entry`=32872;
+UPDATE `creature_template` SET `ScriptName`='npc_ancient_rune_giant' WHERE `entry`=32873;
 UPDATE `creature_template` SET `difficulty_entry_1`=33150 WHERE `entry`=32908; -- Swapped Difficulty entry npcs
 UPDATE `creature_template` SET `difficulty_entry_1`=33151 WHERE `entry`=32907; -- Caused swapped displayIDs in 25n
 UPDATE `creature_template` SET `InhabitType`=4, `flags_extra`=128, `ScriptName`='' WHERE `entry` IN (33140,33141);
-UPDATE `creature_template` SET `InhabitType`=4, `flags_extra`=128 WHERE `entry` IN (33054,33378,32879);
+UPDATE `creature_template` SET `InhabitType`=4, `flags_extra`=128 WHERE `entry` IN (33378,32879);
 UPDATE `creature_template` SET `InhabitType`=4 WHERE `entry` IN (32892);
 UPDATE `creature_template` SET `faction`=1692 WHERE `entry` IN (32885,32883,33152,33153,32908,33150,32907,33151);
 UPDATE `creature_template` SET `faction`=1693 WHERE `entry` IN (32882,33154);
+UPDATE `creature_template` SET `BaseAttackTime`=1500 WHERE `entry`=33147;
 
 DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=13 AND `SourceEntry` IN (62577,62603,62016,62976,63238,64098,62466,62565,62942,64767,62560,61964,61934);
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES
@@ -116,7 +140,7 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 (13,1,61964,0,3,31,0,3,32886,0,0,0,'','Thorim - Circle of Healing'),
 (13,1,61964,0,4,31,0,3,32907,0,0,0,'','Thorim - Circle of Healing'),
 (13,1,61964,0,5,31,0,3,32908,0,0,0,'','Thorim - Circle of Healing'),
-(13,1,61934,0,0,31,0,3,32892,0,0,0,'spell_thorim_arena_leap','Thorim - Leap');
+(13,1,61934,0,0,31,0,3,32892,0,0,0,'condition_thorim_arena_leap','Thorim - Leap');
 
 DELETE FROM `disables` WHERE `sourceType`=4 AND `entry` IN (10289,10314,10304,10313,10440,10457,10800,10801);
 INSERT INTO `disables` (`sourceType`,`entry`,`flags`,`params_0`,`params_1`,`comment`) VALUES
@@ -159,15 +183,6 @@ SET @CGUID:=136446;
 DELETE FROM `creature` WHERE `id`=32879;
 INSERT INTO `creature` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `spawndist`, `MovementType`) VALUES
 (@CGUID, 32879, 603, 3, 1, 2134.774, -262.3073, 428.6936, 1.343904, 7200, 0, 0); -- 32879 (Area: 0) (Auras: 62184 - 62184)
-
-DELETE FROM `gameobject` WHERE `id` IN (194312,194313,194314,194315);
-INSERT INTO `gameobject` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `VerifiedBuild`) values
-(360300,194312,603,1,1,2134.948,-286.436,419.5051,1.588249,0,0,0.7132502,0.7009096,-604800,255,1,0),
-(360301,194313,603,1,1,2134.948,-286.436,419.5051,1.588249,0,0,0.7132502,0.7009096,-604800,255,1,0),
-(360302,194314,603,2,1,2134.948,-286.436,419.5051,1.588249,0,0,0.7132502,0.7009096,-604800,255,1,0),
-(360303,194315,603,2,1,2134.948,-286.436,419.5051,1.588249,0,0,0.7132502,0.7009096,-604800,255,1,0);
-
-DELETE FROM `creature` WHERE `id`=32892 AND `position_z` < 425.0;
 
 -- Pathing for Thorim Event Bunny Entry: 32892 'TDB FORMAT'
 SET @NPC := 136515;

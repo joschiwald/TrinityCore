@@ -416,6 +416,7 @@ enum UlduarData
 
     // Thorim
     DATA_SIF,
+    DATA_SIF_BLIZZARD,
     DATA_THORIM_LEVER,
     DATA_RUNIC_COLOSSUS,
     DATA_RUNE_GIANT,
