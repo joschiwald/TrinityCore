@@ -1609,6 +1609,20 @@ class npc_sif : public CreatureScript
         }
 };
 
+class HeightPositionCheck
+{
+    public:
+        HeightPositionCheck(bool ret) : _ret(ret) { }
+
+        bool operator() (WorldObject* obj) const
+        {
+            return obj->GetPositionZ() > 425.0f == _ret;
+        }
+
+    private:
+        bool _ret;
+};
+
 // 62577 - Blizzard
 // 62603 - Blizzard
 class spell_thorim_blizzard : public SpellScriptLoader
@@ -1727,10 +1741,7 @@ class spell_thorim_charge_orb : public SpellScriptLoader
 
             void FilterTargets(std::list<WorldObject*>& targets)
             {
-                targets.remove_if([](WorldObject* target)
-                {
-                    return target->GetPositionZ() < 425.0f;
-                });
+                targets.remove_if(HeightPositionCheck(false));
 
                 if (targets.empty())
                     return;
@@ -1811,28 +1822,20 @@ class spell_thorim_arena_leap : public SpellScriptLoader
         {
             PrepareSpellScript(spell_thorim_arena_leap_SpellScript);
 
-            void SelectTarget(WorldObject*& target)
-            {
-                Unit* caster = GetCaster();
-                std::list<Creature*> triggers;
-                caster->GetCreatureListWithEntryInGrid(triggers, NPC_THORIM_EVENT_BUNNY, 60.f);
-                triggers.remove_if([](Creature* creature) { return creature->GetPositionZ() > 425.f; });
-                if (!triggers.empty())
-                {
-                    triggers.sort([caster](Unit* left, Unit* right) { return left->GetExactDistSq(caster) < right->GetExactDistSq(caster); });
-                    target = *triggers.begin();
-                    caster->ToCreature()->SetHomePosition(*target);
-                }
-            }
-
             bool Load() override
             {
                 return GetCaster()->GetTypeId() == TYPEID_UNIT;
             }
 
+            void HandleScript(SpellEffIndex /*effIndex*/)
+            {
+                if (GetHitDest())
+                    GetCaster()->ToCreature()->SetHomePosition(*GetHitDest());
+            }
+
             void Register() override
             {
-                OnObjectTargetSelect += SpellObjectTargetSelectFn(spell_thorim_arena_leap_SpellScript::SelectTarget, EFFECT_0, TARGET_DEST_NEARBY_ENTRY);
+                OnEffectHitTarget += SpellEffectFn(spell_thorim_arena_leap_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
 
@@ -2024,19 +2027,15 @@ class spell_thorim_runic_smash : public SpellScriptLoader
 class UpperOrbCheck
 {
     public:
-        UpperOrbCheck(WorldObject const* object, float maxRange) : source(object), range(maxRange) { }
+        UpperOrbCheck() : _check(true) { }
 
-        bool operator() (Unit* unit)
+        bool operator() (Creature* target) const
         {
-            if (unit->GetEntry() == NPC_THUNDER_ORB && unit->GetPositionZ() > 430.f && source->IsWithinDist(unit, range, false))
-                return true;
-
-            return false;
+            return target->GetEntry() == NPC_THUNDER_ORB && _check(target);
         }
 
     private:
-        WorldObject const* source;
-        float range;
+        HeightPositionCheck _check;
 };
 
 // 62184 - Activate Lightning Orb Periodic
@@ -2058,7 +2057,7 @@ class spell_thorim_activate_lightning_orb_periodic : public SpellScriptLoader
                 Unit* caster = GetCaster();
                 std::list<Creature*> triggers;
 
-                UpperOrbCheck check(caster, 100.f);
+                UpperOrbCheck check;
                 Trinity::CreatureListSearcher<UpperOrbCheck> searcher(caster, triggers, check);
                 caster->VisitNearbyGridObject(100.f, searcher);
 
@@ -2105,7 +2104,7 @@ class spell_iron_ring_guard_impale : public SpellScriptLoader
             {
                 if (GetTarget()->HealthAbovePct(GetSpellInfo()->Effects[EFFECT_1].CalcValue()))
                 {
-                    GetTarget()->RemoveAura(GetId(), ObjectGuid::Empty, 0, AURA_REMOVE_BY_ENEMY_SPELL);
+                    Remove(AURA_REMOVE_BY_ENEMY_SPELL);
                     PreventDefaultAction();
                 }
             }
@@ -2142,6 +2141,20 @@ class achievement_lose_your_illusion : public AchievementCriteriaScript
         {
             return target && target->GetAI()->GetData(ACHIEVEMENT_LOSE_YOUR_ILLUSION);
         }
+};
+
+class condition_thorim_arena_leap : public ConditionScript
+{
+    public:
+        condition_thorim_arena_leap() : ConditionScript("condition_thorim_arena_leap"), _check(false) { }
+
+        bool OnConditionCheck(Condition* condition, ConditionSourceInfo& sourceInfo) override
+        {
+            return _check(sourceInfo.mConditionTargets[condition->ConditionTarget]);
+        }
+
+    private:
+        HeightPositionCheck _check;
 };
 
 /*
@@ -2200,4 +2213,5 @@ void AddSC_boss_thorim()
     new spell_iron_ring_guard_impale();
     new achievement_dont_stand_in_the_lightning();
     new achievement_lose_your_illusion();
+    new condition_thorim_arena_leap();
 }

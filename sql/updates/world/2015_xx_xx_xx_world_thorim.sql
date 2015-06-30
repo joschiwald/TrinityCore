@@ -90,7 +90,7 @@ UPDATE `creature_template` SET `InhabitType`=4 WHERE `entry` IN (32892);
 UPDATE `creature_template` SET `faction`=1692 WHERE `entry` IN (32885,32883,33152,33153,32908,33150,32907,33151);
 UPDATE `creature_template` SET `faction`=1693 WHERE `entry` IN (32882,33154);
 
-DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=13 AND `SourceEntry` IN (62577,62603,62016,62976,63238,64098,62466,62565,62942,64767,62560,61964);
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=13 AND `SourceEntry` IN (62577,62603,62016,62976,63238,64098,62466,62565,62942,64767,62560,61964,61934);
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES
 (13,1,62577,0,0,31,0,3,32892,0,0,0,'','Thorim - Blizzard'),
 (13,1,62603,0,0,31,0,3,32892,0,0,0,'','Thorim - Blizzard'),
@@ -115,7 +115,8 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 (13,1,61964,0,2,31,0,3,32885,0,0,0,'','Thorim - Circle of Healing'),
 (13,1,61964,0,3,31,0,3,32886,0,0,0,'','Thorim - Circle of Healing'),
 (13,1,61964,0,4,31,0,3,32907,0,0,0,'','Thorim - Circle of Healing'),
-(13,1,61964,0,5,31,0,3,32908,0,0,0,'','Thorim - Circle of Healing');
+(13,1,61964,0,5,31,0,3,32908,0,0,0,'','Thorim - Circle of Healing'),
+(13,1,61934,0,0,31,0,3,32892,0,0,0,'spell_thorim_arena_leap','Thorim - Leap');
 
 DELETE FROM `disables` WHERE `sourceType`=4 AND `entry` IN (10289,10314,10304,10313,10440,10457,10800,10801);
 INSERT INTO `disables` (`sourceType`,`entry`,`flags`,`params_0`,`params_1`,`comment`) VALUES
@@ -150,11 +151,6 @@ INSERT INTO `achievement_criteria_data` (`criteria_id`,`type`,`value1`,`value2`,
 
 UPDATE `gameobject_template` SET `faction`=94, `flags`=16, `size`=3 WHERE `entry` IN (194312,194313,194314,194315);
 
-UPDATE `gameobject_template` SET `Data1`=27073 WHERE `entry`=194312;
-UPDATE `gameobject_template` SET `Data1`=27074 WHERE `entry`=194313;
-UPDATE `gameobject_template` SET `Data1`=26955 WHERE `entry`=194314;
-UPDATE `gameobject_template` SET `Data1`=26956 WHERE `entry`=194315;
-
 DELETE FROM `creature` WHERE `id` IN (32882,32908,32907,32885,32883,32886); -- PreAdds
 DELETE FROM `creature` WHERE `id` IN (32874,32875,33110); -- Colossus, Giant Adds
 
@@ -173,7 +169,7 @@ INSERT INTO `gameobject` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `positi
 
 DELETE FROM `creature` WHERE `id`=32892 AND `position_z` < 425.0;
 
--- Pathing for Thorim Event Bunny Entry: 32892 'TDB FORMAT' 
+-- Pathing for Thorim Event Bunny Entry: 32892 'TDB FORMAT'
 SET @NPC := 136515;
 SET @PATH := @NPC * 10;
 UPDATE `creature` SET `spawndist`=0,`MovementType`=2,`position_x`=2125.243,`position_y`=-279.0981,`position_z`=419.6088 WHERE `guid`=@NPC;
