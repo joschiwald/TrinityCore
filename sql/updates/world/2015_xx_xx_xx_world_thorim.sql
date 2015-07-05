@@ -112,7 +112,7 @@ UPDATE `creature_template` SET `InhabitType`=4, `flags_extra`=128 WHERE `entry` 
 UPDATE `creature_template` SET `InhabitType`=4 WHERE `entry` IN (32892);
 UPDATE `creature_template` SET `faction`=1692 WHERE `entry` IN (32885,32883,33152,33153,32908,33150,32907,33151);
 UPDATE `creature_template` SET `faction`=1693 WHERE `entry` IN (32882,33154);
-UPDATE `creature_template` SET `BaseAttackTime`=1500 WHERE `entry`=33147;
+UPDATE `creature_template` SET `speed_walk`=2.5/2.5, `speed_run`=14.0/7.0, `BaseAttackTime`=1500, `RangeAttackTime`=1500 WHERE `entry` IN (32865,33147);
 
 DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=13 AND `SourceEntry` IN (62577,62603,62016,62976,63238,64098,62466,62565,62942,64767,62560,61964,61934);
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES
@@ -153,15 +153,10 @@ INSERT INTO `disables` (`sourceType`, `entry`, `flags`, `params_0`, `params_1`, 
 (0, 64767, 64, '', '', 'Stormhammer - Ignore LOS'),
 (0, 45537, 64, '', '', 'Lightning Beam Channel - Ignore LOS');
 
-DELETE FROM `achievement_criteria_data` WHERE `criteria_id` IN (10289,10314,10304,10313,10305,10309,10440,10457);
+DELETE FROM `achievement_criteria_data` WHERE `criteria_id` IN (10289,10314,10305,10309,10440,10457);
 INSERT INTO `achievement_criteria_data` (`criteria_id`,`type`,`value1`,`value2`,`ScriptName`) VALUES
 (10289,12,0,0,''), -- Siffed (10 player)
 (10314,12,1,0,''), -- Siffed (25 player)
-
-(10304,5,62320,0,''), -- Who Needs Bloodlust? (10 player)
-(10304,12,0,0,''),    -- Who Needs Bloodlust? (10 player)
-(10313,5,62320,0,''), -- Who Needs Bloodlust? (25 player)
-(10313,12,1,0,''),    -- Who Needs Bloodlust? (25 player)
 
 (10305,11,0,0,'achievement_dont_stand_in_the_lightning'), -- Don't Stand in the Lightning (10 player)
 (10305,12,0,0,''),                                        -- Don't Stand in the Lightning (10 player)

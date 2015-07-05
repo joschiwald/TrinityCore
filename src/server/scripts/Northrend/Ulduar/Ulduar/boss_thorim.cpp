@@ -505,7 +505,7 @@ class boss_thorim : public CreatureScript
                     Talk(SAY_SLAY);
             }
 
-            void SpellHit(Unit* caster, SpellInfo const* spellInfo) override
+            void SpellHit(Unit* /*caster*/, SpellInfo const* spellInfo) override
             {
                 if (spellInfo->Id == SPELL_TOUCH_OF_DOMINION_TRIGGERED)
                 {
@@ -518,9 +518,9 @@ class boss_thorim : public CreatureScript
                 }
             }
 
-            void SpellHitTarget(Unit* who, SpellInfo const* spell) override
+            void SpellHitTarget(Unit* who, SpellInfo const* spellInfo) override
             {
-                if (who->GetTypeId() == TYPEID_PLAYER && spell->Id == SPELL_LIGHTNING_CHARGE)
+                if (who->GetTypeId() == TYPEID_PLAYER && spellInfo->Id == SPELL_LIGHTNING_CHARGE)
                     _dontStandInTheLightning = false;
             }
 
@@ -1162,8 +1162,6 @@ class npc_thorim_pre_phase : public CreatureScript
                         break;
                 }
             }
-
-        private:
         };
 
         CreatureAI* GetAI(Creature* creature) const override
@@ -1258,13 +1256,10 @@ class npc_thorim_arena_phase : public CreatureScript
                             _events.ScheduleEvent(eventId, 1000);
                         break;
                     case EVENT_ABILITY_CHARGE:
-                    {
-                        Unit* referer = me;
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, [referer](Unit* unit){ return unit->GetTypeId() == TYPEID_PLAYER && unit->IsInRange(referer, 8.0f, 25.0f); }))
+                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, [this](Unit* unit) { return unit->GetTypeId() == TYPEID_PLAYER && unit->IsInRange(me, 8.0f, 25.0f); }))
                             DoCast(target, SPELL_CHARGE);
                         _events.ScheduleEvent(eventId, 12000);
                         break;
-                    }
                     default:
                         break;
                 }
@@ -1301,8 +1296,8 @@ struct npc_thorim_minibossAI : public ScriptedAI
     {
         if (action == ACTION_ACTIVATE_ADDS)
         {
-            for (auto itr = _summons.begin(); itr != _summons.end();)
-                if (Creature* summon = ObjectAccessor::GetCreature(*me, *itr++))
+            for (ObjectGuid const& guid : _summons)
+                if (Creature* summon = ObjectAccessor::GetCreature(*me, guid))
                     summon->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
         }
     }
@@ -1402,13 +1397,10 @@ class npc_runic_colossus : public CreatureScript
                             _events.ScheduleEvent(eventId, urand(15000, 18000));
                             break;
                         case EVENT_RUNIC_CHARGE:
-                        {
-                            Unit* referer = me;
-                            if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, [referer](Unit* unit){ return unit->GetTypeId() == TYPEID_PLAYER && unit->IsInRange(referer, 8.0f, 40.0f); }))
+                            if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, [this](Unit* unit) { return unit->GetTypeId() == TYPEID_PLAYER && unit->IsInRange(me, 8.0f, 40.0f); }))
                                 DoCast(target, SPELL_RUNIC_CHARGE);
                             _events.ScheduleEvent(eventId, 20000);
                             break;
-                        }
                         case EVENT_RUNIC_SMASH:
                             DoCast(me, RAND(SPELL_RUNIC_SMASH_LEFT, SPELL_RUNIC_SMASH_RIGHT));
                             _events.ScheduleEvent(eventId, 6000);
@@ -2191,40 +2183,6 @@ class condition_thorim_arena_leap : public ConditionScript
     private:
         HeightPositionCheck _check;
 };
-
-/*
--- Thorim
-UPDATE `creature_template` SET `speed_walk` = 1.66667, `mechanic_immune_mask` = 650854239, `flags_extra` = 1, `ScriptName` = 'boss_thorim' WHERE `entry` = 32865;
-UPDATE `creature_template` SET `speed_walk` = 1.66667, `baseattacktime` = 1500, `mechanic_immune_mask` = 650854239 WHERE `entry` = 33147;
-
--- Gate
-DELETE FROM `gameobject_template` WHERE `entry`=194265;
-INSERT INTO `gameobject_template` (`entry`, `type`, `displayId`, `name`, `IconName`, `castBarCaption`, `unk1`, `faction`, `flags`, `size`, `questItem1`, `questItem2`, `questItem3`, `questItem4`, `questItem5`, `questItem6`, `data0`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`, `data8`, `data9`, `data10`, `data11`, `data12`, `data13`, `data14`, `data15`, `data16`, `data17`, `data18`, `data19`, `data20`, `data21`, `data22`, `data23`, `ScriptName`, `WDBVerified`) VALUES
-('194265','1','295','Lever','','','','35','48','3','0','0','0','0','0','0','0','0','6000','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','','0');
-UPDATE `gameobject` SET `id` = 194265, `rotation2` = 1, `rotation3` = 0, `spawntimesecs` = 7200, `animprogress` = 100 WHERE `guid` = 55194;
-
--- Cleanup
-DELETE FROM `creature` WHERE `id` IN (32885, 32883, 32908, 32907, 32882, 33110, 32886, 32879, 32874, 32875)
-OR guid IN (136694, 136695, 136666, 136706, 136754, 136653, 136756, 136757, 136725, 136718);
-
--- Pre adds
-UPDATE `creature_template` SET `ScriptName` = 'npc_thorim_pre_phase' WHERE `entry` = 32885;
-UPDATE `creature_template` SET `ScriptName` = 'npc_thorim_pre_phase' WHERE `entry` = 32883;
-UPDATE `creature_template` SET `ScriptName` = 'npc_thorim_pre_phase' WHERE `entry` = 32908;
-UPDATE `creature_template` SET `ScriptName` = 'npc_thorim_pre_phase' WHERE `entry` = 32907;
-UPDATE `creature_template` SET `ScriptName` = 'npc_thorim_pre_phase' WHERE `entry` = 32882;
-UPDATE `creature_template` SET `ScriptName` = 'npc_thorim_pre_phase' WHERE `entry` = 32886;
-
--- Thorim Mini bosses
-UPDATE `creature_template` SET `mechanic_immune_mask` = 650854239, `flags_extra` = 1, `ScriptName` = 'npc_runic_colossus' WHERE `entry` = 32872;
-UPDATE `creature_template` SET `mechanic_immune_mask` = 650854239, `flags_extra` = 1, `ScriptName` = 'npc_ancient_rune_giant' WHERE `entry` = 32873;
-UPDATE `creature_template` SET `mechanic_immune_mask` = 650854239, `flags_extra` = 1, `ScriptName` = 'npc_sif' WHERE `entry` = 33196;
-UPDATE `creature_template` SET `ScriptName` = 'npc_thorim_arena_phase' WHERE `entry` IN (32876, 32904, 32878, 32877, 32874, 32875, 33110);
-DELETE FROM `creature_addon` WHERE `guid`IN (136059, 136816);
-INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `emote`, `auras`) VALUES
-('136059','0','0','0','1','0','40775 0'),
-('136816','0','0','0','1','0','40775 0');
-*/
 
 void AddSC_boss_thorim()
 {
