@@ -1514,7 +1514,7 @@ class npc_sif : public CreatureScript
 
         struct npc_sifAI : public ScriptedAI
         {
-            npc_sifAI(Creature* creature) : ScriptedAI(creature), _summons(me)
+            npc_sifAI(Creature* creature) : ScriptedAI(creature)
             {
                 SetCombatMovement(false);
                 _instance = creature->GetInstanceScript();
@@ -1523,19 +1523,6 @@ class npc_sif : public CreatureScript
             void Reset() override
             {
                 _events.Reset();
-                _summons.DespawnAll();
-            }
-
-            void JustSummoned(Creature* summon) override
-            {
-                _summons.Summon(summon);
-                if (summon->GetEntry() == NPC_THORIM_EVENT_BUNNY)
-                    summon->GetMotionMaster()->MoveRandom(60.0f);
-            }
-
-            void SummonedCreatureDespawn(Creature* summon) override
-            {
-                _summons.Despawn(summon);
             }
 
             void SpellHit(Unit* /*caster*/, SpellInfo const* spellInfo) override
@@ -1612,7 +1599,6 @@ class npc_sif : public CreatureScript
 
         private:
             EventMap _events;
-            SummonList _summons;
             InstanceScript* _instance;
         };
 
