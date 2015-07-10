@@ -244,8 +244,8 @@ enum UlduarGameObjects
     // Thorim
     GO_CACHE_OF_STORMS_10                   = 194312,
     GO_CACHE_OF_STORMS_HARDMODE_10          = 194313,
-    GO_CACHE_OF_STORMS_25                   = 194315,
-    GO_CACHE_OF_STORMS_HARDMODE_25          = 194314,
+    GO_CACHE_OF_STORMS_25                   = 194314,
+    GO_CACHE_OF_STORMS_HARDMODE_25          = 194315,
     GO_THORIM_RUNIC_DOOR                    = 194557,
     GO_THORIM_STONE_DOOR                    = 194558,
     GO_THORIM_ENCOUNTER_DOOR                = 194559,
