@@ -37,7 +37,7 @@ enum UlduarBosses
     BOSS_KOLOGARN            = 5,
     BOSS_AURIAYA             = 6,
     BOSS_HODIR               = 7,
-    DATA_THORIM              = 8,
+    BOSS_THORIM              = 8,
     BOSS_FREYA               = 9,
     BOSS_MIMIRON             = 10,
     BOSS_VEZAX               = 11,

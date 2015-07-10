@@ -393,7 +393,7 @@ class LightningFieldEvent : public BasicEvent
         {
             if (InstanceScript* instance = _owner->GetInstanceScript())
             {
-                if (instance->GetBossState(DATA_THORIM) == IN_PROGRESS)
+                if (instance->GetBossState(BOSS_THORIM) == IN_PROGRESS)
                 {
                     _owner->CastSpell((Unit*)nullptr, SPELL_LIGHTNING_FIELD);
                     _owner->m_Events.AddEvent(this, eventTime + 1000);
@@ -417,7 +417,7 @@ class boss_thorim : public CreatureScript
 
         struct boss_thorimAI : public BossAI
         {
-            boss_thorimAI(Creature* creature) : BossAI(creature, DATA_THORIM)
+            boss_thorimAI(Creature* creature) : BossAI(creature, BOSS_THORIM)
             {
                 _encounterFinished = false;
                 Initialize();
@@ -1126,7 +1126,7 @@ class npc_thorim_pre_phase : public CreatureScript
 
             void JustDied(Unit* /*victim*/)
             {
-                if (Creature* thorim = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_THORIM)))
+                if (Creature* thorim = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(BOSS_THORIM)))
                     thorim->AI()->DoAction(ACTION_INCREASE_PREADDS_COUNT);
             }
 
@@ -1228,7 +1228,7 @@ class npc_thorim_arena_phase : public CreatureScript
             {
                 // this should only happen if theres no alive player in the arena -> summon orb
                 // might be called by mind control release or controllers death?
-                if (Creature* thorim = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_THORIM)))
+                if (Creature* thorim = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(BOSS_THORIM)))
                     thorim->AI()->DoAction(ACTION_BERSERK);
                 ScriptedAI::EnterEvadeMode();
             }
@@ -1356,7 +1356,7 @@ class npc_runic_colossus : public CreatureScript
                 // Runed Door opened
                 _instance->HandleGameObject(_instance->GetGuidData(DATA_RUNIC_DOOR), true);
 
-                if (Creature* thorim = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_THORIM)))
+                if (Creature* thorim = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(BOSS_THORIM)))
                     thorim->AI()->Talk(SAY_SPECIAL_2);
 
                 if (Creature* giant = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_RUNE_GIANT)))
@@ -2071,7 +2071,7 @@ class spell_thorim_activate_lightning_orb_periodic : public SpellScriptLoader
                 if (!triggers.empty())
                 {
                     Creature* target = Trinity::Containers::SelectRandomContainerElement(triggers);
-                    if (Creature* Thorim = ObjectAccessor::GetCreature(*caster, instance->GetGuidData(DATA_THORIM)))
+                    if (Creature* Thorim = ObjectAccessor::GetCreature(*caster, instance->GetGuidData(BOSS_THORIM)))
                         Thorim->AI()->SetGUID(target->GetGUID(), DATA_CHARGED_PILLAR);
                 }
             }

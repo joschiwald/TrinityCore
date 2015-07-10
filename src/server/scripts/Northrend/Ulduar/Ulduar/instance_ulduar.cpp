@@ -36,7 +36,7 @@ static DoorData const doorData[] =
     { GO_MIMIRON_DOOR_1,                BOSS_MIMIRON,           DOOR_TYPE_ROOM,         BOUNDARY_W      },
     { GO_MIMIRON_DOOR_2,                BOSS_MIMIRON,           DOOR_TYPE_ROOM,         BOUNDARY_E      },
     { GO_MIMIRON_DOOR_3,                BOSS_MIMIRON,           DOOR_TYPE_ROOM,         BOUNDARY_S      },
-    { GO_THORIM_ENCOUNTER_DOOR,         DATA_THORIM,            DOOR_TYPE_ROOM,         BOUNDARY_NONE   },
+    { GO_THORIM_ENCOUNTER_DOOR,         BOSS_THORIM,            DOOR_TYPE_ROOM,         BOUNDARY_NONE   },
     { GO_VEZAX_DOOR,                    BOSS_VEZAX,             DOOR_TYPE_PASSAGE,      BOUNDARY_E      },
     { GO_YOGG_SARON_DOOR,               BOSS_YOGG_SARON,        DOOR_TYPE_ROOM,         BOUNDARY_S      },
     { GO_DOODAD_UL_SIGILDOOR_03,        BOSS_ALGALON,           DOOR_TYPE_ROOM,         BOUNDARY_W      },
@@ -184,7 +184,7 @@ class instance_ulduar : public InstanceMapScript
                     _summonObservationRingKeeper[1] = false;
                     instance->SummonCreature(NPC_HODIR_OBSERVATION_RING, ObservationRingKeepersPos[1]);
                 }
-                if (GetBossState(DATA_THORIM) == DONE && _summonObservationRingKeeper[2] && !KeeperGUIDs[2])
+                if (GetBossState(BOSS_THORIM) == DONE && _summonObservationRingKeeper[2] && !KeeperGUIDs[2])
                 {
                     _summonObservationRingKeeper[2] = false;
                     instance->SummonCreature(NPC_THORIM_OBSERVATION_RING, ObservationRingKeepersPos[2]);
@@ -780,7 +780,7 @@ class instance_ulduar : public InstanceMapScript
                             instance->SummonCreature(NPC_HODIR_OBSERVATION_RING, ObservationRingKeepersPos[1]);
                         }
                         break;
-                    case DATA_THORIM:
+                    case BOSS_THORIM:
                         if (state == DONE)
                         {
                             if (Creature* thorim = instance->GetCreature(ThorimGUID))
@@ -961,7 +961,7 @@ class instance_ulduar : public InstanceMapScript
                         return ElderGUIDs[2];
 
                     // Thorim
-                    case DATA_THORIM:
+                    case BOSS_THORIM:
                         return ThorimGUID;
                     case DATA_THORIM_CONTROLLER:
                         return ThorimControllerGUID;
@@ -1126,7 +1126,7 @@ class instance_ulduar : public InstanceMapScript
                         return (_CoUAchivePlayerDeathMask & (1 << BOSS_HODIR)) == 0;
                     case CRITERIA_C_O_U_THORIM_10:
                     case CRITERIA_C_O_U_THORIM_25:
-                        return (_CoUAchivePlayerDeathMask & (1 << DATA_THORIM)) == 0;
+                        return (_CoUAchivePlayerDeathMask & (1 << BOSS_THORIM)) == 0;
                     case CRITERIA_C_O_U_FREYA_10:
                     case CRITERIA_C_O_U_FREYA_25:
                         return (_CoUAchivePlayerDeathMask & (1 << BOSS_FREYA)) == 0;
@@ -1186,7 +1186,7 @@ class instance_ulduar : public InstanceMapScript
                     _summonObservationRingKeeper[0] = true;
                 if (GetBossState(BOSS_HODIR) == DONE && !_summonYSKeeper[1])
                     _summonObservationRingKeeper[1] = true;
-                if (GetBossState(DATA_THORIM) == DONE && !_summonYSKeeper[2])
+                if (GetBossState(BOSS_THORIM) == DONE && !_summonYSKeeper[2])
                     _summonObservationRingKeeper[2] = true;
                 if (GetBossState(BOSS_MIMIRON) == DONE && !_summonYSKeeper[3])
                     _summonObservationRingKeeper[3] = true;
