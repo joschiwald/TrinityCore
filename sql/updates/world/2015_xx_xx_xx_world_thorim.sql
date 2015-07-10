@@ -2,7 +2,7 @@
  * Thorim
  */
 
--- todo: immunity runic colossus, rune giant grip and knockback
+-- todo: immunity runic colossus, rune giant grip
 
 DELETE FROM `creature_text` WHERE `entry` IN (32865,32872,32873,33196);
 INSERT INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `language`, `probability`, `emote`, `duration`, `sound`, `BroadcastTextID`, `comment`) VALUES
@@ -178,6 +178,29 @@ SET @CGUID:=136446;
 DELETE FROM `creature` WHERE `id`=32879;
 INSERT INTO `creature` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `spawndist`, `MovementType`) VALUES
 (@CGUID, 32879, 603, 3, 1, 2134.774, -262.3073, 428.6936, 1.343904, 7200, 0, 0); -- 32879 (Area: 0) (Auras: 62184 - 62184)
+
+DELETE FROM `gameobject_loot_template` WHERE `Entry` IN (26955,26956);
+INSERT INTO `gameobject_loot_template` (`Entry`,`Item`,`Reference`,`Chance`,`QuestRequired`,`LootMode`,`GroupId`,`MinCount`,`MaxCount`,`Comment`) VALUES
+(26955,1,34372,100,0,1,0,1,1,'Thorim25 HM - normal mode loot'),
+(26955,2,12033,100,0,1,0,1,2,'Thorim25 HM - T8.5 tokens'),
+(26955,3,34154,10,0,1,0,1,1,'Thorim25 HM - Random Ulduar craft recipe'),
+(26955,45038,0,18,0,1,0,1,1,'Thorim25 HM - Val''anyr fragment'),
+(26955,45087,0,10,0,1,0,1,1,'Thorim25 HM - Runed Orb'),
+(26955,45470,0,0,0,1,1,1,1,'Thorim25 HM - Wisdom''s Hold'),
+(26955,45471,0,0,0,1,1,1,1,'Thorim25 HM - Fate''s Clutch'),
+(26955,45472,0,0,0,1,1,1,1,'Thorim25 HM - Warhelm of the Champion'),
+(26955,45473,0,0,0,1,1,1,1,'Thorim25 HM - Embrace of the Gladiator'),
+(26955,45474,0,0,0,1,1,1,1,'Thorim25 HM - Pauldrons of the Combatant'),
+(26955,45570,0,0,0,1,1,1,1,'Thorim25 HM - Skyforge Crossbow'),
+(26955,45817,0,100,1,1,0,1,1,'Thorim25 HM - Thorim''s Sigil'),
+(26955,47241,0,100,0,1,0,1,1,'Thorim25 HM - Emblem of Triumph'),
+
+(26956,1,34372,100,0,1,0,1,1,'Thorim25 - normal mode loot'),
+(26956,2,12033,100,0,1,0,1,2,'Thorim25 - T8.5 tokens'),
+(26956,3,34154,10,0,1,0,1,1,'Thorim25 - Random Ulduar craft recipe'),
+(26956,45038,0,8,0,1,0,1,1,'Thorim25 - Val''anyr fragment'),
+(26956,45087,0,10,0,1,0,1,1,'Thorim25 - Runed Orb'),
+(26956,47241,0,100,0,1,0,1,1,'Thorim25 - Emblem of Triumph');
 
 -- Pathing for Thorim Event Bunny Entry: 32892 'TDB FORMAT'
 SET @NPC := 136515;
