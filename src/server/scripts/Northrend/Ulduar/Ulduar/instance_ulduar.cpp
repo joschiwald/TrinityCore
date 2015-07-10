@@ -58,7 +58,10 @@ MinionData const minionData[] =
 class instance_ulduar : public InstanceMapScript
 {
     public:
-        instance_ulduar() : InstanceMapScript(UlduarScriptName, 603) { }
+        instance_ulduar() : InstanceMapScript(UlduarScriptName, 603)
+        {
+            static_assert(DATA_ILLUSION == 46, "Ulduar.h DATA_ILLUSION set to value != 46, spellclick condition won't work as intended.");
+        }
 
         struct instance_ulduar_InstanceMapScript : public InstanceScript
         {
