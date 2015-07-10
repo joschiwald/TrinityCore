@@ -892,8 +892,6 @@ class boss_thorim : public CreatureScript
                     // Hard Mode
                     if (_hardMode)
                         DoCastAOE(SPELL_CREDIT_SIFFED, true);
-                    else
-                        _hardMode = false;
                 }
                 else if (me->HealthBelowPctDamaged(1, damage))
                 {
@@ -1280,6 +1278,7 @@ struct npc_thorim_minibossAI : public ScriptedAI
     npc_thorim_minibossAI(Creature* creature) : ScriptedAI(creature), _summons(me)
     {
         _instance = creature->GetInstanceScript();
+        creature->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
     }
 
     void JustSummoned(Creature* summon) final override
@@ -1433,9 +1432,7 @@ class npc_ancient_rune_giant : public CreatureScript
 
         struct npc_ancient_rune_giantAI : public npc_thorim_minibossAI
         {
-            npc_ancient_rune_giantAI(Creature* creature) : npc_thorim_minibossAI(creature)
-            {
-            }
+            npc_ancient_rune_giantAI(Creature* creature) : npc_thorim_minibossAI(creature) { }
 
             void Reset() override
             {
