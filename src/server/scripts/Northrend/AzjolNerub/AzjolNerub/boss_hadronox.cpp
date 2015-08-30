@@ -47,7 +47,9 @@ enum Events
 
     // ======== CRYPT FIEND ========
     EVENT_INFECTED_WOUNDS       = 2,
-    EVENT_CRUSHING_WEBS         = 3
+    EVENT_CRUSHING_WEBS         = 3,
+
+    EVENT_GROUP_MOVEMENT        = 2
 };
 
 enum Actions
@@ -355,7 +357,7 @@ class boss_hadronox : public CreatureScript
                                 std::list<TempSummon*> reinforcementgroupA;
                                 distantFrontDoorTrigger->SummonCreatureGroup(CREATURE_GROUP_CRUSHER_REINFORCEMENTS_A, &reinforcementgroupA);
                                 for (std::list<TempSummon*>::const_iterator itr = reinforcementgroupA.begin(); itr != reinforcementgroupA.end(); ++itr)
-                                    (*itr)->GetAI()->DoAction(CREATURE_GROUP_CRUSHER_REINFORCEMENTS_A);
+                                    (*itr)->AI()->DoAction(CREATURE_GROUP_CRUSHER_REINFORCEMENTS_A);
 
                                 events.ScheduleEvent(EVENT_TIMED_ATTACKERS_A, 20 * IN_MILLISECONDS);
                             }
@@ -365,7 +367,7 @@ class boss_hadronox : public CreatureScript
                                 std::list<TempSummon*> reinforcementgroupB;
                                 closerFrontDoorTrigger->SummonCreatureGroup(CREATURE_GROUP_CRUSHER_REINFORCEMENTS_B, &reinforcementgroupB);
                                 for (std::list<TempSummon*>::const_iterator itr = reinforcementgroupB.begin(); itr != reinforcementgroupB.end(); ++itr)
-                                    (*itr)->GetAI()->DoAction(CREATURE_GROUP_CRUSHER_REINFORCEMENTS_B);
+                                    (*itr)->AI()->DoAction(CREATURE_GROUP_CRUSHER_REINFORCEMENTS_B);
                             }
 
                             _eventStarted = true;
@@ -396,19 +398,19 @@ class boss_hadronox : public CreatureScript
                     {
                         case 4:
                             _allowedAttack = true;
-                            events.ScheduleEvent(EVENT_MOVE_IN_TUNNEL, 25 * IN_MILLISECONDS, 2);
+                            events.ScheduleEvent(EVENT_MOVE_IN_TUNNEL, 25 * IN_MILLISECONDS, EVENT_GROUP_MOVEMENT);
                             break;
                         case 6:
                             _allowedAttack = true;
-                            events.ScheduleEvent(EVENT_MOVE_IN_TUNNEL, 25 * IN_MILLISECONDS, 2);
+                            events.ScheduleEvent(EVENT_MOVE_IN_TUNNEL, 25 * IN_MILLISECONDS, EVENT_GROUP_MOVEMENT);
                             break;
                         case 8:
                             _allowedAttack = true;
-                            events.ScheduleEvent(EVENT_MOVE_IN_TUNNEL, 25 * IN_MILLISECONDS, 2);
+                            events.ScheduleEvent(EVENT_MOVE_IN_TUNNEL, 25 * IN_MILLISECONDS, EVENT_GROUP_MOVEMENT);
                             break;
                         case 10:
                             _allowedAttack = true;
-                            events.ScheduleEvent(EVENT_MOVE_IN_TUNNEL, 25 * IN_MILLISECONDS, 2);
+                            events.ScheduleEvent(EVENT_MOVE_IN_TUNNEL, 25 * IN_MILLISECONDS, EVENT_GROUP_MOVEMENT);
                             break;
                         case 11:
                             me->CastSpell(me, SPELL_WEB_SIDE_DOOR);
@@ -422,18 +424,12 @@ class boss_hadronox : public CreatureScript
                 }
             }
 
-            /*
-            If Hadronox is left to engage spiders due to core uncapacity to handle such surfaces
-            spiders will fall under webs when try to generate combat movement or when web pulled
-            which will lead to Hadronox going after them.
-            /// @todo: Add core support for movements on such edged surfaces. Mmaps can't handle this at the moment.
-
             void MoveInLineOfSight(Unit* who) override
             {
-                if (who->GetTypeId() == TYPEID_PLAYER || who->IsControlledByPlayer())
+                if (who->GetTypeId() == TYPEID_PLAYER && who->IsControlledByPlayer())
                     return;
 
-                if (!me->IsWithinDistInMap(who, 10.0f, false))
+                if (!me->IsWithinDistInMap(who, 10.0f))
                     return;
 
                 if (Creature* creature = who->ToCreature())
@@ -446,15 +442,14 @@ class boss_hadronox : public CreatureScript
 
                 DoCast(who, SPELL_TAUNT);
             }
-            */
 
             void DamageTaken(Unit* attacker, uint32& /*damage*/) override
             {
-                if (!_clearedWPMovement && (attacker->GetTypeId() == TYPEID_PLAYER) && !_eventReseted)
+                if (!_clearedWPMovement && attacker->GetTypeId() == TYPEID_PLAYER && !_eventReseted)
                 {
                     _clearedWPMovement = true;
-                    events.CancelEventGroup(2);
-                    me->GetMotionMaster()->Clear(false);
+                    events.CancelEventGroup(EVENT_GROUP_MOVEMENT);
+                    me->GetMotionMaster()->Clear();
                 }
             }
 
@@ -479,18 +474,16 @@ class boss_hadronox : public CreatureScript
                                 {
                                     case 0:
                                         distantFrontDoorTrigger->CastSpell((Unit*)nullptr, SPELL_SUMMON_ANUB_AR_NECROMANCER);
-                                        ++_attackersCounterA;
                                         break;
                                     case 1:
                                         distantFrontDoorTrigger->CastSpell((Unit*)nullptr, SPELL_SUMMON_ANUB_AR_CHAMPION);
-                                        ++_attackersCounterA;
                                         break;
                                     case 2:
                                         distantFrontDoorTrigger->CastSpell((Unit*)nullptr, SPELL_SUMMON_ANUB_AR_CRYPT_FIEND);
                                         break;
                                 }
 
-                                if (_attackersCounterA < 2)
+                                if (_attackersCounterA++ < 2)
                                     events.ScheduleEvent(EVENT_TIMED_ATTACKERS_A, 20 * IN_MILLISECONDS);
                                 else
                                     events.ScheduleEvent(EVENT_TIMED_ATTACKERS_B, 20 * IN_MILLISECONDS);
@@ -503,18 +496,16 @@ class boss_hadronox : public CreatureScript
                                 {
                                     case 0:
                                         closerFrontDoorTrigger->CastSpell((Unit*)nullptr, SPELL_SUMMON_ANUB_AR_NECROMANCER);
-                                        ++_attackersCounterB;
                                         break;
                                     case 1:
                                         closerFrontDoorTrigger->CastSpell((Unit*)nullptr, SPELL_SUMMON_ANUB_AR_CHAMPION);
-                                        ++_attackersCounterB;
                                         break;
                                     case 2:
                                         closerFrontDoorTrigger->CastSpell((Unit*)nullptr, SPELL_SUMMON_ANUB_AR_CRYPT_FIEND);
                                         break;
                                 }
 
-                                if (_attackersCounterB < 2)
+                                if (_attackersCounterB++ < 2)
                                     events.ScheduleEvent(EVENT_TIMED_ATTACKERS_B, 20 * IN_MILLISECONDS);
                             }
 
@@ -781,7 +772,7 @@ class npc_anub_ar_champion : public CreatureScript
                 if (waypointId == 10)
                     if (me->GetEntry() == NPC_PERIODIC_ATTACKING_CHAMPION)
                         if (Unit* victim = me->SelectNearestPlayer(100.0f))
-                            me->Attack(victim, true);
+                            AttackStart(victim);
             }
 
             void UpdateEscortAI(uint32 const diff) override
@@ -876,7 +867,7 @@ class npc_anub_ar_necromancer : public CreatureScript
                 if (waypointId == 10)
                     if (me->GetEntry() == NPC_PERIODIC_ATTACKING_NECRO)
                         if (Unit* victim = me->SelectNearestPlayer(100.0f))
-                            me->Attack(victim, true);
+                            AttackStart(victim);
             }
 
             void UpdateEscortAI(uint32 const diff) override
@@ -947,7 +938,7 @@ class npc_anub_ar_crypt_fiend : public CreatureScript
                 if (waypointId == 10)
                     if (me->GetEntry() == NPC_PERIODIC_ATTACKING_FIEND)
                         if (Unit* victim = me->SelectNearestPlayer(100.0f))
-                            me->Attack(victim, true);
+                            AttackStart(victim);
             }
 
             void UpdateEscortAI(uint32 const diff) override
@@ -996,7 +987,7 @@ class spell_hadronox_leech_poison : public SpellScriptLoader
         {
             PrepareAuraScript(spell_hadronox_leech_poison_AuraScript);
 
-            bool Validate(SpellInfo const* spellInfo) override
+            bool Validate(SpellInfo const* /*spellInfo*/) override
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_LEECH_POISON_HEAL))
                     return false;
@@ -1015,9 +1006,6 @@ class spell_hadronox_leech_poison : public SpellScriptLoader
             {
                 AfterEffectRemove += AuraEffectRemoveFn(spell_hadronox_leech_poison_AuraScript::HandleEffectRemove, EFFECT_0, SPELL_AURA_PERIODIC_LEECH, AURA_EFFECT_HANDLE_REAL);
             }
-
-        private:
-            InstanceScript* _instance;
         };
 
         AuraScript* GetAuraScript() const override
