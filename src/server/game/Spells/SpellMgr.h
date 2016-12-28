@@ -31,6 +31,7 @@
 #include <set>
 #include <vector>
 #include <unordered_map>
+#include <functional>
 
 class SpellInfo;
 class Player;
@@ -544,8 +545,6 @@ typedef std::map<int32, PetDefaultSpellsEntry> PetDefaultSpellsMap;
 typedef std::vector<uint32> SpellCustomAttribute;
 typedef std::vector<bool> EnchantCustomAttribute;
 
-typedef std::vector<SpellInfo*> SpellInfoMap;
-
 typedef std::map<int32, std::vector<int32> > SpellLinkedMap;
 
 bool IsPrimaryProfessionSkill(uint32 skill);
@@ -582,16 +581,46 @@ struct SpellInfoLoadHelper
     SpellCategoriesEntry const* Categories = nullptr;
     SpellClassOptionsEntry const* ClassOptions = nullptr;
     SpellCooldownsEntry const* Cooldowns = nullptr;
+    std::vector<SpellEffectEntry const*> Effects;
     SpellEquippedItemsEntry const* EquippedItems = nullptr;
     SpellInterruptsEntry const* Interrupts = nullptr;
     SpellLevelsEntry const* Levels = nullptr;
     SpellMiscEntry const* Misc = nullptr;
+    std::vector<SpellPowerEntry const*> Powers;
     SpellReagentsEntry const* Reagents = nullptr;
     SpellScalingEntry const* Scaling = nullptr;
     SpellShapeshiftEntry const* Shapeshift = nullptr;
     SpellTargetRestrictionsEntry const* TargetRestrictions = nullptr;
     SpellTotemsEntry const* Totems = nullptr;
+    std::vector<SpellXSpellVisualEntry const*> Visuals;
 };
+
+struct SpellInfoDifficultyLoadHelper
+{
+    typedef std::unordered_map<uint32 /*difficultyID*/, SpellInfoLoadHelper> StorageType;
+
+    static void AutoCollect(StorageType& data);
+};
+
+struct SpellInfoDifficultyData
+{
+    SpellInfoDifficultyData() { }
+
+    void Load(SpellInfoDifficultyLoadHelper::StorageType&& data, std::function<SpellInfo*(SpellInfoLoadHelper&&)> loader);
+
+    SpellInfo const* Get(uint32 difficulty) const;
+
+    template <typename Fn>
+    void ForEach(Fn worker);
+
+    typedef std::unordered_map<uint32 /*difficultyID*/, SpellInfo*> StorageType;
+
+private:
+    StorageType _data;
+    bool _hasDifficultyData = false;
+};
+
+typedef std::vector<SpellInfoDifficultyData> SpellInfoContainer;
 
 class TC_GAME_API SpellMgr
 {
@@ -672,21 +701,27 @@ class TC_GAME_API SpellMgr
         SpellAreaForQuestAreaMapBounds GetSpellAreaForQuestAreaMapBounds(uint32 area_id, uint32 quest_id) const;
 
         // SpellInfo object management
-        SpellInfo const* GetSpellInfo(uint32 spellId) const { return spellId < GetSpellInfoStoreSize() ?  mSpellInfoMap[spellId] : NULL; }
+        SpellInfo const* GetSpellInfo(uint32 spellId, WorldObject const* obj) const;
+        SpellInfo const* GetSpellInfo(uint32 spellId, Difficulty difficulty) const;
         // Use this only with 100% valid spellIds
-        SpellInfo const* AssertSpellInfo(uint32 spellId) const
+        inline SpellInfo const* AssertSpellInfo(uint32 spellId, WorldObject const* obj) const
         {
-            ASSERT(spellId < GetSpellInfoStoreSize());
-            SpellInfo const* spellInfo = mSpellInfoMap[spellId];
-            ASSERT(spellInfo);
+            SpellInfo const* spellInfo = GetSpellInfo(spellId, obj);
+            ASSERT(spellInfo, "Spell %u not found.", spellId);
             return spellInfo;
         }
-        uint32 GetSpellInfoStoreSize() const { return uint32(mSpellInfoMap.size()); }
+        inline SpellInfo const* AssertSpellInfo(uint32 spellId, Difficulty difficulty) const
+        {
+            SpellInfo const* spellInfo = GetSpellInfo(spellId, difficulty);
+            ASSERT(spellInfo, "Spell %u not found.", spellId);
+            return spellInfo;
+        }
+        //uint32 GetSpellInfoStoreSize() const { return uint32(mSpellInfoMap.size()); }
 
         void LoadPetFamilySpellsStore();
 
     private:
-        SpellInfo* _GetSpellInfo(uint32 spellId) { return spellId < GetSpellInfoStoreSize() ?  mSpellInfoMap[spellId] : NULL; }
+        //SpellInfo* _GetSpellInfo(uint32 spellId) { return spellId < GetSpellInfoStoreSize() ?  mSpellInfoMap[spellId] : NULL; }
 
     // Modifiers
     public:
@@ -743,8 +778,15 @@ class TC_GAME_API SpellMgr
         SkillLineAbilityMap        mSkillLineAbilityMap;
         PetLevelupSpellMap         mPetLevelupSpellMap;
         PetDefaultSpellsMap        mPetDefaultSpellsMap;           // only spells not listed in related mPetLevelupSpellMap entry
-        SpellInfoMap               mSpellInfoMap;
+        SpellInfoContainer         mSpellInfoStore;
 };
+
+template<typename Fn>
+void SpellInfoDifficultyData::ForEach(Fn worker)
+{
+    for (StorageType::value_type const& pair : _data)
+        worker(pair);
+}
 
 #define sSpellMgr SpellMgr::instance()
 

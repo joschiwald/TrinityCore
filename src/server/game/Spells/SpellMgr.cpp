@@ -337,7 +337,7 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellInfo const* spellproto)
                 return DIMINISHING_DISORIENT;
 
             // Silence -- 15487
-            if (spellproto->SpellFamilyFlags[1] & 0x200000 && spellproto->SchoolMask == 32)
+            if (spellproto->SpellFamilyFlags[1] & 0x200000 && spellproto->GetSchoolMask() == SPELL_SCHOOL_MASK_SHADOW)
                 return DIMINISHING_SILENCE;
             break;
         }
@@ -459,7 +459,7 @@ bool SpellMgr::IsSpellValid(SpellInfo const* spellInfo, Player* player, bool msg
     bool needCheckReagents = false;
 
     // check effects
-    for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
+    for (SpellEffectInfo const* effect : spellInfo->GetEffects())
     {
         if (!effect)
             continue;
@@ -507,7 +507,7 @@ bool SpellMgr::IsSpellValid(SpellInfo const* spellInfo, Player* player, bool msg
             }
             case SPELL_EFFECT_LEARN_SPELL:
             {
-                SpellInfo const* spellInfo2 = sSpellMgr->GetSpellInfo(effect->TriggerSpell);
+                SpellInfo const* spellInfo2 = sSpellMgr->GetSpellInfo(effect->TriggerSpell, player);
                 if (!IsSpellValid(spellInfo2, player, msg))
                 {
                     if (msg)
@@ -528,14 +528,14 @@ bool SpellMgr::IsSpellValid(SpellInfo const* spellInfo, Player* player, bool msg
     {
         for (uint8 j = 0; j < MAX_SPELL_REAGENTS; ++j)
         {
-            if (spellInfo->Reagent[j] > 0 && !sObjectMgr->GetItemTemplate(spellInfo->Reagent[j]))
+            if (spellInfo->Reagents[j].Reagent > 0 && !sObjectMgr->GetItemTemplate(spellInfo->Reagents[j].Reagent))
             {
                 if (msg)
                 {
                     if (player)
-                        ChatHandler(player->GetSession()).PSendSysMessage("Craft spell %u refers a non-existing reagent in DB item (Entry: %u) and then...", spellInfo->Id, spellInfo->Reagent[j]);
+                        ChatHandler(player->GetSession()).PSendSysMessage("Craft spell %u refers a non-existing reagent in DB item (Entry: %u) and then...", spellInfo->Id, spellInfo->Reagents[j].Reagent);
                     else
-                        TC_LOG_ERROR("sql.sql", "Craft spell %u refers to a non-existing reagent in DB, item (Entry: %u) and then...", spellInfo->Id, spellInfo->Reagent[j]);
+                        TC_LOG_ERROR("sql.sql", "Craft spell %u refers to a non-existing reagent in DB, item (Entry: %u) and then...", spellInfo->Id, spellInfo->Reagents[j].Reagent);
                 }
                 return false;
             }
@@ -998,6 +998,20 @@ SpellAreaForQuestAreaMapBounds SpellMgr::GetSpellAreaForQuestAreaMapBounds(uint3
     return mSpellAreaForQuestAreaMap.equal_range(std::pair<uint32, uint32>(area_id, quest_id));
 }
 
+SpellInfo const* SpellMgr::GetSpellInfo(uint32 spellId, WorldObject const* obj) const
+{
+    if (obj)
+        return GetSpellInfo(spellId, obj->GetMap()->GetDifficultyID());
+    return GetSpellInfo(spellId, DIFFICULTY_NONE);
+}
+
+SpellInfo const* SpellMgr::GetSpellInfo(uint32 spellId, Difficulty difficulty) const
+{
+    if (spellId < mSpellInfoStore.size())
+        return mSpellInfoStore[spellId].Get(difficulty);
+    return nullptr;
+}
+
 bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32 newArea) const
 {
     if (gender != GENDER_NONE)                   // is not expected gender
@@ -1090,8 +1104,8 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
 
 void SpellMgr::UnloadSpellInfoChains()
 {
-    for (SpellChainMap::iterator itr = mSpellChains.begin(); itr != mSpellChains.end(); ++itr)
-        mSpellInfoMap[itr->first]->ChainEntry = NULL;
+    //for (SpellChainMap::iterator itr = mSpellChains.begin(); itr != mSpellChains.end(); ++itr)
+    //    mSpellInfoMap[itr->first]->ChainEntry = NULL;
 
     mSpellChains.clear();
 }
@@ -1101,6 +1115,7 @@ void SpellMgr::LoadSpellRanks()
     uint32 oldMSTime = getMSTime();
 
     std::map<uint32 /*spell*/, uint32 /*next*/> chains;
+    /*
     std::set<uint32> hasPrev;
     for (SkillLineAbilityEntry const* skillAbility : sSkillLineAbilityStore)
     {
@@ -1163,7 +1178,7 @@ void SpellMgr::LoadSpellRanks()
             nextItr = chains.find(nextItr->second);
         }
     }
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u spell rank records in %u ms", uint32(mSpellChains.size()), GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -1185,6 +1200,7 @@ void SpellMgr::LoadSpellRequired()
     }
 
     uint32 count = 0;
+    /*
     do
     {
         Field* fields = result->Fetch();
@@ -1223,9 +1239,8 @@ void SpellMgr::LoadSpellRequired()
         mSpellsReqSpell.insert (std::pair<uint32, uint32>(spell_req, spell_id));
         ++count;
     } while (result->NextRow());
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u spell required records in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
-
 }
 
 void SpellMgr::LoadSpellLearnSkills()
@@ -1236,6 +1251,7 @@ void SpellMgr::LoadSpellLearnSkills()
 
     // search auto-learned skills and add its to map also for use in unlearn spells/talents
     uint32 dbc_count = 0;
+    /*
     for (SpellInfo const* entry : mSpellInfoMap)
     {
         if (!entry)
@@ -1273,7 +1289,7 @@ void SpellMgr::LoadSpellLearnSkills()
             break;
         }
     }
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u Spell Learn Skills from DBC in %u ms", dbc_count, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -1292,6 +1308,7 @@ void SpellMgr::LoadSpellLearnSpells()
     }
 
     uint32 count = 0;
+    /*
     do
     {
         Field* fields = result->Fetch();
@@ -1327,12 +1344,13 @@ void SpellMgr::LoadSpellLearnSpells()
 
         ++count;
     } while (result->NextRow());
-
+    */
     // copy state loaded from db
     SpellLearnSpellMap dbSpellLearnSpells = mSpellLearnSpells;
 
     // search auto-learned spells and add its to map also for use in unlearn spells/talents
     uint32 dbc_count = 0;
+    /*
     for (uint32 spell = 0; spell < GetSpellInfoStoreSize(); ++spell)
     {
         SpellInfo const* entry = GetSpellInfo(spell);
@@ -1425,7 +1443,7 @@ void SpellMgr::LoadSpellLearnSpells()
         mSpellLearnSpells.insert(SpellLearnSpellMap::value_type(spellLearnSpell->LearnSpellID, dbcLearnNode));
         ++dbc_count;
     }
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u spell learn spells, %u found in Spell.dbc in %u ms", count, dbc_count, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -1444,6 +1462,7 @@ void SpellMgr::LoadSpellTargetPositions()
     }
 
     uint32 count = 0;
+    /*
     do
     {
         Field* fields = result->Fetch();
@@ -1504,7 +1523,7 @@ void SpellMgr::LoadSpellTargetPositions()
         }
 
     } while (result->NextRow());
-
+    */
     /*
     // Check all spells
     for (uint32 i = 1; i < GetSpellInfoStoreSize(); ++i)
@@ -1548,6 +1567,7 @@ void SpellMgr::LoadSpellGroups()
 
     std::set<uint32> groups;
     uint32 count = 0;
+    /*
     do
     {
         Field* fields = result->Fetch();
@@ -1607,7 +1627,7 @@ void SpellMgr::LoadSpellGroups()
             mSpellSpellGroup.insert(SpellSpellGroupMap::value_type(*spellItr, SpellGroup(*groupItr)));
         }
     }
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u spell group definitions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -1737,6 +1757,7 @@ void SpellMgr::LoadSpellProcs()
         "ProcFlags, SpellTypeMask, SpellPhaseMask, HitMask, AttributesMask, ProcsPerMinute, Chance, Cooldown, Charges FROM spell_proc");
 
     uint32 count = 0;
+    /*
     if (result)
     {
         do
@@ -1932,6 +1953,7 @@ void SpellMgr::LoadSpellProcs()
         mSpellProcMap[spellInfo->Id] = procEntry;
         ++count;
     }
+*/
 
     TC_LOG_INFO("server.loading", ">> Generated spell proc data for %u spells in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
@@ -1951,6 +1973,7 @@ void SpellMgr::LoadSpellThreats()
     }
 
     uint32 count = 0;
+    /*
     do
     {
         Field* fields = result->Fetch();
@@ -1971,7 +1994,7 @@ void SpellMgr::LoadSpellThreats()
         mSpellThreatMap[entry] = ste;
         ++count;
     } while (result->NextRow());
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u SpellThreatEntries in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -2011,6 +2034,7 @@ void SpellMgr::LoadSpellPetAuras()
     }
 
     uint32 count = 0;
+    /*
     do
     {
         Field* fields = result->Fetch();
@@ -2059,7 +2083,7 @@ void SpellMgr::LoadSpellPetAuras()
 
         ++count;
     } while (result->NextRow());
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u spell pet auras in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -2075,6 +2099,7 @@ void SpellMgr::LoadEnchantCustomAttr()
        mEnchantCustomAttr[i] = 0;
 
     uint32 count = 0;
+    /*
     for (uint32 i = 0; i < GetSpellInfoStoreSize(); ++i)
     {
         SpellInfo const* spellInfo = GetSpellInfo(i);
@@ -2099,7 +2124,7 @@ void SpellMgr::LoadEnchantCustomAttr()
             }
         }
     }
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u custom enchant attributes in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -2160,6 +2185,7 @@ void SpellMgr::LoadSpellLinked()
     }
 
     uint32 count = 0;
+    /*
     do
     {
         Field* fields = result->Fetch();
@@ -2200,7 +2226,7 @@ void SpellMgr::LoadSpellLinked()
 
         ++count;
     } while (result->NextRow());
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u linked spells in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -2212,7 +2238,7 @@ void SpellMgr::LoadPetLevelupSpellMap()
 
     uint32 count = 0;
     uint32 family_count = 0;
-
+    /*
     for (uint32 i = 0; i < sCreatureFamilyStore.GetNumRows(); ++i)
     {
         CreatureFamilyEntry const* creatureFamily = sCreatureFamilyStore.LookupEntry(i);
@@ -2256,7 +2282,7 @@ void SpellMgr::LoadPetLevelupSpellMap()
             }
         }
     }
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u pet levelup and default spells for %u families in %u ms", count, family_count, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -2315,7 +2341,7 @@ void SpellMgr::LoadPetDefaultSpells()
     mPetDefaultSpellsMap.clear();
 
     uint32 countCreature = 0;
-
+    /*
     TC_LOG_INFO("server.loading", "Loading summonable creature templates...");
     oldMSTime = getMSTime();
 
@@ -2352,7 +2378,7 @@ void SpellMgr::LoadPetDefaultSpells()
             }
         }
     }
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u summonable creature templates in %u ms", countCreature, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -2375,6 +2401,7 @@ void SpellMgr::LoadSpellAreas()
     }
 
     uint32 count = 0;
+    /*
     do
     {
         Field* fields = result->Fetch();
@@ -2545,7 +2572,7 @@ void SpellMgr::LoadSpellAreas()
 
         ++count;
     } while (result->NextRow());
-
+    */
     TC_LOG_INFO("server.loading", ">> Loaded %u spell area requirements in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
@@ -2556,11 +2583,9 @@ void SpellMgr::LoadSpellInfoStore()
     uint32 oldMSTime = getMSTime();
 
     UnloadSpellInfoStore();
-    mSpellInfoMap.resize(sSpellStore.GetNumRows(), NULL);
-    std::unordered_map<uint32, SpellInfoLoadHelper> loadData;
+    mSpellInfoStore.resize(sSpellStore.GetNumRows());
+    std::unordered_map<uint32, SpellInfoDifficultyLoadHelper::StorageType> loadData;
 
-    std::unordered_map<uint32, SpellEffectEntryMap> effectsBySpell;
-    std::unordered_map<uint32, SpellVisualMap> visualsBySpell;
     std::unordered_map<uint32, SpellEffectScalingEntry const*> spellEffectScallingByEffectId;
 
     for (SpellEffectEntry const* effect : sSpellEffectStore)
@@ -2571,76 +2596,97 @@ void SpellMgr::LoadSpellInfoStore()
         ASSERT(effect->ImplicitTarget[0] < TOTAL_SPELL_TARGETS, "TOTAL_SPELL_TARGETS must be at least %u", effect->ImplicitTarget[0] + 1);
         ASSERT(effect->ImplicitTarget[1] < TOTAL_SPELL_TARGETS, "TOTAL_SPELL_TARGETS must be at least %u", effect->ImplicitTarget[1] + 1);
 
-        SpellEffectEntryVector& effectsForDifficulty = effectsBySpell[effect->SpellID][effect->DifficultyID];
-        if (effectsForDifficulty.size() <= effect->EffectIndex)
-            effectsForDifficulty.resize(effect->EffectIndex + 1);
+        SpellEffectEntryVector& effects = loadData[effect->SpellID][effect->DifficultyID].Effects;
+        if (effects.size() <= effect->EffectIndex)
+            effects.resize(effect->EffectIndex + 1);
 
-        effectsForDifficulty[effect->EffectIndex] = effect;
+        effects[effect->EffectIndex] = effect;
     }
 
+    for (SpellEntry const* spellEntry : sSpellStore)
+    {
+        loadData[spellEntry->ID][DIFFICULTY_NONE].Entry = spellEntry;
+        loadData[spellEntry->ID][DIFFICULTY_NONE].Misc = sSpellMiscStore.LookupEntry(spellEntry->MiscID);
+    }
+
+    for (SpellMiscDifficultyEntry const* miscDifficulty : sSpellMiscDifficultyStore)
+        loadData[miscDifficulty->SpellID][miscDifficulty->DifficultyID].Misc = sSpellMiscStore.LookupEntry(miscDifficulty->ID);
+
     for (SpellAuraOptionsEntry const* auraOptions : sSpellAuraOptionsStore)
-        if (!auraOptions->DifficultyID)    // TODO: implement
-            loadData[auraOptions->SpellID].AuraOptions = auraOptions;
+        loadData[auraOptions->SpellID][auraOptions->DifficultyID].AuraOptions = auraOptions;
 
     for (SpellAuraRestrictionsEntry const* auraRestrictions : sSpellAuraRestrictionsStore)
-        if (!auraRestrictions->DifficultyID)    // TODO: implement
-            loadData[auraRestrictions->SpellID].AuraRestrictions = auraRestrictions;
+        loadData[auraRestrictions->SpellID][auraRestrictions->DifficultyID].AuraRestrictions = auraRestrictions;
 
     for (SpellCastingRequirementsEntry const* castingRequirements : sSpellCastingRequirementsStore)
-        loadData[castingRequirements->SpellID].CastingRequirements = castingRequirements;
+        loadData[castingRequirements->SpellID][DIFFICULTY_NONE].CastingRequirements = castingRequirements;
 
     for (SpellCategoriesEntry const* categories : sSpellCategoriesStore)
-        if (!categories->DifficultyID)  // TODO: implement
-            loadData[categories->SpellID].Categories = categories;
+        loadData[categories->SpellID][categories->DifficultyID].Categories = categories;
 
     for (SpellClassOptionsEntry const* classOptions : sSpellClassOptionsStore)
-        loadData[classOptions->SpellID].ClassOptions = classOptions;
+        loadData[classOptions->SpellID][DIFFICULTY_NONE].ClassOptions = classOptions;
 
     for (SpellCooldownsEntry const* cooldowns : sSpellCooldownsStore)
-        if (!cooldowns->DifficultyID)   // TODO: implement
-            loadData[cooldowns->SpellID].Cooldowns = cooldowns;
+        loadData[cooldowns->SpellID][cooldowns->DifficultyID].Cooldowns = cooldowns;
 
     for (SpellEffectScalingEntry const* spellEffectScaling : sSpellEffectScalingStore)
         spellEffectScallingByEffectId[spellEffectScaling->SpellEffectID] = spellEffectScaling;
 
     for (SpellEquippedItemsEntry const* equippedItems : sSpellEquippedItemsStore)
-        loadData[equippedItems->SpellID].EquippedItems = equippedItems;
+        loadData[equippedItems->SpellID][DIFFICULTY_NONE].EquippedItems = equippedItems;
 
     for (SpellInterruptsEntry const* interrupts : sSpellInterruptsStore)
-        if (!interrupts->DifficultyID)  // TODO: implement
-            loadData[interrupts->SpellID].Interrupts = interrupts;
+        loadData[interrupts->SpellID][interrupts->DifficultyID].Interrupts = interrupts;
 
     for (SpellLevelsEntry const* levels : sSpellLevelsStore)
-        if (!levels->DifficultyID)  // TODO: implement
-            loadData[levels->SpellID].Levels = levels;
+        loadData[levels->SpellID][levels->DifficultyID].Levels = levels;
+
+    for (SpellPowerEntry const* power : sSpellPowerStore)
+    {
+        if (SpellPowerDifficultyEntry const* powerDifficulty = sSpellPowerDifficultyStore.LookupEntry(power->ID))
+        {
+            std::vector<SpellPowerEntry const*>& powers = loadData[power->SpellID][powerDifficulty->DifficultyID].Powers;
+            if (powers.size() <= powerDifficulty->PowerIndex)
+                powers.resize(powerDifficulty->PowerIndex + 1);
+
+            powers[powerDifficulty->PowerIndex] = power;
+        }
+        else
+        {
+            std::vector<SpellPowerEntry const*>& powers = loadData[power->SpellID][DIFFICULTY_NONE].Powers;
+            if (powers.size() <= power->PowerIndex)
+                powers.resize(power->PowerIndex + 1);
+
+            powers[power->PowerIndex] = power;
+        }
+    }
 
     for (SpellReagentsEntry const* reagents : sSpellReagentsStore)
-        loadData[reagents->SpellID].Reagents = reagents;
+        loadData[reagents->SpellID][DIFFICULTY_NONE].Reagents = reagents;
 
     for (SpellScalingEntry const* scaling : sSpellScalingStore)
-        loadData[scaling->SpellID].Scaling = scaling;
+        loadData[scaling->SpellID][DIFFICULTY_NONE].Scaling = scaling;
 
     for (SpellShapeshiftEntry const* shapeshift : sSpellShapeshiftStore)
-        loadData[shapeshift->SpellID].Shapeshift = shapeshift;
+        loadData[shapeshift->SpellID][DIFFICULTY_NONE].Shapeshift = shapeshift;
 
     for (SpellTargetRestrictionsEntry const* targetRestrictions : sSpellTargetRestrictionsStore)
-        if (!targetRestrictions->DifficultyID)  // TODO: implement
-            loadData[targetRestrictions->SpellID].TargetRestrictions = targetRestrictions;
+        loadData[targetRestrictions->SpellID][targetRestrictions->DifficultyID].TargetRestrictions = targetRestrictions;
 
     for (SpellTotemsEntry const* totems : sSpellTotemsStore)
-        loadData[totems->SpellID].Totems = totems;
+        loadData[totems->SpellID][DIFFICULTY_NONE].Totems = totems;
 
     for (SpellXSpellVisualEntry const* visual : sSpellXSpellVisualStore)
-        visualsBySpell[visual->SpellID][visual->DifficultyID].push_back(visual);
+        loadData[visual->SpellID][visual->DifficultyID].Visuals.push_back(visual);
 
-    for (uint32 i = 0; i < sSpellStore.GetNumRows(); ++i)
+    for (auto& v : loadData)
     {
-        if (SpellEntry const* spellEntry = sSpellStore.LookupEntry(i))
+        SpellInfoDifficultyLoadHelper::AutoCollect(v.second);
+        mSpellInfoStore[v.first].Load(std::move(v.second), [&spellEffectScallingByEffectId](SpellInfoLoadHelper&& helper)
         {
-            loadData[i].Entry = spellEntry;
-            loadData[i].Misc = sSpellMiscStore.LookupEntry(spellEntry->MiscID);
-            mSpellInfoMap[i] = new SpellInfo(loadData[i], effectsBySpell[i], std::move(visualsBySpell[i]), spellEffectScallingByEffectId);
-        }
+            return new SpellInfo(std::move(helper), spellEffectScallingByEffectId);
+        });
     }
 
     TC_LOG_INFO("server.loading", ">> Loaded SpellInfo store in %u ms", GetMSTimeDiffToNow(oldMSTime));
@@ -2648,24 +2694,34 @@ void SpellMgr::LoadSpellInfoStore()
 
 void SpellMgr::UnloadSpellInfoStore()
 {
-    for (uint32 i = 0; i < GetSpellInfoStoreSize(); ++i)
-        delete mSpellInfoMap[i];
+    for (SpellInfoDifficultyData& spellInfos : mSpellInfoStore)
+    {
+        spellInfos.ForEach([](SpellInfoDifficultyData::StorageType::value_type const& pair)
+        {
+            delete pair.second;
+        });
+    }
 
-    mSpellInfoMap.clear();
+    mSpellInfoStore.clear();
 }
 
 void SpellMgr::UnloadSpellInfoImplicitTargetConditionLists()
 {
-    for (uint32 i = 0; i < GetSpellInfoStoreSize(); ++i)
-        if (mSpellInfoMap[i])
-            mSpellInfoMap[i]->_UnloadImplicitTargetConditionLists();
+    for (SpellInfoDifficultyData& spellInfos : mSpellInfoStore)
+    {
+        spellInfos.ForEach([](SpellInfoDifficultyData::StorageType::value_type const& pair)
+        {
+            pair.second->_UnloadImplicitTargetConditionLists();
+        });
+    }
 }
 
 void SpellMgr::LoadSpellInfoCustomAttributes()
 {
     uint32 oldMSTime = getMSTime();
+    /*
     uint32 oldMSTime2 = oldMSTime;
-    SpellInfo* spellInfo = NULL;
+    SpellInfo* spellInfo = nullptr;
 
     QueryResult result = WorldDatabase.Query("SELECT entry, attributes FROM spell_custom_attr");
 
@@ -2818,6 +2874,7 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
 
         spellInfo->_InitializeExplicitTargetMask();
     }
+    */
 
     TC_LOG_INFO("server.loading", ">> Loaded SpellInfo custom attributes in %u ms", GetMSTimeDiffToNow(oldMSTime));
 }
@@ -3781,7 +3838,7 @@ void SpellMgr::LoadSpellInfoSpellSpecificAndAuraState()
 
 void SpellMgr::LoadPetFamilySpellsStore()
 {
-    std::unordered_map<uint32, SpellLevelsEntry const*> levelsBySpell;
+    /*std::unordered_map<uint32, SpellLevelsEntry const*> levelsBySpell;
     for (SpellLevelsEntry const* levels : sSpellLevelsStore)
         if (!levels->DifficultyID)
             levelsBySpell[levels->SpellID] = levels;
@@ -3808,6 +3865,115 @@ void SpellMgr::LoadPetFamilySpellsStore()
 
                 sPetFamilySpellsStore[cFamily->ID].insert(spellInfo->Id);
             }
+        }
+    }*/
+}
+
+void SpellInfoDifficultyData::Load(SpellInfoDifficultyLoadHelper::StorageType&& data, std::function<SpellInfo*(SpellInfoLoadHelper&&)> loader)
+{
+    for (auto&& pair : data)
+    {
+        if (pair.first > DIFFICULTY_NONE)
+            _hasDifficultyData = true;
+        _data[pair.first] = loader(std::move(pair.second));
+    }
+}
+
+SpellInfo const* SpellInfoDifficultyData::Get(uint32 difficulty) const
+{
+    if (_data.empty())
+        return nullptr;
+
+    if (_hasDifficultyData)
+    {
+        DifficultyEntry const* difficultyEntry = sDifficultyStore.LookupEntry(difficulty);
+        while (difficultyEntry)
+        {
+            auto itr = _data.find(difficultyEntry->ID);
+            if (itr != _data.end())
+                return itr->second;
+
+            difficultyEntry = sDifficultyStore.LookupEntry(difficultyEntry->FallbackDifficultyID);
+        }
+    }
+
+    auto itr = _data.find(DIFFICULTY_NONE);
+    if (itr != _data.end())
+        return itr->second;
+
+    return nullptr;
+}
+
+void SpellInfoDifficultyLoadHelper::AutoCollect(SpellInfoDifficultyLoadHelper::StorageType& data)
+{
+    std::vector<DifficultyEntry const*> difficultyEntries;
+    for (DifficultyEntry const* difficultyEntry : sDifficultyStore)
+        difficultyEntries.push_back(difficultyEntry);
+    std::sort(difficultyEntries.begin(), difficultyEntries.end(), [](DifficultyEntry const* first, DifficultyEntry const* second)
+    {
+        return first->OrderIndex < second->OrderIndex;
+    });
+
+    auto overrideFn = [](SpellInfoLoadHelper& helper, SpellInfoLoadHelper const& overrideHelper)
+    {
+#define OverrideEntry(Entry) \
+        if (!helper.##Entry) \
+            helper.##Entry = overrideHelper.##Entry
+
+        OverrideEntry(Entry);
+
+        OverrideEntry(AuraOptions);
+        OverrideEntry(AuraRestrictions);
+        OverrideEntry(CastingRequirements);
+        OverrideEntry(Categories);
+        OverrideEntry(ClassOptions);
+        OverrideEntry(Cooldowns);
+
+        if (overrideHelper.Effects.size() > helper.Effects.size())
+            helper.Effects.resize(overrideHelper.Effects.size());
+        for (uint8 effIndex = EFFECT_0; effIndex < overrideHelper.Effects.size(); ++effIndex)
+            OverrideEntry(Effects[effIndex]);
+
+        OverrideEntry(EquippedItems);
+        OverrideEntry(Interrupts);
+        OverrideEntry(Levels);
+        OverrideEntry(Misc);
+
+        if (overrideHelper.Powers.size() > helper.Powers.size())
+            helper.Powers.resize(overrideHelper.Powers.size());
+        for (uint8 powerIndex = 0; powerIndex < overrideHelper.Powers.size(); ++powerIndex)
+            OverrideEntry(Powers[powerIndex]);
+
+        OverrideEntry(Reagents);
+        OverrideEntry(Scaling);
+        OverrideEntry(Shapeshift);
+        OverrideEntry(TargetRestrictions);
+        OverrideEntry(Totems);
+
+        if (helper.Visuals.empty())
+            helper.Visuals = overrideHelper.Visuals;
+
+#undef OverrideEntry(Entry)
+    };
+
+    for (DifficultyEntry const* difficultyEntry : difficultyEntries)
+    {
+        auto itr = data.find(difficultyEntry->ID);
+        if (itr != data.end())
+        {
+            DifficultyEntry const* fallbackDifficultyEntry = sDifficultyStore.LookupEntry(difficultyEntry->FallbackDifficultyID);
+            while (fallbackDifficultyEntry)
+            {
+                auto fallbackItr = data.find(fallbackDifficultyEntry->ID);
+                if (fallbackItr != data.end())
+                    overrideFn(itr->second, fallbackItr->second);
+
+                fallbackDifficultyEntry = sDifficultyStore.LookupEntry(fallbackDifficultyEntry->FallbackDifficultyID);
+            }
+
+            auto defaultItr = data.find(DIFFICULTY_NONE);
+            if (defaultItr != data.end())
+                overrideFn(itr->second, defaultItr->second);
         }
     }
 }

@@ -48,9 +48,10 @@ class TC_GAME_API AuraEffect
         int32 GetBaseAmount() const { return m_baseAmount; }
         int32 GetPeriod() const { return m_period; }
 
-        int32 GetMiscValueB() const { return GetSpellEffectInfo()->MiscValueB; }
+        AuraType GetAuraType() const { return AuraType(GetSpellEffectInfo()->ApplyAuraName); }
         int32 GetMiscValue() const { return GetSpellEffectInfo()->MiscValue; }
-        AuraType GetAuraType() const { return (AuraType)GetSpellEffectInfo()->ApplyAuraName; }
+        int32 GetMiscValueB() const { return GetSpellEffectInfo()->MiscValueB; }
+
         int32 GetAmount() const { return m_amount; }
         void SetAmount(int32 amount) { m_amount = amount; m_canBeRecalculated = false;}
 
@@ -86,7 +87,7 @@ class TC_GAME_API AuraEffect
         bool IsPeriodic() const { return m_isPeriodic; }
         void SetPeriodic(bool isPeriodic) { m_isPeriodic = isPeriodic; }
         bool IsAffectingSpell(SpellInfo const* spell) const;
-        bool HasSpellClassMask() const { return GetSpellEffectInfo()->SpellClassMask; }
+        bool HasSpellClassMask() const { return GetSpellInfo()->GetEffect(GetEffIndex())->SpellClassMask; }
 
         void SendTickImmune(Unit* target, Unit* caster) const;
         void PeriodicTick(AuraApplication* aurApp, Unit* caster) const;
@@ -99,15 +100,11 @@ class TC_GAME_API AuraEffect
 
         SpellEffectInfo const* GetSpellEffectInfo() const { return _effectInfo; }
 
-        bool IsEffect() const { return _effectInfo->Effect != 0; }
-        bool IsEffect(SpellEffectName effectName) const { return _effectInfo->Effect == uint32(effectName); }
-        bool IsAreaAuraEffect() const;
-
     private:
         Aura* const m_base;
 
         SpellInfo const* const m_spellInfo;
-        SpellEffectInfo const* _effectInfo;
+        SpellEffectInfo const* const _effectInfo;
         int32 const m_baseAmount;
 
         int32 m_amount;

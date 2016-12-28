@@ -1184,7 +1184,7 @@ void GameObject::TriggeringLinkedGameObject(uint32 trapEntry, Unit* target)
     if (!trapInfo || trapInfo->type != GAMEOBJECT_TYPE_TRAP)
         return;
 
-    SpellInfo const* trapSpell = sSpellMgr->GetSpellInfo(trapInfo->trap.spell);
+    SpellInfo const* trapSpell = sSpellMgr->GetSpellInfo(trapInfo->trap.spell, this);
     if (!trapSpell)                                          // checked at load already
         return;
 
@@ -1885,7 +1885,7 @@ void GameObject::Use(Unit* user)
     if (!spellId)
         return;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     if (!spellInfo)
     {
         if (user->GetTypeId() != TYPEID_PLAYER || !sOutdoorPvPMgr->HandleCustomSpell(user->ToPlayer(), spellId, this))
@@ -1911,12 +1911,12 @@ void GameObject::CastSpell(Unit* target, uint32 spellId, bool triggered /* = tru
 
 void GameObject::CastSpell(Unit* target, uint32 spellId, TriggerCastFlags triggered)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     if (!spellInfo)
         return;
 
     bool self = false;
-    for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+    for (SpellEffectInfo const* effect : spellInfo->GetEffects())
     {
         if (effect && effect->TargetA.GetTarget() == TARGET_UNIT_CASTER)
         {

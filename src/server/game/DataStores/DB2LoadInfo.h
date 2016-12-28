@@ -4354,6 +4354,20 @@ struct SpellMiscLoadInfo
     }
 };
 
+struct SpellMiscDifficultyLoadInfo
+{
+    static DB2LoadInfo Instance()
+    {
+        static DB2FieldMeta const fields[] =
+        {
+            { false, FT_INT, "SpellID" },
+            { false, FT_BYTE, "DifficultyID" },
+            { false, FT_INT, "ID" },
+        };
+        return { &fields[0], std::extent<decltype(fields)>::value, SpellMiscDifficultyMeta::Instance(), HOTFIX_SEL_SPELL_MISC_DIFFICULTY };
+    }
+};
+
 struct SpellPowerLoadInfo
 {
     static DB2LoadInfo const* Instance()

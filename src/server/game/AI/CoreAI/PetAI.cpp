@@ -144,7 +144,7 @@ void PetAI::UpdateAI(uint32 diff)
             if (!spellID)
                 continue;
 
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellID);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellID, me);
             if (!spellInfo)
                 continue;
 
@@ -182,7 +182,7 @@ void PetAI::UpdateAI(uint32 diff)
                     }
                 }
 
-                if (spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_JUMP_DEST))
+                if (spellInfo->HasEffect(SPELL_EFFECT_JUMP_DEST))
                 {
                     if (!spellUsed)
                         delete spell;

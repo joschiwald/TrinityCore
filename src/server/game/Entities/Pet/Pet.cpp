@@ -156,7 +156,7 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
         return false;
 
     uint32 summonSpellId = fields[14].GetUInt32();
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(summonSpellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(summonSpellId, owner);
 
     bool isTemporarySummon = spellInfo && spellInfo->GetDuration() > 0;
     if (current && isTemporarySummon)
@@ -1212,7 +1212,7 @@ void Pet::_LoadAuras(uint32 timediff)
             int32 remainTime = fields[6].GetInt32();
             uint8 remainCharges = fields[7].GetUInt8();
 
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(key.SpellId);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(key.SpellId, GetOwner());
             if (!spellInfo)
             {
                 TC_LOG_ERROR("entities.pet", "Unknown aura (spellid %u), ignore.", key.SpellId);
@@ -1317,7 +1317,7 @@ void Pet::_SaveAuras(SQLTransaction& trans)
 
 bool Pet::addSpell(uint32 spellId, ActiveStates active /*= ACT_DECIDE*/, PetSpellState state /*= PETSPELL_NEW*/, PetSpellType type /*= PETSPELL_NORMAL*/)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     if (!spellInfo)
     {
         // do pet spell book cleanup
@@ -1383,7 +1383,7 @@ bool Pet::addSpell(uint32 spellId, ActiveStates active /*= ACT_DECIDE*/, PetSpel
             if (itr2->second.state == PETSPELL_REMOVED)
                 continue;
 
-            SpellInfo const* oldRankSpellInfo = sSpellMgr->GetSpellInfo(itr2->first);
+            SpellInfo const* oldRankSpellInfo = sSpellMgr->GetSpellInfo(itr2->first, this);
 
             if (!oldRankSpellInfo)
                 continue;
@@ -1476,7 +1476,7 @@ void Pet::InitLevelupSpellsForLevel()
     {
         for (uint8 i = 0; i < MAX_CREATURE_SPELL_DATA_SLOT; ++i)
         {
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(defSpells->spellid[i]);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(defSpells->spellid[i], this);
             if (!spellInfo)
                 continue;
 
@@ -1565,7 +1565,7 @@ void Pet::CleanupActionBar()
                     m_charmInfo->SetActionBar(i, 0, ACT_PASSIVE);
                 else if (ab->GetType() == ACT_ENABLED)
                 {
-                    if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ab->GetAction()))
+                    if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ab->GetAction(), this))
                         ToggleAutocast(spellInfo, true);
                 }
             }
@@ -1807,7 +1807,7 @@ void Pet::LearnSpecializationSpells()
         for (size_t j = 0; j < specSpells->size(); ++j)
         {
             SpecializationSpellsEntry const* specSpell = specSpells->at(j);
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(specSpell->SpellID);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(specSpell->SpellID, this);
             if (!spellInfo || spellInfo->SpellLevel > getLevel())
                 continue;
 

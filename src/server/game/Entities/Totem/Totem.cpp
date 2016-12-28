@@ -67,9 +67,9 @@ void Totem::InitStats(uint32 duration)
         }
 
         // set display id depending on caster's race
-        if (SpellInfo const* createdBySpell = sSpellMgr->GetSpellInfo(GetUInt32Value(UNIT_CREATED_BY_SPELL)))
+        if (SpellInfo const* createdBySpell = sSpellMgr->GetSpellInfo(GetUInt32Value(UNIT_CREATED_BY_SPELL), this))
         {
-            SpellEffectInfoVector effects = createdBySpell->GetEffectsForDifficulty(DIFFICULTY_NONE);
+            SpellEffectInfoVector const& effects = createdBySpell->GetEffects();
             auto summonEffect = std::find_if(effects.begin(), effects.end(), [](SpellEffectInfo const* effect)
             {
                 return effect && effect->IsEffect(SPELL_EFFECT_SUMMON);
@@ -83,7 +83,7 @@ void Totem::InitStats(uint32 duration)
     Minion::InitStats(duration);
 
     // Get spell cast by totem
-    if (SpellInfo const* totemSpell = sSpellMgr->GetSpellInfo(GetSpell()))
+    if (SpellInfo const* totemSpell = sSpellMgr->GetSpellInfo(GetSpell(), this))
         if (totemSpell->CalcCastTime(getLevel()))   // If spell has cast time -> its an active totem
             m_type = TOTEM_ACTIVE;
 
@@ -130,7 +130,7 @@ void Totem::UnSummon(uint32 msTime)
     {
         owner->SendAutoRepeatCancel(this);
 
-        if (SpellInfo const* spell = sSpellMgr->GetSpellInfo(GetUInt32Value(UNIT_CREATED_BY_SPELL)))
+        if (SpellInfo const* spell = sSpellMgr->GetSpellInfo(GetUInt32Value(UNIT_CREATED_BY_SPELL), this))
             GetSpellHistory()->SendCooldownEvent(spell, 0, nullptr, false);
 
         if (Group* group = owner->GetGroup())
@@ -152,17 +152,17 @@ bool Totem::IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index) con
     /// @todo possibly all negative auras immune?
     if (GetEntry() == 5925)
         return false;
-    if (SpellEffectInfo const* effect = spellInfo->GetEffect(GetMap()->GetDifficultyID(), index))
+    if (SpellEffectInfo const* effect = spellInfo->GetEffect(index))
     {
         switch (effect->ApplyAuraName)
         {
-        case SPELL_AURA_PERIODIC_DAMAGE:
-        case SPELL_AURA_PERIODIC_LEECH:
-        case SPELL_AURA_MOD_FEAR:
-        case SPELL_AURA_TRANSFORM:
-            return true;
-        default:
-            break;
+            case SPELL_AURA_PERIODIC_DAMAGE:
+            case SPELL_AURA_PERIODIC_LEECH:
+            case SPELL_AURA_MOD_FEAR:
+            case SPELL_AURA_TRANSFORM:
+                return true;
+            default:
+                break;
         }
     }
     else

@@ -2547,6 +2547,13 @@ struct SpellMiscEntry
     uint32 ActiveIconFileDataID;
 };
 
+struct SpellMiscDifficultyEntry
+{
+    uint32 SpellID;
+    uint8 DifficultyID;
+    uint32 ID;
+};
+
 struct SpellPowerEntry
 {
     uint32 SpellID;

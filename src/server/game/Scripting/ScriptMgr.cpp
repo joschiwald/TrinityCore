@@ -1213,12 +1213,12 @@ void ScriptMgr::FillSpellSummary()
         SpellSummary[i].Effects = 0;
         SpellSummary[i].Targets = 0;
 
-        pTempSpell = sSpellMgr->GetSpellInfo(i);
+        pTempSpell = sSpellMgr->GetSpellInfo(i); // DIFFICULTY_NONE
         // This spell doesn't exist.
         if (!pTempSpell)
             continue;
 
-        for (SpellEffectInfo const* effect : pTempSpell->GetEffectsForDifficulty(DIFFICULTY_NONE))
+        for (SpellEffectInfo const* effect : pTempSpell->GetEffects())
         {
             if (!effect)
                 continue;

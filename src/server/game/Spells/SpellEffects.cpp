@@ -3479,7 +3479,7 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                             {
                                 /// @todo a hack, range = 11, should after some time cast, otherwise too far
                                 m_caster->CastSpell(parent, 62496, true);
-                                unitTarget->CastSpell(parent, GetEffect(EFFECT_0)->CalcValue()); // DIFFICULTY_NONE, so effect always valid
+                                unitTarget->CastSpell(parent, GetEffect(EFFECT_0)->CalcValue());
                             }
                         }
                     }

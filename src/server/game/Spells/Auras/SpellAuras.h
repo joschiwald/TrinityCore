@@ -194,7 +194,7 @@ class TC_GAME_API Aura
         bool IsRemovedOnShapeLost(Unit* target) const
         {
             return GetCasterGUID() == target->GetGUID()
-                    && m_spellInfo->Stances
+                    && m_spellInfo->Shapeshift.ShapeshiftMask
                     && !m_spellInfo->HasAttribute(SPELL_ATTR2_NOT_NEED_SHAPESHIFT)
                     && !m_spellInfo->HasAttribute(SPELL_ATTR0_NOT_SHAPESHIFT);
         }
@@ -290,10 +290,7 @@ class TC_GAME_API Aura
 
         std::vector<AuraScript*> m_loadedScripts;
 
-        AuraEffectVector GetAuraEffects() const { return _effects; }
-
-        SpellEffectInfoVector GetSpellEffectInfos() const { return _spelEffectInfos; }
-        SpellEffectInfo const* GetSpellEffectInfo(uint32 index) const;
+        AuraEffectVector const& GetAuraEffects() const { return _effects; }
 
     private:
         AuraScript* GetScriptByName(std::string const& scriptName) const;
@@ -335,7 +332,6 @@ class TC_GAME_API Aura
         Unit::AuraApplicationList m_removedApplications;
 
         AuraEffectVector _effects;
-        SpellEffectInfoVector _spelEffectInfos;
 };
 
 class TC_GAME_API UnitAura : public Aura

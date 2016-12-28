@@ -968,7 +968,7 @@ void Unit::CastSpell(Unit* victim, uint32 spellId, bool triggered, Item* castIte
 
 void Unit::CastSpell(Unit* victim, uint32 spellId, TriggerCastFlags triggerFlags /*= TRIGGER_NONE*/, Item* castItem /*= NULL*/, AuraEffect const* triggeredByAura /*= NULL*/, ObjectGuid originalCaster /*= ObjectGuid::Empty*/)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     if (!spellInfo)
     {
         TC_LOG_ERROR("entities.unit", "CastSpell: unknown spell id %u by caster: %s", spellId, GetGUID().ToString().c_str());
@@ -1018,7 +1018,7 @@ void Unit::CastCustomSpell(uint32 spellId, SpellValueMod mod, int32 value, Unit*
 
 void Unit::CastCustomSpell(uint32 spellId, CustomSpellValues const& value, Unit* victim, TriggerCastFlags triggerFlags, Item* castItem, AuraEffect const* triggeredByAura, ObjectGuid originalCaster)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     if (!spellInfo)
     {
         TC_LOG_ERROR("entities.unit", "CastSpell: unknown spell id %u by caster: %s", spellId, GetGUID().ToString().c_str());
@@ -1032,7 +1032,7 @@ void Unit::CastCustomSpell(uint32 spellId, CustomSpellValues const& value, Unit*
 
 void Unit::CastSpell(float x, float y, float z, uint32 spellId, bool triggered, Item* castItem, AuraEffect const* triggeredByAura, ObjectGuid originalCaster)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     if (!spellInfo)
     {
         TC_LOG_ERROR("entities.unit", "CastSpell: unknown spell id %u by caster: %s", spellId, GetGUID().ToString().c_str());
@@ -1046,7 +1046,7 @@ void Unit::CastSpell(float x, float y, float z, uint32 spellId, bool triggered, 
 
 void Unit::CastSpell(GameObject* go, uint32 spellId, bool triggered, Item* castItem, AuraEffect* triggeredByAura, ObjectGuid originalCaster)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     if (!spellInfo)
     {
         TC_LOG_ERROR("entities.unit", "CastSpell: unknown spell id %u by caster: %s", spellId, GetGUID().ToString().c_str());
@@ -1170,7 +1170,7 @@ void Unit::DealSpellDamage(SpellNonMeleeDamage const* damageInfo, bool durabilit
     if (!victim->IsAlive() || victim->HasUnitState(UNIT_STATE_IN_FLIGHT) || (victim->GetTypeId() == TYPEID_UNIT && victim->ToCreature()->IsEvadingAttacks()))
         return;
 
-    SpellInfo const* spellProto = sSpellMgr->GetSpellInfo(damageInfo->SpellID);
+    SpellInfo const* spellProto = sSpellMgr->GetSpellInfo(damageInfo->SpellID, this);
     if (!spellProto)
     {
         TC_LOG_DEBUG("entities.unit", "Unit::DealSpellDamage has wrong damageInfo->SpellID: %u", damageInfo->SpellID);
@@ -1514,7 +1514,7 @@ bool Unit::IsDamageReducedByArmor(SpellSchoolMask schoolMask, SpellInfo const* s
         if (effIndex != -1)
         {
             // bleeding effects are not reduced by armor
-            if (SpellEffectInfo const* effect = spellInfo->GetEffect(GetMap()->GetDifficultyID(), effIndex))
+            if (SpellEffectInfo const* effect = spellInfo->GetEffect(effIndex))
             {
                 if (effect->ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE ||
                     effect->Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
@@ -2249,12 +2249,12 @@ int32 Unit::GetMechanicResistChance(SpellInfo const* spellInfo) const
         return 0;
 
     int32 resistMech = 0;
-    for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+    for (SpellEffectInfo const* effect : spellInfo->GetEffects())
     {
         if (!effect || !effect->IsEffect())
             break;
 
-        int32 effectMech = spellInfo->GetEffectMechanic(effect->EffectIndex, GetMap()->GetDifficultyID());
+        int32 effectMech = spellInfo->GetEffectMechanic(effect->EffectIndex);
         if (effectMech)
         {
             int32 temp = GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_MECHANIC_RESISTANCE, effectMech);
@@ -3125,7 +3125,7 @@ Aura* Unit::_TryStackingOrRefreshingExistingAura(SpellInfo const* newAura, uint3
                 return nullptr;
 
             // update basepoints with new values - effect amount will be recalculated in ModStackAmount
-            for (SpellEffectInfo const* effect : foundAura->GetSpellEffectInfos())
+            for (SpellEffectInfo const* effect : foundAura->GetSpellInfo()->GetEffects())
             {
                 if (!effect)
                     continue;
@@ -3393,12 +3393,12 @@ void Unit::_RemoveNoStackAurasDueToAura(Aura* aura)
     SpellInfo const* spellProto = aura->GetSpellInfo();
 
     // passive spell special case (only non stackable with ranks)
-    if (spellProto->IsPassiveStackableWithRanks(GetMap()->GetDifficultyID()))
+    if (spellProto->IsPassiveStackableWithRanks())
         return;
 
     if (!IsHighestExclusiveAura(aura))
     {
-        if (!aura->GetSpellInfo()->IsAffectingArea(GetMap()->GetDifficultyID()))
+        if (!aura->GetSpellInfo()->IsAffectingArea())
         {
             Unit* caster = aura->GetCaster();
             if (caster && caster->GetTypeId() == TYPEID_PLAYER)
@@ -4077,44 +4077,28 @@ void Unit::RemoveAllAurasRequiringDeadTarget()
 
 void Unit::RemoveAllAurasExceptType(AuraType type)
 {
-    for (AuraApplicationMap::iterator iter = m_appliedAuras.begin(); iter != m_appliedAuras.end();)
+    RemoveAppliedAuras([type](AuraApplication const* aurApp)
     {
-        Aura const* aura = iter->second->GetBase();
-        if (aura->GetSpellInfo()->HasAura(GetMap()->GetDifficultyID(), type))
-            ++iter;
-        else
-            _UnapplyAura(iter, AURA_REMOVE_BY_DEFAULT);
-    }
+        return !aurApp->GetBase()->GetSpellInfo()->HasAura(type);
+    });
 
-    for (AuraMap::iterator iter = m_ownedAuras.begin(); iter != m_ownedAuras.end();)
+    RemoveOwnedAuras([type](Aura const* aura)
     {
-        Aura* aura = iter->second;
-        if (aura->GetSpellInfo()->HasAura(GetMap()->GetDifficultyID(), type))
-            ++iter;
-        else
-            RemoveOwnedAura(iter, AURA_REMOVE_BY_DEFAULT);
-    }
+        return !aura->GetSpellInfo()->HasAura(type);
+    });
 }
 
 void Unit::RemoveAllAurasExceptType(AuraType type1, AuraType type2)
 {
-    for (AuraApplicationMap::iterator iter = m_appliedAuras.begin(); iter != m_appliedAuras.end();)
+    RemoveAppliedAuras([type1, type2](AuraApplication const* aurApp)
     {
-        Aura const* aura = iter->second->GetBase();
-        if (aura->GetSpellInfo()->HasAura(GetMap()->GetDifficultyID(), type1) || aura->GetSpellInfo()->HasAura(GetMap()->GetDifficultyID(), type2))
-            ++iter;
-        else
-            _UnapplyAura(iter, AURA_REMOVE_BY_DEFAULT);
-    }
+        return !aurApp->GetBase()->GetSpellInfo()->HasAura(type1) && !aurApp->GetBase()->GetSpellInfo()->HasAura(type2);
+    });
 
-    for (AuraMap::iterator iter = m_ownedAuras.begin(); iter != m_ownedAuras.end();)
+    RemoveOwnedAuras([type1, type2](Aura const* aura)
     {
-        Aura* aura = iter->second;
-        if (aura->GetSpellInfo()->HasAura(GetMap()->GetDifficultyID(), type1) || aura->GetSpellInfo()->HasAura(GetMap()->GetDifficultyID(), type2))
-            ++iter;
-        else
-            RemoveOwnedAura(iter, AURA_REMOVE_BY_DEFAULT);
-    }
+        return !aura->GetSpellInfo()->HasAura(type1) && !aura->GetSpellInfo()->HasAura(type2);
+    });
 }
 
 void Unit::RemoveAllGroupBuffsFromCaster(ObjectGuid casterGUID)
@@ -4386,13 +4370,7 @@ bool Unit::HasAuraWithMechanic(uint32 mechanicMask) const
     for (AuraApplicationMap::const_iterator iter = m_appliedAuras.begin(); iter != m_appliedAuras.end(); ++iter)
     {
         SpellInfo const* spellInfo = iter->second->GetBase()->GetSpellInfo();
-        if (spellInfo->Mechanic && (mechanicMask & (1 << spellInfo->Mechanic)))
-            return true;
-
-        for (SpellEffectInfo const* effect : iter->second->GetBase()->GetSpellEffectInfos())
-        if (effect && effect->Effect && effect->Mechanic)
-        if (mechanicMask & (1 << effect->Mechanic))
-                    return true;
+        return spellInfo->GetAllEffectsMechanicMask() & mechanicMask;
     }
 
     return false;
@@ -4841,7 +4819,7 @@ void Unit::AddGameObject(GameObject* gameObj)
 
     if (gameObj->GetSpellId())
     {
-        SpellInfo const* createBySpell = sSpellMgr->GetSpellInfo(gameObj->GetSpellId());
+        SpellInfo const* createBySpell = sSpellMgr->GetSpellInfo(gameObj->GetSpellId(), this);
         // Need disable spell use for owner
         if (createBySpell && createBySpell->IsCooldownStartedOnEvent())
             // note: item based cooldowns and cooldown spell mods with charges ignored (unknown existing cases)
@@ -4873,7 +4851,7 @@ void Unit::RemoveGameObject(GameObject* gameObj, bool del)
     {
         RemoveAurasDueToSpell(spellid);
 
-        SpellInfo const* createBySpell = sSpellMgr->GetSpellInfo(spellid);
+        SpellInfo const* createBySpell = sSpellMgr->GetSpellInfo(spellid, this);
         // Need activate spell use for owner
         if (createBySpell && createBySpell->IsCooldownStartedOnEvent())
             // note: item based cooldowns and cooldown spell mods with charges ignored (unknown existing cases)
@@ -5628,7 +5606,7 @@ void Unit::ModifyAuraState(AuraStateType flag, bool apply)
                 {
                     if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled)
                         continue;
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first);
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first, this);
                     if (!spellInfo || !spellInfo->IsPassive())
                         continue;
                     if (spellInfo->CasterAuraState == uint32(flag))
@@ -5641,7 +5619,7 @@ void Unit::ModifyAuraState(AuraStateType flag, bool apply)
                 {
                     if (itr->second.state == PETSPELL_REMOVED)
                         continue;
-                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first);
+                    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first, this);
                     if (!spellInfo || !spellInfo->IsPassive())
                         continue;
                     if (spellInfo->CasterAuraState == uint32(flag))
@@ -5898,7 +5876,7 @@ void Unit::SetMinion(Minion *minion, bool apply)
             minion->setPowerType(POWER_ENERGY);
 
         // Send infinity cooldown - client does that automatically but after relog cooldown needs to be set again
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(minion->GetUInt32Value(UNIT_CREATED_BY_SPELL));
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(minion->GetUInt32Value(UNIT_CREATED_BY_SPELL), this);
 
         if (spellInfo && (spellInfo->IsCooldownStartedOnEvent()))
             GetSpellHistory()->StartCooldown(spellInfo, 0, nullptr, true);
@@ -5925,8 +5903,8 @@ void Unit::SetMinion(Minion *minion, bool apply)
         else if (minion->IsTotem())
         {
             // All summoned by totem minions must disappear when it is removed.
-            if (SpellInfo const* spInfo = sSpellMgr->GetSpellInfo(minion->ToTotem()->GetSpell()))
-                for (SpellEffectInfo const* effect : spInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
+            if (SpellInfo const* spInfo = sSpellMgr->GetSpellInfo(minion->ToTotem()->GetSpell(), minion))
+                for (SpellEffectInfo const* effect : spInfo->GetEffects())
                     {
                         if (!effect || effect->Effect != SPELL_EFFECT_SUMMON)
                             continue;
@@ -5935,7 +5913,7 @@ void Unit::SetMinion(Minion *minion, bool apply)
                     }
         }
 
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(minion->GetUInt32Value(UNIT_CREATED_BY_SPELL));
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(minion->GetUInt32Value(UNIT_CREATED_BY_SPELL), minion);
         // Remove infinity cooldown
         if (spellInfo && (spellInfo->IsCooldownStartedOnEvent()))
             GetSpellHistory()->SendCooldownEvent(spellInfo);
@@ -6399,7 +6377,7 @@ void Unit::EnergizeBySpell(Unit* victim, uint32 spellId, int32 damage, Powers po
     int32 gain = victim->ModifyPower(powerType, damage);
     int32 overEnergize = damage - gain;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     victim->getHostileRefManager().threatAssist(this, float(damage) * 0.5f, spellInfo);
 
     SendEnergizeSpellLog(victim, spellId, damage, overEnergize, powerType);
@@ -6957,7 +6935,7 @@ uint32 Unit::SpellHealingBonusDone(Unit* victim, SpellInfo const* spellProto, ui
         DoneTotal += int32(DoneAdvertisedBenefit * coeff * factorMod);
     }
 
-    for (SpellEffectInfo const* effect : spellProto->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+    for (SpellEffectInfo const* effect : spellProto->GetEffects())
     {
         if (!effect)
             continue;
@@ -7071,7 +7049,7 @@ uint32 Unit::SpellHealingBonusTaken(Unit* caster, SpellInfo const* spellProto, u
         if (caster->GetGUID() == (*i)->GetCasterGUID() && (*i)->IsAffectingSpell(spellProto))
             AddPct(TakenTotalMod, (*i)->GetAmount());
 
-    for (SpellEffectInfo const* effect : spellProto->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+    for (SpellEffectInfo const* effect : spellProto->GetEffects())
     {
         if (!effect)
             continue;
@@ -7176,7 +7154,7 @@ bool Unit::IsImmunedToDamage(SpellInfo const* spellInfo) const
         // If m_immuneToSchool type contain this school type, IMMUNE damage.
         SpellImmuneList const& schoolList = m_spellImmune[IMMUNITY_SCHOOL];
         for (SpellImmuneList::const_iterator itr = schoolList.begin(); itr != schoolList.end(); ++itr)
-            if (itr->type & shoolMask && !spellInfo->CanPierceImmuneAura(sSpellMgr->GetSpellInfo(itr->spellId)))
+            if (itr->type & shoolMask && !spellInfo->CanPierceImmuneAura(sSpellMgr->GetSpellInfo(itr->spellId, this)))
                 return true;
     }
 
@@ -7221,7 +7199,7 @@ bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo) const
     }
 
     bool immuneToAllEffects = true;
-    for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+    for (SpellEffectInfo const* effect : spellInfo->GetEffects())
     {
         // State/effect immunities applied by aura expect full spell immunity
         // Ignore effects with mechanic, they are supposed to be checked separately
@@ -7242,7 +7220,7 @@ bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo) const
         SpellImmuneList const& schoolList = m_spellImmune[IMMUNITY_SCHOOL];
         for (SpellImmuneList::const_iterator itr = schoolList.begin(); itr != schoolList.end(); ++itr)
         {
-            SpellInfo const* immuneSpellInfo = sSpellMgr->GetSpellInfo(itr->spellId);
+            SpellInfo const* immuneSpellInfo = sSpellMgr->GetSpellInfo(itr->spellId, this);
             if ((itr->type & spellInfo->GetSchoolMask())
                 && !(immuneSpellInfo && immuneSpellInfo->IsPositive() && spellInfo->IsPositive())
                 && !spellInfo->CanPierceImmuneAura(immuneSpellInfo))
@@ -7278,7 +7256,7 @@ bool Unit::IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index) cons
     if (!spellInfo)
         return false;
 
-    SpellEffectInfo const* effect = spellInfo->GetEffect(GetMap()->GetDifficultyID(), index);
+    SpellEffectInfo const* effect = spellInfo->GetEffect(index);
     if (!effect || !effect->IsEffect())
         return false;
 
@@ -7364,7 +7342,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
 
     if (APbonus != 0)                                       // Can be negative
     {
-        bool normalized = spellProto && spellProto->HasEffect(GetMap()->GetDifficultyID(), SPELL_EFFECT_NORMALIZED_WEAPON_DMG);
+        bool normalized = spellProto && spellProto->HasEffect(SPELL_EFFECT_NORMALIZED_WEAPON_DMG);
         DoneFlatBenefit += int32(APbonus / 3.5f * GetAPMultiplier(attType, normalized));
     }
 
@@ -7921,7 +7899,7 @@ bool Unit::_IsValidAttackTarget(Unit const* target, SpellInfo const* bySpell, Wo
             return false;
 
     // can't attack invisible (ignore stealth for aoe spells) also if the area being looked at is from a spell use the dynamic object created instead of the casting unit. Ignore stealth if target is player and unit in combat with same player
-    if ((!bySpell || !bySpell->HasAttribute(SPELL_ATTR6_CAN_TARGET_INVISIBLE)) && (obj ? !obj->CanSeeOrDetect(target, bySpell && bySpell->IsAffectingArea(GetMap()->GetDifficultyID())) : !CanSeeOrDetect(target, (bySpell && bySpell->IsAffectingArea(GetMap()->GetDifficultyID())) || (target->GetTypeId() == TYPEID_PLAYER && target->HasStealthAura() && target->IsInCombat() && IsInCombatWith(target)))))
+    if ((!bySpell || !bySpell->HasAttribute(SPELL_ATTR6_CAN_TARGET_INVISIBLE)) && (obj ? !obj->CanSeeOrDetect(target, bySpell && bySpell->IsAffectingArea()) : !CanSeeOrDetect(target, (bySpell && bySpell->IsAffectingArea()) || (target->GetTypeId() == TYPEID_PLAYER && target->HasStealthAura() && target->IsInCombat() && IsInCombatWith(target)))))
         return false;
 
     // can't attack dead
@@ -8040,7 +8018,7 @@ bool Unit::_IsValidAssistTarget(Unit const* target, SpellInfo const* bySpell) co
             return false;
 
     // can't assist invisible
-    if ((!bySpell || !bySpell->HasAttribute(SPELL_ATTR6_CAN_TARGET_INVISIBLE)) && !CanSeeOrDetect(target, bySpell && bySpell->IsAffectingArea(GetMap()->GetDifficultyID())))
+    if ((!bySpell || !bySpell->HasAttribute(SPELL_ATTR6_CAN_TARGET_INVISIBLE)) && !CanSeeOrDetect(target, bySpell && bySpell->IsAffectingArea()))
         return false;
 
     // can't assist dead
@@ -8836,7 +8814,7 @@ float Unit::ApplyEffectModifiers(SpellInfo const* spellProto, uint8 effect_index
 // function uses real base points (typically value - 1)
 int32 Unit::CalculateSpellDamage(Unit const* target, SpellInfo const* spellProto, uint8 effect_index, int32 const* basePoints /*= nullptr*/, float* variance /*= nullptr*/, int32 itemLevel /*= -1*/) const
 {
-    SpellEffectInfo const* effect = spellProto->GetEffect(GetMap()->GetDifficultyID(), effect_index);
+    SpellEffectInfo const* effect = spellProto->GetEffect(effect_index);
     if (variance)
         *variance = 0.0f;
 
@@ -8928,7 +8906,7 @@ int32 Unit::ModSpellDuration(SpellInfo const* spellProto, Unit const* target, in
                 sSpellMgr->IsSpellMemberOfSpellGroup(spellProto->Id, SPELL_GROUP_ELIXIR_BATTLE) ||
                 sSpellMgr->IsSpellMemberOfSpellGroup(spellProto->Id, SPELL_GROUP_ELIXIR_GUARDIAN)))
             {
-                SpellEffectInfo const* effect = spellProto->GetEffect(DIFFICULTY_NONE, EFFECT_0);
+                SpellEffectInfo const* effect = spellProto->GetEffect(EFFECT_0);
                 if (target->HasAura(53042) && effect && target->HasSpell(effect->TriggerSpell))
                     duration *= 2;
             }
@@ -9188,7 +9166,7 @@ bool Unit::IsInFeralForm() const
 
 bool Unit::IsInDisallowedMountForm() const
 {
-    if (SpellInfo const* transformSpellInfo = sSpellMgr->GetSpellInfo(getTransForm()))
+    if (SpellInfo const* transformSpellInfo = sSpellMgr->GetSpellInfo(getTransForm(), this))
         if (transformSpellInfo->HasAttribute(SPELL_ATTR0_CASTABLE_WHILE_MOUNTED))
             return false;
 
@@ -9845,7 +9823,7 @@ void CharmInfo::InitPossessCreateSpells()
         for (uint8 i = 0; i < MAX_CREATURE_SPELLS; ++i)
         {
             uint32 spellId = _unit->ToCreature()->m_spells[i];
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _unit);
             if (spellInfo)
             {
                 if (spellInfo->IsPassive())
@@ -9872,7 +9850,7 @@ void CharmInfo::InitCharmCreateSpells()
     for (uint32 x = 0; x < MAX_SPELL_CHARM; ++x)
     {
         uint32 spellId = _unit->ToCreature()->m_spells[x];
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, _unit);
 
         if (!spellInfo)
         {
@@ -10002,7 +9980,7 @@ void CharmInfo::LoadPetActionBar(const std::string& data)
         // check correctness
         if (PetActionBar[index].IsActionBarForSpell())
         {
-            SpellInfo const* spelInfo = sSpellMgr->GetSpellInfo(PetActionBar[index].GetAction());
+            SpellInfo const* spelInfo = sSpellMgr->GetSpellInfo(PetActionBar[index].GetAction(), _unit);
             if (!spelInfo)
                 SetActionBar(index, 0, ACT_PASSIVE);
             else if (!spelInfo->IsAutocastable())
@@ -10372,7 +10350,7 @@ bool Unit::IsPolymorphed() const
     if (!transformId)
         return false;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(transformId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(transformId, this);
     if (!spellInfo)
         return false;
 
@@ -10576,7 +10554,7 @@ uint32 Unit::GetCastingTimeForBonus(SpellInfo const* spellProto, DamageEffectTyp
     bool DirectDamage = false;
     bool AreaEffect   = false;
 
-    for (SpellEffectInfo const* effect : spellProto->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+    for (SpellEffectInfo const* effect : spellProto->GetEffects())
     {
         if (!effect)
             continue;
@@ -10635,7 +10613,7 @@ uint32 Unit::GetCastingTimeForBonus(SpellInfo const* spellProto, DamageEffectTyp
         CastingTime /= 2;
 
     // 50% for damage and healing spells for leech spells from damage bonus and 0% from healing
-    for (SpellEffectInfo const* effect : spellProto->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+    for (SpellEffectInfo const* effect : spellProto->GetEffects())
     {
         if (!effect)
             continue;
@@ -10691,7 +10669,7 @@ float Unit::CalculateDefaultCoefficient(SpellInfo const* spellInfo, DamageEffect
         if (!spellInfo->IsChanneled() && DotDuration > 0)
             DotFactor = DotDuration / 15000.0f;
 
-        if (uint32 DotTicks = spellInfo->GetMaxTicks(GetMap()->GetDifficultyID()))
+        if (uint32 DotTicks = spellInfo->GetMaxTicks())
             DotFactor /= DotTicks;
     }
 
@@ -11869,7 +11847,7 @@ Aura* Unit::AddAura(uint32 spellId, Unit* target)
     if (!target)
         return NULL;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     if (!spellInfo)
         return NULL;
 
@@ -12746,27 +12724,13 @@ bool Unit::HandleSpellClick(Unit* clicker, int8 seatId)
         Unit* target = (itr->second.castFlags & NPC_CLICK_CAST_TARGET_CLICKER) ? clicker : this;
         ObjectGuid origCasterGUID = (itr->second.castFlags & NPC_CLICK_CAST_ORIG_CASTER_OWNER) ? GetOwnerGUID() : clicker->GetGUID();
 
-        SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(itr->second.spellId);
+        SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(itr->second.spellId, this);
         // if (!spellEntry) should be checked at npc_spellclick load
 
         if (seatId > -1)
         {
             uint8 i = 0;
-            bool valid = false;
-            for (SpellEffectInfo const* effect : spellEntry->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
-            {
-                if (!effect)
-                    continue;
-
-                if (effect->ApplyAuraName == SPELL_AURA_CONTROL_VEHICLE)
-                {
-                    valid = true;
-                    break;
-                }
-                ++i;
-            }
-
-            if (!valid)
+            if (!spellEntry->HasAura(SPELL_AURA_CONTROL_VEHICLE))
             {
                 TC_LOG_ERROR("sql.sql", "Spell %u specified in npc_spellclick_spells is not a valid vehicle enter aura!", itr->second.spellId);
                 continue;
@@ -12777,7 +12741,7 @@ bool Unit::HandleSpellClick(Unit* clicker, int8 seatId)
             else    // This can happen during Player::_LoadAuras
             {
                 int32 bp0[MAX_SPELL_EFFECTS];
-                for (SpellEffectInfo const* effect : spellEntry->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+                for (SpellEffectInfo const* effect : spellEntry->GetEffects())
                     if (effect)
                         bp0[effect->EffectIndex] = effect->BasePoints;
 
@@ -13874,8 +13838,8 @@ void Unit::BuildValuesUpdate(uint8 updateType, ByteBuffer* data, Player* target)
                     CreatureTemplate const* cinfo = creature->GetCreatureTemplate();
 
                     // this also applies for transform auras
-                    if (SpellInfo const* transform = sSpellMgr->GetSpellInfo(getTransForm()))
-                        for (SpellEffectInfo const* effect : transform->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+                    if (SpellInfo const* transform = sSpellMgr->GetSpellInfo(getTransForm(), this))
+                        for (SpellEffectInfo const* effect : transform->GetEffects())
                             if (effect && effect->IsAura(SPELL_AURA_TRANSFORM))
                                 if (CreatureTemplate const* transformInfo = sObjectMgr->GetCreatureTemplate(effect->MiscValue))
                                 {
@@ -14154,7 +14118,7 @@ SpellInfo const* Unit::GetCastSpellInfo(SpellInfo const* spellInfo) const
     for (AuraEffect const* auraEffect : swaps)
     {
         if (uint32(auraEffect->GetMiscValue()) == spellInfo->Id || auraEffect->IsAffectingSpell(spellInfo))
-            if (SpellInfo const* newInfo = sSpellMgr->GetSpellInfo(auraEffect->GetAmount()))
+            if (SpellInfo const* newInfo = sSpellMgr->GetSpellInfo(auraEffect->GetAmount(), this))
                 return newInfo;
     }
 
@@ -14168,7 +14132,7 @@ uint32 Unit::GetCastSpellXSpellVisualId(SpellInfo const* spellInfo) const
     {
         if (uint32(effect->GetMiscValue()) == spellInfo->Id)
         {
-            if (SpellInfo const* visualSpell = sSpellMgr->GetSpellInfo(effect->GetMiscValueB()))
+            if (SpellInfo const* visualSpell = sSpellMgr->GetSpellInfo(effect->GetMiscValueB(), this))
             {
                 spellInfo = visualSpell;
                 break;

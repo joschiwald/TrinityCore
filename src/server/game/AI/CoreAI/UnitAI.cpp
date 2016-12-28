@@ -84,7 +84,7 @@ bool UnitAI::DoSpellAttackIfReady(uint32 spellId)
     if (me->HasUnitState(UNIT_STATE_CASTING) || !me->isAttackReady())
         return true;
 
-    if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
+    if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, me))
     {
         if (me->IsWithinCombatRange(me->GetVictim(), spellInfo->GetMaxRange(false)))
         {
@@ -122,7 +122,7 @@ void UnitAI::DoCast(uint32 spellId)
             break;
         case AITARGET_ENEMY:
         {
-            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
+            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, me))
             {
                 bool playerOnly = spellInfo->HasAttribute(SPELL_ATTR3_ONLY_TARGET_PLAYERS);
                 target = SelectTarget(SELECT_TARGET_RANDOM, 0, spellInfo->GetMaxRange(false), playerOnly);
@@ -137,7 +137,7 @@ void UnitAI::DoCast(uint32 spellId)
             break;
         case AITARGET_DEBUFF:
         {
-            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
+            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, me))
             {
                 bool playerOnly = spellInfo->HasAttribute(SPELL_ATTR3_ONLY_TARGET_PLAYERS);
                 float range = spellInfo->GetMaxRange(false);
@@ -277,7 +277,7 @@ bool DefaultTargetSelector::operator()(Unit const* target) const
 }
 
 SpellTargetSelector::SpellTargetSelector(Unit* caster, uint32 spellId) :
-    _caster(caster), _spellInfo(sSpellMgr->GetSpellInfo(spellId))
+    _caster(caster), _spellInfo(sSpellMgr->GetSpellInfo(spellId, _caster))
 {
     ASSERT(_spellInfo);
 }

@@ -100,7 +100,7 @@ void AddItemsSetItem(Player* player, Item* item)
             if (eff->SetBonuses.count(itemSetSpell))
                 continue;
 
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itemSetSpell->SpellID);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itemSetSpell->SpellID, player);
             if (!spellInfo)
             {
                 TC_LOG_ERROR("entities.player.items", "WORLD: unknown spell id %u in items set %u effects", itemSetSpell->SpellID, setid);
@@ -155,7 +155,7 @@ void RemoveItemsSetItem(Player* player, ItemTemplate const* proto)
             if (!eff->SetBonuses.count(itemSetSpell))
                 continue;
 
-            player->ApplyEquipSpell(sSpellMgr->AssertSpellInfo(itemSetSpell->SpellID), nullptr, false);
+            player->ApplyEquipSpell(sSpellMgr->AssertSpellInfo(itemSetSpell->SpellID, player), nullptr, false);
             eff->SetBonuses.erase(itemSetSpell);
         }
     }
@@ -318,7 +318,7 @@ bool Item::Create(ObjectGuid::LowType guidlow, uint32 itemId, Player const* owne
     {
         if (i < 5)
             SetSpellCharges(i, itemProto->Effects[i]->Charges);
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itemProto->Effects[i]->SpellID))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itemProto->Effects[i]->SpellID, owner))
             if (spellInfo->HasEffect(SPELL_EFFECT_GIVE_ARTIFACT_POWER))
                 if (uint32 artifactKnowledgeLevel = owner->GetCurrency(CURRENCY_TYPE_ARTIFACT_KNOWLEDGE))
                     SetModifier(ITEM_MODIFIER_ARTIFACT_KNOWLEDGE_LEVEL, artifactKnowledgeLevel + 1);

@@ -1879,7 +1879,7 @@ bool Creature::IsImmunedToSpell(SpellInfo const* spellInfo) const
     // This check must be done instead of 'if (GetCreatureTemplate()->MechanicImmuneMask & (1 << (spellInfo->Mechanic - 1)))' for not break
     // the check of mechanic immunity on DB (tested) because GetCreatureTemplate()->MechanicImmuneMask and m_spellImmune[IMMUNITY_MECHANIC] don't have same data.
     bool immunedToAllEffects = true;
-    for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+    for (SpellEffectInfo const* effect : spellInfo->GetEffects())
     {
         if (!effect || !effect->IsEffect())
             continue;
@@ -1897,7 +1897,7 @@ bool Creature::IsImmunedToSpell(SpellInfo const* spellInfo) const
 
 bool Creature::IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index) const
 {
-    SpellEffectInfo const* effect = spellInfo->GetEffect(GetMap()->GetDifficultyID(), index);
+    SpellEffectInfo const* effect = spellInfo->GetEffect(index);
     if (!effect)
         return true;
     if (GetCreatureTemplate()->MechanicImmuneMask & (1 << (effect->Mechanic - 1)))
@@ -1935,7 +1935,7 @@ SpellInfo const* Creature::reachWithSpellAttack(Unit* victim)
     {
         if (!m_spells[i])
             continue;
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(m_spells[i]);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(m_spells[i], this);
         if (!spellInfo)
         {
             TC_LOG_ERROR("entities.unit", "WORLD: unknown spell id %i", m_spells[i]);
@@ -1943,7 +1943,7 @@ SpellInfo const* Creature::reachWithSpellAttack(Unit* victim)
         }
 
         bool bcontinue = true;
-        for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+        for (SpellEffectInfo const* effect : spellInfo->GetEffects())
         {
             if (effect && ((effect->Effect == SPELL_EFFECT_SCHOOL_DAMAGE)       ||
                 (effect->Effect == SPELL_EFFECT_INSTAKILL)            ||
@@ -1983,11 +1983,11 @@ SpellInfo const* Creature::reachWithSpellCure(Unit* victim)
     if (!victim)
         return nullptr;
 
-    for (uint32 i=0; i < MAX_CREATURE_SPELLS; ++i)
+    for (uint32 i = 0; i < MAX_CREATURE_SPELLS; ++i)
     {
         if (!m_spells[i])
             continue;
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(m_spells[i]);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(m_spells[i], this);
         if (!spellInfo)
         {
             TC_LOG_ERROR("entities.unit", "WORLD: unknown spell id %i", m_spells[i]);
@@ -1995,9 +1995,9 @@ SpellInfo const* Creature::reachWithSpellCure(Unit* victim)
         }
 
         bool bcontinue = true;
-        for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(GetMap()->GetDifficultyID()))
+        for (SpellEffectInfo const* effect : spellInfo->GetEffects())
         {
-            if (effect && (effect->Effect == SPELL_EFFECT_HEAL))
+            if (effect && effect->IsEffect(SPELL_EFFECT_HEAL))
             {
                 bcontinue = false;
                 break;
@@ -2315,21 +2315,21 @@ bool Creature::LoadCreaturesAddon()
 
     if (!cainfo->auras.empty())
     {
-        for (std::vector<uint32>::const_iterator itr = cainfo->auras.begin(); itr != cainfo->auras.end(); ++itr)
+        for (uint32 aura : cainfo->auras)
         {
-            SpellInfo const* AdditionalSpellInfo = sSpellMgr->GetSpellInfo(*itr);
-            if (!AdditionalSpellInfo)
+            SpellInfo const* additionalSpellInfo = sSpellMgr->GetSpellInfo(aura, this);
+            if (!additionalSpellInfo)
             {
-                TC_LOG_ERROR("sql.sql", "Creature (%s) has wrong spell %u defined in `auras` field.", GetGUID().ToString().c_str(), *itr);
+                TC_LOG_ERROR("sql.sql", "Creature (%s) has wrong spell %u defined in `auras` field.", GetGUID().ToString().c_str(), aura);
                 continue;
             }
 
             // skip already applied aura
-            if (HasAura(*itr))
+            if (HasAura(aura))
                 continue;
 
-            AddAura(*itr, this);
-            TC_LOG_DEBUG("entities.unit", "Spell: %u added to creature (%s)", *itr, GetGUID().ToString().c_str());
+            AddAura(aura, this);
+            TC_LOG_DEBUG("entities.unit", "Spell: %u added to creature (%s)", aura, GetGUID().ToString().c_str());
         }
     }
 

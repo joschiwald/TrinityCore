@@ -2774,7 +2774,7 @@ void Spell::DoTriggersOnSpellHit(Unit* unit, uint32 effMask)
             // Cast the serverside immunity shield marker
             m_caster->CastSpell(unit, 61988, true);
 
-        if (sSpellMgr->GetSpellInfo(m_preCastSpell))
+        if (sSpellMgr->GetSpellInfo(m_preCastSpell, m_caster))
             // Blizz seems to just apply aura without bothering to cast
             m_caster->AddAura(m_preCastSpell, unit);
     }

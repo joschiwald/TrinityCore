@@ -177,7 +177,9 @@ TC_GAME_API extern DB2Storage<SpellItemEnchantmentEntry>            sSpellItemEn
 TC_GAME_API extern DB2Storage<SpellItemEnchantmentConditionEntry>   sSpellItemEnchantmentConditionStore;
 TC_GAME_API extern DB2Storage<SpellLearnSpellEntry>                 sSpellLearnSpellStore;
 TC_GAME_API extern DB2Storage<SpellLevelsEntry>                     sSpellLevelsStore;
+TC_GAME_API extern DB2Storage<SpellMiscDifficultyEntry>             sSpellMiscDifficultyStore;
 TC_GAME_API extern DB2Storage<SpellMiscEntry>                       sSpellMiscStore;
+TC_GAME_API extern DB2Storage<SpellPowerDifficultyEntry>            sSpellPowerDifficultyStore;
 TC_GAME_API extern DB2Storage<SpellPowerEntry>                      sSpellPowerStore;
 TC_GAME_API extern DB2Storage<SpellProcsPerMinuteEntry>             sSpellProcsPerMinuteStore;
 TC_GAME_API extern DB2Storage<SpellRadiusEntry>                     sSpellRadiusStore;
@@ -311,7 +313,6 @@ public:
     SkillRaceClassInfoEntry const* GetSkillRaceClassInfo(uint32 skill, uint8 race, uint8 class_);
     std::vector<SpecializationSpellsEntry const*> const* GetSpecializationSpells(uint32 specId) const;
     static bool IsValidSpellFamiliyName(SpellFamilyNames family);
-    std::vector<SpellPowerEntry const*> GetSpellPowers(uint32 spellId, Difficulty difficulty = DIFFICULTY_NONE, bool* hasDifficultyPowers = nullptr) const;
     std::vector<SpellProcsPerMinuteModEntry const*> GetSpellProcsPerMinuteMods(uint32 spellprocsPerMinuteId) const;
     std::vector<TalentEntry const*> const& GetTalentsByPosition(uint32 class_, uint32 tier, uint32 column) const;
     static bool IsTotemCategoryCompatibleWith(uint32 itemTotemCategoryId, uint32 requiredTotemCategoryId);

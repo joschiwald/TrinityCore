@@ -2847,15 +2847,15 @@ bool Player::AddTalent(TalentEntry const* talent, uint8 spec, bool learning)
 
 void Player::RemoveTalent(TalentEntry const* talent)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talent->SpellID);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talent->SpellID, this);
     if (!spellInfo)
         return;
 
     RemoveSpell(talent->SpellID, true);
 
     // search for spells that the talent teaches and unlearn them
-    for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
-        if (effect && effect->TriggerSpell > 0 && effect->Effect == SPELL_EFFECT_LEARN_SPELL)
+    for (SpellEffectInfo const* effect : spellInfo->GetEffects())
+        if (effect && effect->TriggerSpell > 0 && effect->IsEffect(SPELL_EFFECT_LEARN_SPELL))
             RemoveSpell(effect->TriggerSpell, true);
 
     if (talent->OverridesSpellID)
@@ -2869,7 +2869,7 @@ void Player::RemoveTalent(TalentEntry const* talent)
 
 bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent, bool disabled, bool loading /*= false*/, uint32 fromSkill /*= 0*/)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
     if (!spellInfo)
     {
         // do character spell book cleanup (all characters)
@@ -3211,7 +3211,7 @@ bool Player::IsNeedCastPassiveSpellAtLearn(SpellInfo const* spellInfo) const
     // note: form passives activated with shapeshift spells be implemented by HandleShapeshiftBoosts instead of spell_learn_spell
     // talent dependent passives activated at form apply have proper stance data
     ShapeshiftForm form = GetShapeshiftForm();
-    bool need_cast = (!spellInfo->Stances || (form && (spellInfo->Stances & (UI64LIT(1) << (form - 1)))) ||
+    bool need_cast = (!spellInfo->Shapeshift.ShapeshiftMask || (form && (spellInfo->Shapeshift.ShapeshiftMask & (UI64LIT(1) << (form - 1)))) ||
         (!form && (spellInfo->HasAttribute(SPELL_ATTR2_NOT_NEED_SHAPESHIFT))));
 
     if (spellInfo->HasAttribute(SPELL_ATTR8_MASTERY_SPECIALIZATION))
@@ -3441,10 +3441,10 @@ void Player::RemoveSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
 void Player::RemoveArenaSpellCooldowns(bool removeActivePetCooldowns)
 {
     // remove cooldowns on spells that have < 10 min CD
-    GetSpellHistory()->ResetCooldowns([](SpellHistory::CooldownStorageType::iterator itr)
+    GetSpellHistory()->ResetCooldowns([this](SpellHistory::CooldownStorageType::iterator itr)
     {
-        SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(itr->first);
-        return spellInfo->RecoveryTime < 10 * MINUTE * IN_MILLISECONDS && spellInfo->CategoryRecoveryTime < 10 * MINUTE * IN_MILLISECONDS;
+        SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(itr->first, this);
+        return spellInfo->Cooldowns.RecoveryTime < 10 * MINUTE * IN_MILLISECONDS && spellInfo->Cooldowns.CategoryRecoveryTime < 10 * MINUTE * IN_MILLISECONDS;
     }, true);
 
     // pet cooldowns
@@ -11836,14 +11836,14 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
             if (pProto && IsInCombat() && (pProto->GetClass() == ITEM_CLASS_WEAPON || pProto->GetInventoryType() == INVTYPE_RELIC) && m_weaponChangeTimer == 0)
             {
                 uint32 cooldownSpell = getClass() == CLASS_ROGUE ? 6123 : 6119;
-                SpellInfo const* spellProto = sSpellMgr->GetSpellInfo(cooldownSpell);
+                SpellInfo const* spellProto = sSpellMgr->GetSpellInfo(cooldownSpell, this);
 
                 if (!spellProto)
                     TC_LOG_ERROR("entities.player", "Player::EquipItem: Weapon switch cooldown spell %u for player '%s' (%s) couldn't be found in Spell.dbc",
                         cooldownSpell, GetName().c_str(), GetGUID().ToString().c_str());
                 else
                 {
-                    m_weaponChangeTimer = spellProto->StartRecoveryTime;
+                    m_weaponChangeTimer = spellProto->Cooldowns.StartRecoveryTime;
 
                     GetSpellHistory()->AddGlobalCooldown(spellProto, m_weaponChangeTimer);
 
@@ -21114,21 +21114,21 @@ void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
     {
         //returning of reagents only for players, so best done here
         uint32 spellId = pet ? pet->GetUInt32Value(UNIT_CREATED_BY_SPELL) : m_oldpetspell;
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, this);
 
         if (spellInfo)
         {
             for (uint32 i = 0; i < MAX_SPELL_REAGENTS; ++i)
             {
-                if (spellInfo->Reagent[i] > 0)
+                if (spellInfo->Reagents[i].Reagent > 0)
                 {
                     ItemPosCountVec dest;                   //for succubus, voidwalker, felhunter and felguard credit soulshard when despawn reason other than death (out of range, logout)
-                    InventoryResult msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, spellInfo->Reagent[i], spellInfo->ReagentCount[i]);
+                    InventoryResult msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, spellInfo->Reagents[i].Reagent, spellInfo->Reagents[i].ReagentCount);
                     if (msg == EQUIP_ERR_OK)
                     {
-                        Item* item = StoreNewItem(dest, spellInfo->Reagent[i], true);
+                        Item* item = StoreNewItem(dest, spellInfo->Reagents[i].Reagent, true);
                         if (IsInWorld())
-                            SendNewItem(item, spellInfo->ReagentCount[i], true, false);
+                            SendNewItem(item, spellInfo->Reagents[i].ReagentCount, true, false);
                     }
                 }
             }
@@ -23879,15 +23879,15 @@ void Player::LearnQuestRewardedSpells(Quest const* quest)
         return;
     }
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell_id);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell_id, this);
     if (!spellInfo)
         return;
 
     // check learned spells state
     bool found = false;
-    for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
+    for (SpellEffectInfo const* effect : spellInfo->GetEffects())
     {
-        if (effect && effect->Effect == SPELL_EFFECT_LEARN_SPELL && !HasSpell(effect->TriggerSpell))
+        if (effect && effect->IsEffect(SPELL_EFFECT_LEARN_SPELL) && !HasSpell(effect->TriggerSpell))
         {
             found = true;
             break;
@@ -23898,19 +23898,19 @@ void Player::LearnQuestRewardedSpells(Quest const* quest)
     if (!found)
         return;
 
-    SpellEffectInfo const* effect = spellInfo->GetEffect(DIFFICULTY_NONE, EFFECT_0);
+    SpellEffectInfo const* effect = spellInfo->GetEffect(EFFECT_0);
     if (!effect)
         return;
 
     uint32 learned_0 = effect->TriggerSpell;
     if (!HasSpell(learned_0))
     {
-        SpellInfo const* learnedInfo = sSpellMgr->GetSpellInfo(learned_0);
+        SpellInfo const* learnedInfo = sSpellMgr->GetSpellInfo(learned_0, this);
         if (!learnedInfo)
             return;
 
         // profession specialization can be re-learned from npc
-        if (learnedInfo->GetEffect(EFFECT_0)->Effect == SPELL_EFFECT_TRADE_SKILL && learnedInfo->GetEffect(EFFECT_1)->Effect == 0 && !learnedInfo->SpellLevel)
+        if (learnedInfo->GetEffect(EFFECT_0)->IsEffect(SPELL_EFFECT_TRADE_SKILL) && !learnedInfo->GetEffect(EFFECT_1)->IsEffect() && !learnedInfo->SpellLevel)
             return;
     }
 
@@ -26537,15 +26537,15 @@ void Player::ActivateTalentGroup(ChrSpecializationEntry const* spec)
         if (talentInfo->SpellID == 0)
             continue;
 
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talentInfo->SpellID);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talentInfo->SpellID, this);
         if (!spellInfo)
             continue;
 
         RemoveSpell(talentInfo->SpellID, true);
 
         // search for spells that the talent teaches and unlearn them
-        for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
-            if (effect && effect->TriggerSpell > 0 && effect->Effect == SPELL_EFFECT_LEARN_SPELL)
+        for (SpellEffectInfo const* effect : spellInfo->GetEffects())
+            if (effect && effect->TriggerSpell > 0 && effect->IsEffect(SPELL_EFFECT_LEARN_SPELL))
                 RemoveSpell(effect->TriggerSpell, true);
 
         if (talentInfo->OverridesSpellID)

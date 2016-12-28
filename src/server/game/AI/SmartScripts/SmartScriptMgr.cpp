@@ -1046,8 +1046,8 @@ bool SmartAIMgr::IsEventValid(SmartScriptHolder& e)
             if (!IsSpellValid(e, e.action.cast.spell))
                 return false;
 
-            SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(e.action.cast.spell);
-            for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
+            SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(e.action.cast.spell, DIFFICULTY_NONE);
+            for (SpellEffectInfo const* effect : spellInfo->GetEffects())
             {
                 if (effect && (effect->IsEffect(SPELL_EFFECT_KILL_CREDIT) || effect->IsEffect(SPELL_EFFECT_KILL_CREDIT2)))
                 {
@@ -1543,11 +1543,11 @@ void SmartAIMgr::LoadHelperStores()
     SpellInfo const* spellInfo = NULL;
     for (uint32 i = 0; i < sSpellMgr->GetSpellInfoStoreSize(); ++i)
     {
-        spellInfo = sSpellMgr->GetSpellInfo(i);
+        spellInfo = sSpellMgr->GetSpellInfo(i, DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 
-        for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
+        for (SpellEffectInfo const* effect : spellInfo->GetEffects())
         {
             if (!effect)
                 continue;

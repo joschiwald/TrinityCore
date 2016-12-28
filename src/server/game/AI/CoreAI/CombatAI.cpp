@@ -56,7 +56,7 @@ void AggressorAI::UpdateAI(uint32 /*diff*/)
 void CombatAI::InitializeAI()
 {
     for (uint32 i = 0; i < MAX_CREATURE_SPELLS; ++i)
-        if (me->m_spells[i] && sSpellMgr->GetSpellInfo(me->m_spells[i]))
+        if (me->m_spells[i] && sSpellMgr->GetSpellInfo(me->m_spells[i], me))
             spells.push_back(me->m_spells[i]);
 
     CreatureAI::InitializeAI();
@@ -182,7 +182,7 @@ ArcherAI::ArcherAI(Creature* c) : CreatureAI(c)
     if (!me->m_spells[0])
         TC_LOG_ERROR("misc", "ArcherAI set for creature (entry = %u) with spell1=0. AI will do nothing", me->GetEntry());
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->m_spells[0]);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->m_spells[0], me);
     m_minRange = spellInfo ? spellInfo->GetMinRange(false) : 0;
 
     if (!m_minRange)
@@ -231,7 +231,7 @@ TurretAI::TurretAI(Creature* c) : CreatureAI(c)
     if (!me->m_spells[0])
         TC_LOG_ERROR("misc", "TurretAI set for creature (entry = %u) with spell1=0. AI will do nothing", me->GetEntry());
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->m_spells[0]);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->m_spells[0], me);
     m_minRange = spellInfo ? spellInfo->GetMinRange(false) : 0;
     me->m_CombatDistance = spellInfo ? spellInfo->GetMaxRange(false) : 0;
     me->m_SightDistance = me->m_CombatDistance;

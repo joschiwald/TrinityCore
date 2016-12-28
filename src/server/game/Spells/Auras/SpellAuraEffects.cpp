@@ -560,12 +560,12 @@ pAuraEffectHandler AuraEffectHandler[TOTAL_AURAS]=
 };
 
 AuraEffect::AuraEffect(Aura* base, uint32 effIndex, int32 *baseAmount, Unit* caster) :
-m_base(base), m_spellInfo(base->GetSpellInfo()),
-_effectInfo(base->GetSpellEffectInfo(effIndex)),
-m_baseAmount(baseAmount ? *baseAmount : base->GetSpellEffectInfo(effIndex)->BasePoints),
-m_damage(0), m_critChance(0.0f), m_donePct(1.0f),
-m_spellmod(NULL), m_periodicTimer(0), m_tickNumber(0), m_effIndex(effIndex),
-m_canBeRecalculated(true), m_isPeriodic(false)
+    m_base(base), m_spellInfo(base->GetSpellInfo()),
+    _effectInfo(base->GetSpellInfo()->GetEffect(effIndex)),
+    m_baseAmount(baseAmount ? *baseAmount : _effectInfo->BasePoints),
+    m_damage(0), m_critChance(0.0f), m_donePct(1.0f),
+    m_spellmod(NULL), m_periodicTimer(0), m_tickNumber(0), m_effIndex(effIndex),
+    m_canBeRecalculated(true), m_isPeriodic(false)
 {
     CalculatePeriodic(caster, true, false);
 
@@ -579,7 +579,7 @@ AuraEffect::~AuraEffect()
     delete m_spellmod;
 }
 
-void AuraEffect::GetTargetList(std::list<Unit*> & targetList) const
+void AuraEffect::GetTargetList(std::list<Unit*>& targetList) const
 {
     Aura::ApplicationMap const & targetMap = GetBase()->GetApplicationMap();
     // remove all targets which were not added to new list - they no longer deserve area aura
@@ -590,9 +590,9 @@ void AuraEffect::GetTargetList(std::list<Unit*> & targetList) const
     }
 }
 
-void AuraEffect::GetApplicationList(std::list<AuraApplication*> & applicationList) const
+void AuraEffect::GetApplicationList(std::list<AuraApplication*>& applicationList) const
 {
-    Aura::ApplicationMap const & targetMap = GetBase()->GetApplicationMap();
+    Aura::ApplicationMap const& targetMap = GetBase()->GetApplicationMap();
     for (Aura::ApplicationMap::const_iterator appIter = targetMap.begin(); appIter != targetMap.end(); ++appIter)
     {
         if (appIter->second->HasEffect(GetEffIndex()))
@@ -1391,7 +1391,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                 if (itr->first == spellId || itr->first == spellId2 || itr->first == spellId3 || itr->first == spellId4)
                     continue;
 
-                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first);
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first, target);
                 if (!spellInfo || !(spellInfo->IsPassive() || spellInfo->HasAttribute(SPELL_ATTR0_HIDDEN_CLIENTSIDE)))
                     continue;
 
@@ -1399,7 +1399,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                 if ((spellInfo->HasAttribute(SPELL_ATTR8_MASTERY_SPECIALIZATION)) && !plrTarget->IsCurrentSpecMasterySpell(spellInfo))
                     continue;
 
-                if (spellInfo->Stances & (UI64LIT(1) << (GetMiscValue() - 1)))
+                if (spellInfo->Shapeshift.ShapeshiftMask & (UI64LIT(1) << (GetMiscValue() - 1)))
                     target->CastSpell(target, itr->first, true, NULL, this);
             }
         }
@@ -1434,7 +1434,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
             uint64 newStance = newAura ? (UI64LIT(1) << (newAura->GetMiscValue() - 1)) : 0;
 
             // If the stances are not compatible with the spell, remove it
-            if (itr->second->GetBase()->IsRemovedOnShapeLost(target) && !(itr->second->GetBase()->GetSpellInfo()->Stances & newStance))
+            if (itr->second->GetBase()->IsRemovedOnShapeLost(target) && !(itr->second->GetBase()->GetSpellInfo()->Shapeshift.ShapeshiftMask & newStance))
                 target->RemoveAura(itr);
             else
                 ++itr;
@@ -1784,7 +1784,7 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const* aurApp, uint8 mo
         target->SetShapeshiftForm(form);
         if (modelid > 0)
         {
-            SpellInfo const* transformSpellInfo = sSpellMgr->GetSpellInfo(target->getTransForm());
+            SpellInfo const* transformSpellInfo = sSpellMgr->GetSpellInfo(target->getTransForm(), target);
             if (!transformSpellInfo || !GetSpellInfo()->IsPositive())
                 target->SetDisplayId(modelid);
         }
@@ -1878,7 +1878,7 @@ void AuraEffect::HandleAuraTransform(AuraApplication const* aurApp, uint8 mode, 
     if (apply)
     {
         // update active transform spell only when transform not set or not overwriting negative by positive case
-        SpellInfo const* transformSpellInfo = sSpellMgr->GetSpellInfo(target->getTransForm());
+        SpellInfo const* transformSpellInfo = sSpellMgr->GetSpellInfo(target->getTransForm(), target);
         if (!transformSpellInfo || !GetSpellInfo()->IsPositive() || transformSpellInfo->IsPositive())
         {
             target->setTransForm(GetId());
@@ -2573,8 +2573,8 @@ void AuraEffect::HandleAuraMounted(AuraApplication const* aurApp, uint8 mode, bo
             }
 
             //some spell has one aura of mount and one of vehicle
-            for (SpellEffectInfo const* effect : GetBase()->GetSpellEffectInfos())
-                if (effect && effect->Effect == SPELL_EFFECT_SUMMON && effect->MiscValue == GetMiscValue())
+            for (SpellEffectInfo const* effect : GetBase()->GetSpellInfo()->GetEffects())
+                if (effect && effect->IsEffect(SPELL_EFFECT_SUMMON) && effect->MiscValue == GetMiscValue())
                     displayId = 0;
         }
 
@@ -4846,7 +4846,7 @@ void AuraEffect::HandleAuraDummy(AuraApplication const* aurApp, uint8 mode, bool
                     uint32 spellId = 24659;
                     if (apply && caster)
                     {
-                        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(spellId);
+                        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(spellId, caster);
 
                         for (uint32 i = 0; i < spell->StackAmount; ++i)
                             caster->CastSpell(target, spell->Id, true, NULL, NULL, GetCasterGUID());
@@ -4861,7 +4861,7 @@ void AuraEffect::HandleAuraDummy(AuraApplication const* aurApp, uint8 mode, bool
                     uint32 spellId = 24662;
                     if (apply && caster)
                     {
-                        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(spellId);
+                        SpellInfo const* spell = sSpellMgr->AssertSpellInfo(spellId, caster);
                         for (uint32 i = 0; i < spell->StackAmount; ++i)
                             caster->CastSpell(target, spell->Id, true, NULL, NULL, GetCasterGUID());
                         break;
@@ -5117,11 +5117,11 @@ void AuraEffect::HandleAuraLinked(AuraApplication const* aurApp, uint8 mode, boo
     Unit* target = aurApp->GetTarget();
 
     uint32 triggeredSpellId = GetSpellEffectInfo()->TriggerSpell;
-    SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggeredSpellId);
+    SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggeredSpellId, target);
     if (!triggeredSpellInfo)
         return;
 
-    Unit* caster = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo, target->GetMap()->GetDifficultyID()) ? GetCaster() : target;
+    Unit* caster = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo) ? GetCaster() : target;
     if (!caster)
         return;
 
@@ -5137,13 +5137,13 @@ void AuraEffect::HandleAuraLinked(AuraApplication const* aurApp, uint8 mode, boo
         }
         else
         {
-            ObjectGuid casterGUID = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo, caster->GetMap()->GetDifficultyID()) ? GetCasterGUID() : target->GetGUID();
+            ObjectGuid casterGUID = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo) ? GetCasterGUID() : target->GetGUID();
             target->RemoveAura(triggeredSpellId, casterGUID, 0, aurApp->GetRemoveMode());
         }
     }
     else if (mode & AURA_EFFECT_HANDLE_REAPPLY && apply)
     {
-        ObjectGuid casterGUID = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo, caster->GetMap()->GetDifficultyID()) ? GetCasterGUID() : target->GetGUID();
+        ObjectGuid casterGUID = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo) ? GetCasterGUID() : target->GetGUID();
         // change the stack amount to be equal to stack amount of our aura
         if (Aura* triggeredAura = target->GetAura(triggeredSpellId, casterGUID))
             triggeredAura->ModStackAmount(GetBase()->GetStackAmount() - triggeredAura->GetStackAmount());
@@ -5415,7 +5415,7 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
     // generic casting code with custom spells and target/caster customs
     uint32 triggerSpellId = GetSpellEffectInfo()->TriggerSpell;
 
-    SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId);
+    SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId, target);
     SpellInfo const* auraSpellInfo = GetSpellInfo();
     uint32 auraId = auraSpellInfo->Id;
 
@@ -5675,11 +5675,11 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
     }
 
     // Reget trigger spell proto
-    triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId);
+    triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId, target);
 
     if (triggeredSpellInfo)
     {
-        if (Unit* triggerCaster = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo, target->GetMap()->GetDifficultyID()) ? caster : target)
+        if (Unit* triggerCaster = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo) ? caster : target)
         {
             triggerCaster->CastSpell(target, triggeredSpellInfo, true, NULL, this);
             TC_LOG_DEBUG("spells", "AuraEffect::HandlePeriodicTriggerSpellAuraTick: Spell %u Trigger %u", GetId(), triggeredSpellInfo->Id);
@@ -5697,9 +5697,9 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
 void AuraEffect::HandlePeriodicTriggerSpellWithValueAuraTick(Unit* target, Unit* caster) const
 {
     uint32 triggerSpellId = GetSpellEffectInfo()->TriggerSpell;
-    if (SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId))
+    if (SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId, target))
     {
-        if (Unit* triggerCaster = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo, target->GetMap()->GetDifficultyID()) ? caster : target)
+        if (Unit* triggerCaster = triggeredSpellInfo->NeedsToBeTriggeredByCaster(m_spellInfo) ? caster : target)
         {
             int32 basepoints = GetAmount();
             triggerCaster->CastCustomSpell(target, triggerSpellId, &basepoints, &basepoints, &basepoints, true, nullptr, this);
@@ -5741,7 +5741,7 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
                 break;
             case 38772: // Grievous Wound
             {
-                if (SpellEffectInfo const* effect = GetSpellInfo()->GetEffect(DIFFICULTY_NONE, EFFECT_1))
+                if (SpellEffectInfo const* effect = GetSpellInfo()->GetEffect(EFFECT_1))
                 {
                     uint32 percent = effect->CalcValue(caster);
                     if (!target->HealthBelowPct(percent))
@@ -5856,18 +5856,6 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
 
     caster->DealDamage(target, damage, &cleanDamage, DOT, GetSpellInfo()->GetSchoolMask(), GetSpellInfo(), true);
     target->SendPeriodicAuraLog(&pInfo);
-}
-
-bool AuraEffect::IsAreaAuraEffect() const
-{
-    if (_effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_PARTY ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_RAID ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_FRIEND ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_ENEMY ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_PET ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_OWNER)
-        return true;
-    return false;
 }
 
 void AuraEffect::HandlePeriodicHealthLeechAuraTick(Unit* target, Unit* caster) const
@@ -6283,7 +6271,7 @@ void AuraEffect::HandleProcTriggerSpellAuraProc(AuraApplication* aurApp, ProcEve
     Unit* triggerTarget = eventInfo.GetProcTarget();
 
     uint32 triggerSpellId = GetSpellEffectInfo()->TriggerSpell;
-    if (SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId))
+    if (SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId, triggerCaster))
     {
         TC_LOG_DEBUG("spells", "AuraEffect::HandleProcTriggerSpellAuraProc: Triggering spell %u from aura %u proc", triggeredSpellInfo->Id, GetId());
         triggerCaster->CastSpell(triggerTarget, triggeredSpellInfo, true, NULL, this);
@@ -6298,7 +6286,7 @@ void AuraEffect::HandleProcTriggerSpellWithValueAuraProc(AuraApplication* aurApp
     Unit* triggerTarget = eventInfo.GetProcTarget();
 
     uint32 triggerSpellId = GetSpellEffectInfo()->TriggerSpell;
-    if (SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId))
+    if (SpellInfo const* triggeredSpellInfo = sSpellMgr->GetSpellInfo(triggerSpellId, triggerCaster))
     {
         int32 basepoints0 = GetAmount();
         TC_LOG_DEBUG("spells", "AuraEffect::HandleProcTriggerSpellWithValueAuraProc: Triggering spell %u with value %d from aura %u proc", triggeredSpellInfo->Id, basepoints0, GetId());
@@ -6373,9 +6361,9 @@ void AuraEffect::HandleShowConfirmationPrompt(AuraApplication const* aurApp, uin
         return;
 
     if (apply)
-        player->AddTemporarySpell(_effectInfo->TriggerSpell);
+        player->AddTemporarySpell(GetSpellEffectInfo()->TriggerSpell);
     else
-        player->RemoveTemporarySpell(_effectInfo->TriggerSpell);
+        player->RemoveTemporarySpell(GetSpellEffectInfo()->TriggerSpell);
 }
 
 void AuraEffect::HandleOverridePetSpecs(AuraApplication const* aurApp, uint8 mode, bool apply) const

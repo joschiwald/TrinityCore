@@ -90,7 +90,7 @@ void AuraApplication::_InitFlags(Unit* caster, uint32 effMask)
     if (IsSelfcast() || !caster || !caster->IsFriendlyTo(GetTarget()))
     {
         bool negativeFound = false;
-        for (SpellEffectInfo const* effect : GetBase()->GetSpellEffectInfos())
+        for (SpellEffectInfo const* effect : GetBase()->GetSpellInfo()->GetEffects())
         {
             if (effect && ((1 << effect->EffectIndex) & effMask) && !GetBase()->GetSpellInfo()->IsPositiveEffect(effect->EffectIndex))
             {
@@ -105,7 +105,7 @@ void AuraApplication::_InitFlags(Unit* caster, uint32 effMask)
     else
     {
         bool positiveFound = false;
-        for (SpellEffectInfo const* effect : GetBase()->GetSpellEffectInfos())
+        for (SpellEffectInfo const* effect : GetBase()->GetSpellInfo()->GetEffects())
         {
             if (effect && ((1 << effect->EffectIndex) & effMask) && GetBase()->GetSpellInfo()->IsPositiveEffect(effect->EffectIndex))
             {
@@ -233,14 +233,14 @@ uint32 Aura::BuildEffectMaskForOwner(SpellInfo const* spellProto, uint32 availab
     {
         case TYPEID_UNIT:
         case TYPEID_PLAYER:
-            for (SpellEffectInfo const* effect : spellProto->GetEffectsForDifficulty(owner->GetMap()->GetDifficultyID()))
+            for (SpellEffectInfo const* effect : spellProto->GetEffects())
             {
                 if (effect && effect->IsUnitOwnedAuraEffect())
                     effMask |= 1 << effect->EffectIndex;
             }
             break;
         case TYPEID_DYNAMICOBJECT:
-            for (SpellEffectInfo const* effect : spellProto->GetEffectsForDifficulty(owner->GetMap()->GetDifficultyID()))
+            for (SpellEffectInfo const* effect : spellProto->GetEffects())
             {
                 if (effect && effect->Effect == SPELL_EFFECT_PERSISTENT_AREA_AURA)
                     effMask |= 1 << effect->EffectIndex;
@@ -374,24 +374,13 @@ AuraScript* Aura::GetScriptByName(std::string const& scriptName) const
     return nullptr;
 }
 
-SpellEffectInfo const* Aura::GetSpellEffectInfo(uint32 index) const
-{
-    if (index >= _spelEffectInfos.size())
-        return nullptr;
-
-    return _spelEffectInfos[index];
-}
-
 void Aura::_InitEffects(uint32 effMask, Unit* caster, int32 *baseAmount)
 {
-    // shouldn't be in constructor - functions in AuraEffect::AuraEffect use polymorphism
-    _spelEffectInfos = m_spellInfo->GetEffectsForDifficulty(GetOwner()->GetMap()->GetDifficultyID());
+    ASSERT(!m_spellInfo->GetEffects().empty());
 
-    ASSERT(!_spelEffectInfos.empty());
+    _effects.resize(m_spellInfo->GetEffects().size());
 
-    _effects.resize(GetSpellEffectInfos().size());
-
-    for (SpellEffectInfo const* effect : GetSpellEffectInfos())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (effect && effMask & (1 << effect->EffectIndex))
             _effects[effect->EffectIndex] = new AuraEffect(this, effect->EffectIndex, baseAmount ? baseAmount + effect->EffectIndex : NULL, caster);
@@ -980,7 +969,7 @@ void Aura::RefreshSpellMods()
 bool Aura::HasMoreThanOneEffectForType(AuraType auraType) const
 {
     uint32 count = 0;
-    for (SpellEffectInfo const* effect : GetSpellEffectInfos())
+    for (SpellEffectInfo const* effect : GetSpellInfo()->GetEffects())
         if (effect && HasEffect(effect->EffectIndex) && AuraType(effect->ApplyAuraName) == auraType)
             ++count;
 
@@ -989,7 +978,7 @@ bool Aura::HasMoreThanOneEffectForType(AuraType auraType) const
 
 bool Aura::IsArea() const
 {
-    for (SpellEffectInfo const* effect : GetSpellEffectInfos())
+    for (SpellEffectInfo const* effect : GetSpellInfo()->GetEffects())
         if (effect && HasEffect(effect->EffectIndex) && effect->IsAreaAuraEffect())
             return true;
 
@@ -1455,7 +1444,7 @@ void Aura::HandleAuraSpecificPeriodics(AuraApplication const* aurApp, Unit* cast
 
     for (AuraEffect* effect : GetAuraEffects())
     {
-        if (!effect || effect->IsAreaAuraEffect() || effect->IsEffect(SPELL_EFFECT_PERSISTENT_AREA_AURA))
+        if (!effect || effect->GetSpellEffectInfo()->IsAreaAuraEffect() || effect->GetSpellEffectInfo()->IsEffect(SPELL_EFFECT_PERSISTENT_AREA_AURA))
             continue;
 
         switch (effect->GetSpellEffectInfo()->ApplyAuraName)
@@ -1534,14 +1523,14 @@ bool Aura::CanStackWith(Aura const* existingAura) const
     if (IsPassive() && sameCaster && (m_spellInfo->IsDifferentRankOf(existingSpellInfo) || (m_spellInfo->Id == existingSpellInfo->Id && m_castItemGuid.IsEmpty())))
         return false;
 
-    for (SpellEffectInfo const* effect : existingAura->GetSpellEffectInfos())
+    for (SpellEffectInfo const* effect : existingAura->GetSpellInfo()->GetEffects())
     {
         // prevent remove triggering aura by triggered aura
         if (effect && effect->TriggerSpell == GetId())
             return true;
     }
 
-    for (SpellEffectInfo const* effect : GetSpellEffectInfos())
+    for (SpellEffectInfo const* effect : GetSpellInfo()->GetEffects())
     {
         // prevent remove triggered aura by triggering aura refresh
         if (effect && effect->TriggerSpell == existingAura->GetId())
@@ -1554,7 +1543,7 @@ bool Aura::CanStackWith(Aura const* existingAura) const
     //  * The minimap tracking list will only show a check mark next to the last skill activated
     //    Sometimes this bugs out and doesn't switch the check mark. It has no effect on the actual tracking though.
     //  * The minimap dots are yellow for both resources
-    if (m_spellInfo->HasAura(GetOwner()->GetMap()->GetDifficultyID(), SPELL_AURA_TRACK_RESOURCES) && existingSpellInfo->HasAura(GetOwner()->GetMap()->GetDifficultyID(), SPELL_AURA_TRACK_RESOURCES))
+    if (m_spellInfo->HasAura(SPELL_AURA_TRACK_RESOURCES) && existingSpellInfo->HasAura(SPELL_AURA_TRACK_RESOURCES))
         return sWorld->getBoolConfig(CONFIG_ALLOW_TRACK_BOTH_RESOURCES);
 
     // check spell specific stack rules
@@ -1591,9 +1580,8 @@ bool Aura::CanStackWith(Aura const* existingAura) const
             return true;
 
         // check same periodic auras
-        for (uint32 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+        for (SpellEffectInfo const* effect : GetSpellInfo()->GetEffects())
         {
-            SpellEffectInfo const* effect = GetSpellEffectInfo(i);
             if (!effect)
                 continue;
             switch (effect->ApplyAuraName)
@@ -1611,7 +1599,7 @@ bool Aura::CanStackWith(Aura const* existingAura) const
                 case SPELL_AURA_OBS_MOD_HEALTH:
                 case SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE:
                     {
-                        SpellEffectInfo const* existingEffect = GetSpellEffectInfo(i);
+                        SpellEffectInfo const* existingEffect = existingAura->GetSpellInfo()->GetEffect(effect->EffectIndex);
                         // periodic auras which target areas are not allowed to stack this way (replenishment for example)
                         if (effect->IsTargetingArea() || (existingEffect && existingEffect->IsTargetingArea()))
                             break;
@@ -2287,7 +2275,7 @@ void UnitAura::Remove(AuraRemoveMode removeMode)
 
 void UnitAura::FillTargetMap(std::unordered_map<Unit*, uint32>& targets, Unit* caster)
 {
-    for (SpellEffectInfo const* effect : GetSpellEffectInfos())
+    for (SpellEffectInfo const* effect : GetSpellInfo()->GetEffects())
     {
         if (!effect || !HasEffect(effect->EffectIndex))
             continue;
@@ -2385,7 +2373,7 @@ void DynObjAura::FillTargetMap(std::unordered_map<Unit*, uint32>& targets, Unit*
     Unit* dynObjOwnerCaster = GetDynobjOwner()->GetCaster();
     float radius = GetDynobjOwner()->GetRadius();
 
-    for (SpellEffectInfo const* effect : GetSpellEffectInfos())
+    for (SpellEffectInfo const* effect : GetSpellInfo()->GetEffects())
     {
         if (!effect || !HasEffect(effect->EffectIndex))
             continue;
