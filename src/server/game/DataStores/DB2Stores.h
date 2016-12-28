@@ -165,6 +165,7 @@ TC_GAME_API extern DB2Storage<SpellLearnSpellEntry>                 sSpellLearnS
 TC_GAME_API extern DB2Storage<SpellLevelsEntry>                     sSpellLevelsStore;
 TC_GAME_API extern DB2Storage<SpellMiscEntry>                       sSpellMiscStore;
 TC_GAME_API extern DB2Storage<SpellPowerEntry>                      sSpellPowerStore;
+TC_GAME_API extern DB2Storage<SpellPowerDifficultyEntry>            sSpellPowerDifficultyStore;
 TC_GAME_API extern DB2Storage<SpellProcsPerMinuteEntry>             sSpellProcsPerMinuteStore;
 TC_GAME_API extern DB2Storage<SpellRadiusEntry>                     sSpellRadiusStore;
 TC_GAME_API extern DB2Storage<SpellRangeEntry>                      sSpellRangeStore;
@@ -266,8 +267,6 @@ public:
     typedef std::unordered_map<uint32, uint32> RulesetItemUpgradeContainer;
     typedef std::unordered_multimap<uint32, SkillRaceClassInfoEntry const*> SkillRaceClassInfoContainer;
     typedef std::unordered_map<uint32, std::vector<SpecializationSpellsEntry const*>> SpecializationSpellsContainer;
-    typedef std::unordered_map<uint32, std::vector<SpellPowerEntry const*>> SpellPowerContainer;
-    typedef std::unordered_map<uint32, std::unordered_map<uint32, std::vector<SpellPowerEntry const*>>> SpellPowerDifficultyContainer;
     typedef std::unordered_map<uint32, std::vector<SpellProcsPerMinuteModEntry const*>> SpellProcsPerMinuteModContainer;
     typedef std::vector<TalentEntry const*> TalentsByPosition[MAX_CLASSES][MAX_TALENT_TIERS][MAX_TALENT_COLUMNS];
     typedef std::unordered_set<uint32> ToyItemIdsContainer;
@@ -336,7 +335,6 @@ public:
     uint32 GetRulesetItemUpgrade(uint32 itemId) const;
     SkillRaceClassInfoEntry const* GetSkillRaceClassInfo(uint32 skill, uint8 race, uint8 class_);
     std::vector<SpecializationSpellsEntry const*> const* GetSpecializationSpells(uint32 specId) const;
-    std::vector<SpellPowerEntry const*> GetSpellPowers(uint32 spellId, Difficulty difficulty = DIFFICULTY_NONE, bool* hasDifficultyPowers = nullptr) const;
     std::vector<SpellProcsPerMinuteModEntry const*> GetSpellProcsPerMinuteMods(uint32 spellprocsPerMinuteId) const;
     std::vector<TalentEntry const*> const& GetTalentsByPosition(uint32 class_, uint32 tier, uint32 column) const;
     static bool IsTotemCategoryCompatibleWith(uint32 itemTotemCategoryId, uint32 requiredTotemCategoryId);
@@ -388,8 +386,6 @@ private:
     RulesetItemUpgradeContainer _rulesetItemUpgrade;
     SkillRaceClassInfoContainer _skillRaceClassInfoBySkill;
     SpecializationSpellsContainer _specializationSpellsBySpec;
-    SpellPowerContainer _spellPowers;
-    SpellPowerDifficultyContainer _spellPowerDifficulties;
     SpellProcsPerMinuteModContainer _spellProcsPerMinuteMods;
     TalentsByPosition _talentsByPosition;
     ToyItemIdsContainer _toys;

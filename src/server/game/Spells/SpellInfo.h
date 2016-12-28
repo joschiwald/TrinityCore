@@ -313,8 +313,8 @@ typedef std::unordered_map<uint32, SpellEffectInfoVector> SpellEffectInfoMap;
 typedef std::vector<SpellEffectEntry const*> SpellEffectEntryVector;
 typedef std::unordered_map<uint32, SpellEffectEntryVector> SpellEffectEntryMap;
 
+typedef std::vector<SpellPowerEntry const*> SpellPowerVector;
 typedef std::vector<SpellXSpellVisualEntry const*> SpellVisualVector;
-typedef std::unordered_map<uint32, SpellVisualVector> SpellVisualMap;
 
 typedef std::vector<AuraEffect*> AuraEffectVector;
 
@@ -322,11 +322,27 @@ struct SpellInfoLoadHelper;
 
 class TC_GAME_API SpellInfo
 {
+    template <typename T>
+    struct DifficultyData
+    {
+        DifficultyData() { }
+
+        template <typename C, typename Fn>
+        void Load(std::unordered_map<uint32 /*difficultyID*/, C>&& data, Fn loader);
+
+        T const* Get(WorldObject const* obj = nullptr) const;
+        T const* Get(uint32 difficulty) const;
+
+        void Walk(std::function<bool(T const&)>&& walkerFn, WorldObject const* obj = nullptr) const;
+        void Walk(std::function<bool(T const&)>&& walkerFn, uint32 difficulty) const;
+
+    private:
+        std::unordered_map<uint32 /*difficultyID*/, T> _data;
+        bool _hasDifficultyData = false;
+    };
+
 public:
     uint32 Id;
-    uint32 CategoryId;
-    uint32 Dispel;
-    uint32 Mechanic;
     uint32 Attributes;
     uint32 AttributesEx;
     uint32 AttributesEx2;
@@ -344,41 +360,100 @@ public:
     uint32 AttributesCu;
     uint64 Stances;
     uint64 StancesNot;
-    uint32 Targets;
-    uint32 TargetCreatureType;
     uint32 RequiresSpellFocus;
     uint32 FacingCasterFlags;
-    uint32 CasterAuraState;
-    uint32 TargetAuraState;
-    uint32 ExcludeCasterAuraState;
-    uint32 ExcludeTargetAuraState;
-    uint32 CasterAuraSpell;
-    uint32 TargetAuraSpell;
-    uint32 ExcludeCasterAuraSpell;
-    uint32 ExcludeTargetAuraSpell;
+
+    // SpellAuraOptionsEntry
+    struct AuraOptionsInfo
+    {
+        uint32 ProcFlags;
+        uint32 ProcChance;
+        uint32 ProcCharges;
+        uint32 ProcCooldown;
+        float ProcBasePPM;
+        std::vector<SpellProcsPerMinuteModEntry const*> ProcPPMMods;
+        uint32 StackAmount;
+    };
+    DifficultyData<AuraOptionsInfo> AuraOptions;
+
+    // SpellAuraRestrictionsEntry
+    struct AuraRestrictionsInfo
+    {
+        uint32 CasterAuraState;
+        uint32 TargetAuraState;
+        uint32 ExcludeCasterAuraState;
+        uint32 ExcludeTargetAuraState;
+        uint32 CasterAuraSpell;
+        uint32 TargetAuraSpell;
+        uint32 ExcludeCasterAuraSpell;
+        uint32 ExcludeTargetAuraSpell;
+    };
+    DifficultyData<AuraRestrictionsInfo> AuraRestrictions;
+
+    // SpellCategoriesEntry
+    struct CategoriesInfo
+    {
+        uint32 CategoryId;
+        uint32 Dispel;
+        uint32 Mechanic;
+        uint32 StartRecoveryCategory;
+        uint32 DmgClass;
+        uint32 PreventionType;
+        uint32 ChargeCategoryId;
+    };
+    DifficultyData<CategoriesInfo> Categories;
+
+    // SpellCooldownsEntry
+    struct CooldownsInfo
+    {
+        uint32 RecoveryTime;
+        uint32 CategoryRecoveryTime;
+        uint32 StartRecoveryTime;
+    };
+    DifficultyData<CooldownsInfo> Cooldowns;
+
+    // SpellInterruptsEntry
+    struct InterruptsInfo
+    {
+        uint32 InterruptFlags;
+        uint64 AuraInterruptFlags;
+        uint64 ChannelInterruptFlags;
+    };
+    DifficultyData<InterruptsInfo> Interrups;
+
+    // SpellLevelsEntry
+    struct LevelsInfo
+    {
+        uint32 MaxLevel;
+        uint32 BaseLevel;
+        uint32 SpellLevel;
+    };
+    DifficultyData<LevelsInfo> Levels;
+
+    // SpellPowerEntry
+    DifficultyData<SpellPowerVector> PowerCosts;
+
+    // SpellTargetRestrictionsEntry
+    struct TargetRestrictionsInfo
+    {
+        uint32 Targets;
+        uint32 TargetCreatureType;
+        uint32 MaxAffectedTargets;
+        uint32 MaxTargetLevel;
+    };
+    DifficultyData<TargetRestrictionsInfo> TargetRestrictions;
+
+    // SpellXSpellVisualEntry
+    DifficultyData<SpellVisualVector> Visuals;
+
+
     SpellCastTimesEntry const* CastTimeEntry;
-    uint32 RecoveryTime;
-    uint32 CategoryRecoveryTime;
-    uint32 StartRecoveryCategory;
-    uint32 StartRecoveryTime;
-    uint32 InterruptFlags;
-    uint32 AuraInterruptFlags;
-    uint32 ChannelInterruptFlags;
-    uint32 ProcFlags;
-    uint32 ProcChance;
-    uint32 ProcCharges;
-    uint32 ProcCooldown;
-    float ProcBasePPM;
-    std::vector<SpellProcsPerMinuteModEntry const*> ProcPPMMods;
-    uint32 MaxLevel;
-    uint32 BaseLevel;
-    uint32 SpellLevel;
+
     SpellDurationEntry const* DurationEntry;
-    std::vector<SpellPowerEntry const*> PowerCosts;
+
     uint32 RangeIndex;
     SpellRangeEntry const* RangeEntry;
     float  Speed;
-    uint32 StackAmount;
     uint32 Totem[MAX_SPELL_TOTEMS];
     int32  Reagent[MAX_SPELL_REAGENTS];
     uint32 ReagentCount[MAX_SPELL_REAGENTS];
@@ -389,15 +464,13 @@ public:
     uint32 SpellIconID;
     uint32 ActiveIconID;
     LocalizedString const* SpellName;
-    uint32 MaxTargetLevel;
-    uint32 MaxAffectedTargets;
+
     uint32 SpellFamilyName;
     flag128 SpellFamilyFlags;
-    uint32 DmgClass;
-    uint32 PreventionType;
+
     int32  RequiredAreasID;
     uint32 SchoolMask;
-    uint32 ChargeCategoryId;
+
     // SpellScalingEntry
     struct ScalingInfo
     {
@@ -410,7 +483,7 @@ public:
     uint32 ExplicitTargetMask;
     SpellChainNode const* ChainEntry;
 
-    SpellInfo(SpellInfoLoadHelper const& data, SpellEffectEntryMap const& effectsMap, SpellVisualMap&& visuals,
+    SpellInfo(SpellInfoLoadHelper&& data, SpellEffectEntryMap const& effectsMap,
         std::unordered_map<uint32, SpellEffectScalingEntry const*> const& effectScaling);
     ~SpellInfo();
 
@@ -436,6 +509,8 @@ public:
     inline bool HasAttribute(SpellAttr12 attribute) const { return !!(AttributesEx12 & attribute); }
     inline bool HasAttribute(SpellAttr13 attribute) const { return !!(AttributesEx13 & attribute); }
     inline bool HasAttribute(SpellCustomAttributes customAttribute) const { return !!(AttributesCu & customAttribute); }
+
+    uint32 GetStackAmount(WorldObject const* caster) const;
 
     bool IsExplicitDiscovery() const;
     bool IsLootCrafting() const;
@@ -551,8 +626,81 @@ public:
     SpellEffectInfo const* GetEffect(WorldObject const* obj, uint32 index) const { return GetEffect(obj->GetMap()->GetDifficultyID(), index); }
 
     SpellEffectInfoMap _effects;
-    SpellVisualMap _visuals;
-    bool _hasPowerDifficultyData;
 };
+
+template<typename T>
+template<typename C, typename Fn>
+void SpellInfo::DifficultyData<T>::Load(std::unordered_map<uint32, C>&& data, Fn loader)
+{
+    for (auto&& v : data)
+    {
+        if (!_hasDifficultyData && v.first > DIFFICULTY_NONE)
+            _hasDifficultyData = true;
+        loader(_data[v.first], v.second);
+    }
+}
+
+template <typename T>
+T const* SpellInfo::DifficultyData<T>::Get(WorldObject const* obj /*= nullptr*/) const
+{
+    if (obj)
+        return Get(obj->GetMap()->GetDifficultyID());
+    return Get(DIFFICULTY_NONE);
+}
+
+template <typename T>
+T const* SpellInfo::DifficultyData<T>::Get(uint32 difficulty) const
+{
+    if (_hasDifficultyData)
+    {
+        DifficultyEntry const* difficultyEntry = sDifficultyStore.LookupEntry(difficulty);
+        while (difficultyEntry)
+        {
+            auto itr = _data.find(difficultyEntry->ID);
+            if (itr != _data.end())
+                return &itr->second;
+
+            difficultyEntry = sDifficultyStore.LookupEntry(difficultyEntry->FallbackDifficultyID);
+        }
+    }
+
+    auto itr = _data.find(DIFFICULTY_NONE);
+    if (itr != _data.end())
+        return &itr->second;
+
+    ABORT(); // only happen with incomplete dbc data
+    return nullptr;
+}
+
+template<typename T>
+void SpellInfo::DifficultyData<T>::Walk(std::function<bool(T const&)>&& walkerFn, WorldObject const * obj /*= nullptr*/) const
+{
+    if (obj)
+        return Walk(walkerFn, obj->GetMap()->GetDifficultyID());
+    return Get(walkerFn, DIFFICULTY_NONE);
+}
+
+template<typename T>
+void SpellInfo::DifficultyData<T>::Walk(std::function<bool(T const&)>&& walkerFn, uint32 difficulty) const
+{
+    if (_hasDifficultyData)
+    {
+        DifficultyEntry const* difficultyEntry = sDifficultyStore.LookupEntry(difficulty);
+        while (difficultyEntry)
+        {
+            auto itr = _data.find(difficultyEntry->ID);
+            if (itr != _data.end())
+                if (walkerFn(itr->second)
+                    return;
+
+            difficultyEntry = sDifficultyStore.LookupEntry(difficultyEntry->FallbackDifficultyID);
+        }
+    }
+
+    auto itr = _data.find(DIFFICULTY_NONE);
+    if (itr != _data.end())
+        if (walkerFn(itr->second)
+            return;
+}
 
 #endif // _SPELLINFO_H

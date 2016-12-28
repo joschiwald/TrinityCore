@@ -617,23 +617,28 @@ TC_GAME_API extern PetFamilySpellsStore                         sPetFamilySpells
 
 struct SpellInfoLoadHelper
 {
+    template <typename T>
+    using DifficultyLoadHelper = std::unordered_map<uint32 /*difficultyID*/, T>;
+
     SpellEntry const* Entry = nullptr;
 
-    SpellAuraOptionsEntry const* AuraOptions = nullptr;
-    SpellAuraRestrictionsEntry const* AuraRestrictions = nullptr;
+    DifficultyLoadHelper<SpellAuraOptionsEntry const*> AuraOptions;
+    DifficultyLoadHelper<SpellAuraRestrictionsEntry const*> AuraRestrictions;
     SpellCastingRequirementsEntry const* CastingRequirements = nullptr;
-    SpellCategoriesEntry const* Categories = nullptr;
+    DifficultyLoadHelper<SpellCategoriesEntry const*> Categories;
     SpellClassOptionsEntry const* ClassOptions = nullptr;
-    SpellCooldownsEntry const* Cooldowns = nullptr;
+    DifficultyLoadHelper<SpellCooldownsEntry const*> Cooldowns;
     SpellEquippedItemsEntry const* EquippedItems = nullptr;
-    SpellInterruptsEntry const* Interrupts = nullptr;
-    SpellLevelsEntry const* Levels = nullptr;
+    DifficultyLoadHelper<SpellInterruptsEntry const*> Interrupts;
+    DifficultyLoadHelper<SpellLevelsEntry const*> Levels;
     SpellMiscEntry const* Misc = nullptr;
+    DifficultyLoadHelper<SpellPowerVector> Powers;
     SpellReagentsEntry const* Reagents = nullptr;
     SpellScalingEntry const* Scaling = nullptr;
     SpellShapeshiftEntry const* Shapeshift = nullptr;
-    SpellTargetRestrictionsEntry const* TargetRestrictions = nullptr;
+    DifficultyLoadHelper<SpellTargetRestrictionsEntry const*> TargetRestrictions;
     SpellTotemsEntry const* Totems = nullptr;
+    DifficultyLoadHelper<SpellVisualVector> Visuals;
 };
 
 class TC_GAME_API SpellMgr

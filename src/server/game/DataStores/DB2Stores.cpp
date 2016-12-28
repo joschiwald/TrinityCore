@@ -811,26 +811,6 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     for (SpecializationSpellsEntry const* specSpells : sSpecializationSpellsStore)
         _specializationSpellsBySpec[specSpells->SpecID].push_back(specSpells);
 
-    for (SpellPowerEntry const* power : sSpellPowerStore)
-    {
-        if (SpellPowerDifficultyEntry const* powerDifficulty = sSpellPowerDifficultyStore.LookupEntry(power->ID))
-        {
-            std::vector<SpellPowerEntry const*>& powers = _spellPowerDifficulties[power->SpellID][powerDifficulty->DifficultyID];
-            if (powers.size() <= powerDifficulty->PowerIndex)
-                powers.resize(powerDifficulty->PowerIndex + 1);
-
-            powers[powerDifficulty->PowerIndex] = power;
-        }
-        else
-        {
-            std::vector<SpellPowerEntry const*>& powers = _spellPowers[power->SpellID];
-            if (powers.size() <= power->PowerIndex)
-                powers.resize(power->PowerIndex + 1);
-
-            powers[power->PowerIndex] = power;
-        }
-    }
-
     for (SpellProcsPerMinuteModEntry const* ppmMod : sSpellProcsPerMinuteModStore)
         _spellProcsPerMinuteMods[ppmMod->SpellProcsPerMinuteID].push_back(ppmMod);
 
@@ -1700,48 +1680,6 @@ std::vector<SpecializationSpellsEntry const*> const* DB2Manager::GetSpecializati
         return &itr->second;
 
     return nullptr;
-}
-
-std::vector<SpellPowerEntry const*> DB2Manager::GetSpellPowers(uint32 spellId, Difficulty difficulty /*= DIFFICULTY_NONE*/, bool* hasDifficultyPowers /*= nullptr*/) const
-{
-    std::vector<SpellPowerEntry const*> powers;
-
-    auto difficultyItr = _spellPowerDifficulties.find(spellId);
-    if (difficultyItr != _spellPowerDifficulties.end())
-    {
-        if (hasDifficultyPowers)
-            *hasDifficultyPowers = true;
-
-        DifficultyEntry const* difficultyEntry = sDifficultyStore.LookupEntry(difficulty);
-        while (difficultyEntry)
-        {
-            auto powerDifficultyItr = difficultyItr->second.find(difficultyEntry->ID);
-            if (powerDifficultyItr != difficultyItr->second.end())
-            {
-                if (powerDifficultyItr->second.size() > powers.size())
-                    powers.resize(powerDifficultyItr->second.size());
-
-                for (SpellPowerEntry const* difficultyPower : powerDifficultyItr->second)
-                    if (!powers[difficultyPower->PowerIndex])
-                        powers[difficultyPower->PowerIndex] = difficultyPower;
-            }
-
-            difficultyEntry = sDifficultyStore.LookupEntry(difficultyEntry->FallbackDifficultyID);
-        }
-    }
-
-    auto itr = _spellPowers.find(spellId);
-    if (itr != _spellPowers.end())
-    {
-        if (itr->second.size() > powers.size())
-            powers.resize(itr->second.size());
-
-        for (SpellPowerEntry const* power : itr->second)
-            if (!powers[power->PowerIndex])
-                powers[power->PowerIndex] = power;
-    }
-
-    return powers;
 }
 
 std::vector<SpellProcsPerMinuteModEntry const*> DB2Manager::GetSpellProcsPerMinuteMods(uint32 spellprocsPerMinuteId) const
