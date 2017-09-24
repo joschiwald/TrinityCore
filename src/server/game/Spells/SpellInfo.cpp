@@ -1444,8 +1444,7 @@ bool SpellInfo::IsAllowingDeadTarget() const
 
 bool SpellInfo::IsGroupBuff() const
 {
-    SpellEffectInfoVector effects = GetEffectsForDifficulty(DIFFICULTY_NONE);
-    for (SpellEffectInfo const* effect : effects)
+    for (SpellEffectInfo const* effect : _effects)
     {
         if (!effect)
             continue;
@@ -2233,10 +2232,9 @@ void SpellInfo::_LoadAuraState()
             return AURA_STATE_BLEEDING;
 
         if (GetSchoolMask() & SPELL_SCHOOL_MASK_FROST)
-            for (SpellEffectInfoMap::const_iterator itr = _effects.begin(); itr != _effects.end(); ++itr)
-                for (SpellEffectInfo const* effect : itr->second)
-                    if (effect && (effect->IsAura(SPELL_AURA_MOD_STUN) || effect->IsAura(SPELL_AURA_MOD_ROOT)))
-                        return AURA_STATE_FROZEN;
+            for (SpellEffectInfo const* effect : _effects)
+                if (effect && (effect->IsAura(SPELL_AURA_MOD_STUN) || effect->IsAura(SPELL_AURA_MOD_ROOT)))
+                    return AURA_STATE_FROZEN;
 
         switch (Id)
         {
@@ -2269,27 +2267,25 @@ void SpellInfo::_LoadSpellSpecific()
                 {
                     bool food = false;
                     bool drink = false;
-                    for (SpellEffectInfoMap::const_iterator itr = _effects.begin(); itr != _effects.end(); ++itr)
+
+                    for (SpellEffectInfo const* effect : _effects)
                     {
-                        for (SpellEffectInfo const* effect : itr->second)
+                        if (!effect || !effect->IsAura())
+                            continue;
+                        switch (effect->ApplyAuraName)
                         {
-                            if (!effect || !effect->IsAura())
-                                continue;
-                            switch (effect->ApplyAuraName)
-                            {
-                                // Food
+                            // Food
                             case SPELL_AURA_MOD_REGEN:
                             case SPELL_AURA_OBS_MOD_HEALTH:
                                 food = true;
                                 break;
-                                // Drink
+                            // Drink
                             case SPELL_AURA_MOD_POWER_REGEN:
                             case SPELL_AURA_OBS_MOD_POWER:
                                 drink = true;
                                 break;
                             default:
                                 break;
-                            }
                         }
                     }
 
@@ -2416,14 +2412,12 @@ void SpellInfo::_LoadSpellSpecific()
                 break;
         }
 
-        for (SpellEffectInfoMap::const_iterator itr = _effects.begin(); itr != _effects.end(); ++itr)
+        for (SpellEffectInfo const* effect : _effects)
         {
-            for (SpellEffectInfo const* effect : itr->second)
+            if (effect && effect->Effect == SPELL_EFFECT_APPLY_AURA)
             {
-                if (effect && effect->Effect == SPELL_EFFECT_APPLY_AURA)
+                switch (effect->ApplyAuraName)
                 {
-                    switch (effect->ApplyAuraName)
-                    {
                     case SPELL_AURA_MOD_CHARM:
                     case SPELL_AURA_MOD_POSSESS_PET:
                     case SPELL_AURA_MOD_POSSESS:
@@ -2436,10 +2430,10 @@ void SpellInfo::_LoadSpellSpecific()
                     case SPELL_AURA_TRACK_RESOURCES:
                     case SPELL_AURA_TRACK_STEALTHED:
                         return SPELL_SPECIFIC_TRACKER;
-                    }
                 }
             }
         }
+
         return SPELL_SPECIFIC_NORMAL;
     }();
 }

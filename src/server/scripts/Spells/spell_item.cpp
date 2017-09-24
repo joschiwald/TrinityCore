@@ -160,9 +160,9 @@ class spell_item_alchemist_stone : public SpellScriptLoader
                 uint32 spellId = 0;
                 int32 amount = int32(eventInfo.GetDamageInfo()->GetDamage() * 0.4f);
 
-                if (eventInfo.GetDamageInfo()->GetSpellInfo()->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_HEAL))
+                if (eventInfo.GetDamageInfo()->GetSpellInfo()->HasEffect(SPELL_EFFECT_HEAL))
                     spellId = SPELL_ALCHEMIST_STONE_EXTRA_HEAL;
-                else if (eventInfo.GetDamageInfo()->GetSpellInfo()->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_ENERGIZE))
+                else if (eventInfo.GetDamageInfo()->GetSpellInfo()->HasEffect(SPELL_EFFECT_ENERGIZE))
                     spellId = SPELL_ALCHEMIST_STONE_EXTRA_MANA;
 
                 if (!spellId)

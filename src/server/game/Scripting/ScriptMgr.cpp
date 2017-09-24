@@ -1093,7 +1093,7 @@ ScriptMgr* ScriptMgr::instance()
 
 void ScriptMgr::Initialize()
 {
-    ASSERT(sSpellMgr->GetSpellInfo(SPELL_HOTSWAP_VISUAL_SPELL_EFFECT)
+    ASSERT(sSpellMgr->GetSpellInfo(SPELL_HOTSWAP_VISUAL_SPELL_EFFECT, DIFFICULTY_NONE)
            && "Reload hotswap spell effect for creatures isn't valid!");
 
     uint32 oldMSTime = getMSTime();

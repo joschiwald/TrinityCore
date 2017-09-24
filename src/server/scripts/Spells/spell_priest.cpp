@@ -542,7 +542,7 @@ class spell_pri_glyph_of_prayer_of_healing : public SpellScriptLoader
                     return;
 
                 SpellInfo const* triggeredSpellInfo = sSpellMgr->AssertSpellInfo(SPELL_PRIEST_GLYPH_OF_PRAYER_OF_HEALING_HEAL);
-                int32 heal = int32(CalculatePct(healInfo->GetHeal(), aurEff->GetAmount()) / triggeredSpellInfo->GetMaxTicks(DIFFICULTY_NONE));
+                int32 heal = int32(CalculatePct(healInfo->GetHeal(), aurEff->GetAmount()) / triggeredSpellInfo->GetMaxTicks());
                 GetTarget()->CastCustomSpell(SPELL_PRIEST_GLYPH_OF_PRAYER_OF_HEALING_HEAL, SPELLVALUE_BASE_POINT0, heal, eventInfo.GetProcTarget(), true, NULL, aurEff);
             }
 
@@ -1523,7 +1523,7 @@ class spell_pri_angelic_feather_trigger : public SpellScriptLoader
                 {
                     SpellCastTargets targets;
                     targets.SetDst(destPos);
-                    GetCaster()->CastSpell(targets, sSpellMgr->GetSpellInfo(SPELL_PRIEST_ANGELIC_FEATHER_AREATRIGGER), nullptr);
+                    GetCaster()->CastSpell(targets, sSpellMgr->GetSpellInfo(SPELL_PRIEST_ANGELIC_FEATHER_AREATRIGGER, GetCaster()), nullptr);
                 }
             }
 

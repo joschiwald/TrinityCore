@@ -490,13 +490,10 @@ void SpellCastTargets::OutDebug() const
     TC_LOG_DEBUG("spells", "pitch: %f", m_pitch);
 }
 
-SpellValue::SpellValue(Difficulty diff, SpellInfo const* proto)
+SpellValue::SpellValue(SpellInfo const* proto)
 {
-    // todo 6.x
-    SpellEffectInfoVector effects = proto->GetEffectsForDifficulty(diff);
-    ASSERT(effects.size() <= MAX_SPELL_EFFECTS);
     memset(EffectBasePoints, 0, sizeof(EffectBasePoints));
-    for (SpellEffectInfo const* effect : effects)
+    for (SpellEffectInfo const* effect : proto->GetEffects())
         if (effect)
             EffectBasePoints[effect->EffectIndex] = effect->BasePoints;
 
@@ -520,10 +517,8 @@ protected:
 
 Spell::Spell(Unit* caster, SpellInfo const* info, TriggerCastFlags triggerFlags, ObjectGuid originalCasterGUID, bool skipCheck) :
 m_spellInfo(info), m_caster((info->HasAttribute(SPELL_ATTR6_CAST_BY_CHARMER) && caster->GetCharmerOrOwner()) ? caster->GetCharmerOrOwner() : caster),
-m_spellValue(new SpellValue(caster->GetMap()->GetDifficultyID(), m_spellInfo))
+m_spellValue(new SpellValue(m_spellInfo))
 {
-    _effects = info->GetEffectsForDifficulty(caster->GetMap()->GetDifficultyID());
-
     m_customError = SPELL_CUSTOM_ERROR_NONE;
     m_skipCheck = skipCheck;
     m_fromClient = false;
@@ -768,7 +763,7 @@ void Spell::SelectSpellTargets()
 
     uint32 processedAreaEffectsMask = 0;
 
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : GetSpellInfo()->GetEffects())
     {
         if (!effect)
             continue;
@@ -872,10 +867,10 @@ void Spell::SelectEffectImplicitTargets(SpellEffIndex effIndex, SpellImplicitTar
             // targets for effect already selected
             if (effectMask & processedEffectMask)
                 return;
-            if (SpellEffectInfo const* _effect = GetEffect(effIndex))
+            if (SpellEffectInfo const* _effect = GetSpellInfo()->GetEffect(effIndex))
             {
                 // choose which targets we can select at once
-                for (SpellEffectInfo const* effect : GetEffects())
+                for (SpellEffectInfo const* effect : GetSpellInfo()->GetEffects())
                 {
                     //for (uint32 j = effIndex + 1; j < MAX_SPELL_EFFECTS; ++j)
                     if (!effect || effect->EffectIndex <= uint32(effIndex))
@@ -1040,7 +1035,7 @@ void Spell::SelectImplicitNearbyTargets(SpellEffIndex effIndex, SpellImplicitTar
         return;
     }
 
-    SpellEffectInfo const* effect = GetEffect(effIndex);
+    SpellEffectInfo const* effect = GetSpellInfo()->GetEffect(effIndex);
     if (!effect)
         return;
 
@@ -1157,7 +1152,7 @@ void Spell::SelectImplicitConeTargets(SpellEffIndex effIndex, SpellImplicitTarge
     std::list<WorldObject*> targets;
     SpellTargetObjectTypes objectType = targetType.GetObjectType();
     SpellTargetCheckTypes selectionType = targetType.GetCheckType();
-    SpellEffectInfo const* effect = GetEffect(effIndex);
+    SpellEffectInfo const* effect = GetSpellInfo()->GetEffect(effIndex);
     if (!effect)
         return;
 
@@ -1243,7 +1238,7 @@ void Spell::SelectImplicitAreaTargets(SpellEffIndex effIndex, SpellImplicitTarge
     }
 
     std::list<WorldObject*> targets;
-    SpellEffectInfo const* effect = GetEffect(effIndex);
+    SpellEffectInfo const* effect = GetSpellInfo()->GetEffect(effIndex);
     if (!effect)
         return;
     float radius = effect->CalcRadius(m_caster) * m_spellValue->RadiusMod;
@@ -1283,7 +1278,7 @@ void Spell::SelectImplicitCasterDestTargets(SpellEffIndex effIndex, SpellImplici
             if (SpellTargetPosition const* st = sSpellMgr->GetSpellTargetPosition(m_spellInfo->Id, effIndex))
             {
                 /// @todo fix this check
-                if (HasEffect(SPELL_EFFECT_TELEPORT_UNITS) || HasEffect(SPELL_EFFECT_BIND))
+                if (GetSpellInfo()->HasEffect(SPELL_EFFECT_TELEPORT_UNITS) || GetSpellInfo()->HasEffect(SPELL_EFFECT_BIND))
                     dest = SpellDestination(st->target_X, st->target_Y, st->target_Z, st->target_Orientation, (int32)st->target_mapId);
                 else if (st->target_mapId == m_caster->GetMapId())
                     dest = SpellDestination(st->target_X, st->target_Y, st->target_Z, st->target_Orientation);
@@ -1331,7 +1326,7 @@ void Spell::SelectImplicitCasterDestTargets(SpellEffIndex effIndex, SpellImplici
         }
         default:
         {
-            if (SpellEffectInfo const* effect = GetEffect(effIndex))
+            if (SpellEffectInfo const* effect = GetSpellInfo()->GetEffect(effIndex))
             {
                 float dist = effect->CalcRadius(m_caster);
                 float angle = targetType.CalcDirectionAngle();
@@ -1390,7 +1385,7 @@ void Spell::SelectImplicitTargetDestTargets(SpellEffIndex effIndex, SpellImplici
             break;
         default:
         {
-            if (SpellEffectInfo const* effect = GetEffect(effIndex))
+            if (SpellEffectInfo const* effect = GetSpellInfo()->GetEffect(effIndex))
             {
                 float angle = targetType.CalcDirectionAngle();
                 float objSize = target->GetObjectSize();
@@ -1435,7 +1430,7 @@ void Spell::SelectImplicitDestDestTargets(SpellEffIndex effIndex, SpellImplicitT
             return;
         default:
         {
-            if (SpellEffectInfo const* effect = GetEffect(effIndex))
+            if (SpellEffectInfo const* effect = GetSpellInfo()->GetEffect(effIndex))
             {
                 float angle = targetType.CalcDirectionAngle();
                 float dist = effect->CalcRadius(m_caster);
@@ -1524,7 +1519,7 @@ void Spell::SelectImplicitTargetObjectTargets(SpellEffIndex effIndex, SpellImpli
 
 void Spell::SelectImplicitChainTargets(SpellEffIndex effIndex, SpellImplicitTargetInfo const& targetType, WorldObject* target, uint32 effMask)
 {
-    SpellEffectInfo const* effect = GetEffect(effIndex);
+    SpellEffectInfo const* effect = GetSpellInfo()->GetEffect(effIndex);
     if (!effect)
         return;
 
@@ -1535,7 +1530,7 @@ void Spell::SelectImplicitChainTargets(SpellEffIndex effIndex, SpellImplicitTarg
     if (maxTargets > 1)
     {
         // mark damage multipliers as used
-        for (SpellEffectInfo const* eff : GetEffects())
+        for (SpellEffectInfo const* eff : GetSpellInfo()->GetEffects())
             if (eff && (effMask & (1 << eff->EffectIndex)))
                 m_damageMultipliers[eff->EffectIndex] = 1.0f;
         m_applyMultiplierMask |= effMask;
@@ -1725,7 +1720,7 @@ void Spell::SelectEffectTypeImplicitTargets(uint32 effIndex)
 {
     // special case for SPELL_EFFECT_SUMMON_RAF_FRIEND and SPELL_EFFECT_SUMMON_PLAYER
     /// @todo this is a workaround - target shouldn't be stored in target map for those spells
-    SpellEffectInfo const* effect = GetEffect(effIndex);
+    SpellEffectInfo const* effect = m_spellInfo->GetEffect(effIndex);
     if (!effect)
         return;
     switch (effect->Effect)
@@ -2099,7 +2094,7 @@ class ProcReflectDelayed : public BasicEvent
 void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*= true*/, bool implicit /*= true*/, Position const* losPosition /*= nullptr*/)
 {
     uint32 validEffectMask = 0;
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && (effectMask & (1 << effect->EffectIndex)) != 0 && CheckEffectTarget(target, effect, losPosition))
             validEffectMask |= 1 << effect->EffectIndex;
 
@@ -2114,7 +2109,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
             return;
 
     // Check for effect immune skip if immuned
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && target->IsImmunedToSpellEffect(m_spellInfo, effect->EffectIndex))
             effectMask &= ~(1 << effect->EffectIndex);
 
@@ -2210,7 +2205,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
 void Spell::AddGOTarget(GameObject* go, uint32 effectMask)
 {
     uint32 validEffectMask = 0;
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && (effectMask & (1 << effect->EffectIndex)) != 0 && CheckEffectTarget(go, effect))
             validEffectMask |= 1 << effect->EffectIndex;
 
@@ -2265,7 +2260,7 @@ void Spell::AddGOTarget(GameObject* go, uint32 effectMask)
 void Spell::AddItemTarget(Item* item, uint32 effectMask)
 {
     uint32 validEffectMask = 0;
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && (effectMask & (1 << effect->EffectIndex)) != 0 && CheckEffectTarget(item, effect))
             validEffectMask |= 1 << effect->EffectIndex;
 
@@ -2314,7 +2309,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
     {
         uint32 farMask = 0;
         // create far target mask
-        for (SpellEffectInfo const* effect : GetEffects())
+        for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
             if (effect && effect->IsFarUnitTargetEffect())
                 if ((1 << effect->EffectIndex) & mask)
                     farMask |= (1 << effect->EffectIndex);
@@ -2329,7 +2324,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
 
         // do far effects on the unit
         // can't use default call because of threading, do stuff as fast as possible
-        for (SpellEffectInfo const* effect : GetEffects())
+        for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
             if (effect && (farMask & (1 << effect->EffectIndex)))
                 HandleEffects(unit, NULL, NULL, effect->EffectIndex, SPELL_EFFECT_HANDLE_HIT_TARGET);
         return;
@@ -2529,7 +2524,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
         }
     }
 
-    if (missInfo != SPELL_MISS_EVADE && !m_caster->IsFriendlyTo(unit) && (!m_spellInfo->IsPositive() || HasEffect(SPELL_EFFECT_DISPEL)))
+    if (missInfo != SPELL_MISS_EVADE && !m_caster->IsFriendlyTo(unit) && (!m_spellInfo->IsPositive() || m_spellInfo->HasEffect(SPELL_EFFECT_DISPEL)))
     {
         m_caster->CombatStart(unit, m_spellInfo->HasInitialAggro());
 
@@ -2572,7 +2567,7 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
 
     // disable effects to which unit is immune
     SpellMissInfo returnVal = SPELL_MISS_IMMUNE;
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && (effectMask & (1 << effect->EffectIndex)))
             if (unit->IsImmunedToSpellEffect(m_spellInfo, effect->EffectIndex))
                 effectMask &= ~(1 << effect->EffectIndex);
@@ -2630,7 +2625,7 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
     }
 
     uint32 aura_effmask = 0;
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && (effectMask & (1 << effect->EffectIndex) && effect->IsUnitOwnedAuraEffect()))
             aura_effmask |= 1 << effect->EffectIndex;
 
@@ -2657,10 +2652,10 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
         {
             aurSpellInfo = m_spellInfo->GetAuraRankForLevel(unitTarget->getLevel());
             ASSERT(aurSpellInfo);
-            for (SpellEffectInfo const* effect : aurSpellInfo->GetEffectsForDifficulty(0))
+            for (SpellEffectInfo const* effect : aurSpellInfo->GetEffects())
             {
                 basePoints[effect->EffectIndex] = effect->BasePoints;
-                if (SpellEffectInfo const* myEffect = GetEffect(effect->EffectIndex))
+                if (SpellEffectInfo const* myEffect = m_spellInfo->GetEffect(effect->EffectIndex))
                 {
                     if (myEffect->Effect != effect->Effect)
                     {
@@ -2699,7 +2694,7 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
                 {
                     m_spellAura->Remove();
                     bool found = false;
-                    for (SpellEffectInfo const* effect : GetEffects())
+                    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
                         if (effect && (effectMask & (1 << effect->EffectIndex) && effect->Effect != SPELL_EFFECT_APPLY_AURA))
                             found = true;
                     if (!found)
@@ -2724,7 +2719,7 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
                         {
                             int32 origDuration = duration;
                             duration = 0;
-                            for (SpellEffectInfo const* effect : GetEffects())
+                            for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
                                 if (effect)
                                     if (AuraEffect const* eff = m_spellAura->GetEffect(effect->EffectIndex))
                                         if (int32 period = eff->GetPeriod())  // period is hastened by UNIT_MOD_CAST_SPEED
@@ -2747,7 +2742,7 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
         }
     }
 
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && (effectMask & (1 << effect->EffectIndex)))
             HandleEffects(unit, NULL, NULL, effect->EffectIndex, SPELL_EFFECT_HANDLE_HIT_TARGET);
 
@@ -2843,7 +2838,7 @@ void Spell::DoAllEffectOnTarget(GOTargetInfo* target)
     PrepareScriptHitHandlers();
     CallScriptBeforeHitHandlers(SPELL_MISS_NONE);
 
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && (effectMask & (1 << effect->EffectIndex)))
             HandleEffects(NULL, NULL, go, effect->EffectIndex, SPELL_EFFECT_HANDLE_HIT_TARGET);
 
@@ -2860,7 +2855,7 @@ void Spell::DoAllEffectOnTarget(ItemTargetInfo* target)
     PrepareScriptHitHandlers();
     CallScriptBeforeHitHandlers(SPELL_MISS_NONE);
 
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && (effectMask & (1 << effect->EffectIndex)))
             HandleEffects(NULL, target->item, NULL, effect->EffectIndex, SPELL_EFFECT_HANDLE_HIT_TARGET);
 
@@ -2877,7 +2872,7 @@ bool Spell::UpdateChanneledTargetList()
 
     uint32 channelTargetEffectMask = m_channelTargetEffectMask;
     uint32 channelAuraMask = 0;
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && effect->Effect == SPELL_EFFECT_APPLY_AURA)
             channelAuraMask |= 1 << effect->EffectIndex;
 
@@ -2950,7 +2945,7 @@ void Spell::prepare(SpellCastTargets const* targets, AuraEffect const* triggered
     // Fill aura scaling information
     if (m_caster->IsControlledByPlayer() && !m_spellInfo->IsPassive() && m_spellInfo->SpellLevel && !m_spellInfo->IsChanneled() && !(_triggeredCastFlags & TRIGGERED_IGNORE_AURA_SCALING))
     {
-        for (SpellEffectInfo const* effect : GetEffects())
+        for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         {
             if (effect && effect->Effect == SPELL_EFFECT_APPLY_AURA)
             {
@@ -3099,7 +3094,7 @@ void Spell::prepare(SpellCastTargets const* targets, AuraEffect const* triggered
         if (!(_triggeredCastFlags & TRIGGERED_IGNORE_AURA_INTERRUPT_FLAGS) && m_spellInfo->IsBreakingStealth())
         {
             m_caster->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_CAST);
-            for (SpellEffectInfo const* effect : GetEffects())
+            for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
                 if (effect && effect->GetUsedTargetObjectType() == TARGET_OBJECT_TYPE_UNIT)
                 {
                     m_caster->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_SPELL_ATTACK);
@@ -3114,7 +3109,7 @@ void Spell::prepare(SpellCastTargets const* targets, AuraEffect const* triggered
             TriggerGlobalCooldown();
 
         //item: first cast may destroy item and second cast causes crash
-        if (!m_casttime && !m_spellInfo->StartRecoveryTime && !m_castItemGUID && GetCurrentContainer() == CURRENT_GENERIC_SPELL)
+        if (!m_casttime && !m_spellInfo->Cooldowns.StartRecoveryTime && !m_castItemGUID && GetCurrentContainer() == CURRENT_GENERIC_SPELL)
             cast(true);
     }
 }
@@ -3547,7 +3542,7 @@ void Spell::_handle_immediate_phase()
     PrepareScriptHitHandlers();
 
     // handle effects with SPELL_EFFECT_HANDLE_HIT mode
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         // don't do anything for empty effect
         if (!effect || !effect->IsEffect())
@@ -3575,7 +3570,7 @@ void Spell::_handle_finish_phase()
             m_caster->m_playerMovingMe->GainSpellComboPoints(m_comboPointGain);
     }
 
-    if (m_caster->m_extraAttacks && HasEffect(SPELL_EFFECT_ADD_EXTRA_ATTACKS))
+    if (m_caster->m_extraAttacks && m_spellInfo->HasEffect(SPELL_EFFECT_ADD_EXTRA_ATTACKS))
     {
         if (Unit* victim = ObjectAccessor::GetUnit(*m_caster, m_targets.GetOrigUnitTargetGUID()))
             m_caster->HandleProcExtraAttackFor(victim);
@@ -3630,7 +3625,7 @@ void Spell::update(uint32 difftime)
 
     // check if the player caster has moved before the spell finished
     // with the exception of spells affected with SPELL_AURA_CAST_WHILE_WALKING effect
-    SpellEffectInfo const* effect = GetEffect(EFFECT_0);
+    SpellEffectInfo const* effect = m_spellInfo->GetEffect(EFFECT_0);
     if ((m_caster->GetTypeId() == TYPEID_PLAYER && m_timer != 0) &&
         m_caster->isMoving() && (m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_MOVEMENT) &&
         ((effect && effect->Effect != SPELL_EFFECT_STUCK) || !m_caster->HasUnitMovementFlag(MOVEMENTFLAG_FALLING_FAR)) &&
@@ -3732,7 +3727,7 @@ void Spell::finish(bool ok)
     {
         // Unsummon statue
         uint32 spell = m_caster->GetUInt32Value(UNIT_CREATED_BY_SPELL);
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell, m_caster);
         if (spellInfo && spellInfo->IconFileDataId == 134230)
         {
             TC_LOG_DEBUG("spells", "Statue %s is unsummoned in spell %d finish", m_caster->GetGUID().ToString().c_str(), m_spellInfo->Id);
@@ -3811,16 +3806,16 @@ inline void FillSpellCastFailedArgs(T& packet, ObjectGuid castId, SpellInfo cons
             }
             break;
         case SPELL_FAILED_TOTEMS:
-            if (spellInfo->Totem[0])
-                packet.FailedArg1 = spellInfo->Totem[0];
-            if (spellInfo->Totem[1])
-                packet.FailedArg2 = spellInfo->Totem[1];
+            if (spellInfo->Totems[0].Totem)
+                packet.FailedArg1 = spellInfo->Totems[0].Totem;
+            if (spellInfo->Totems[1].Totem)
+                packet.FailedArg2 = spellInfo->Totems[1].Totem;
             break;
         case SPELL_FAILED_TOTEM_CATEGORY:
-            if (spellInfo->TotemCategory[0])
-                packet.FailedArg1 = spellInfo->TotemCategory[0];
-            if (spellInfo->TotemCategory[1])
-                packet.FailedArg2 = spellInfo->TotemCategory[1];
+            if (spellInfo->Totems[0].RequiredTotemCategoryID)
+                packet.FailedArg1 = spellInfo->Totems[0].RequiredTotemCategoryID;
+            if (spellInfo->Totems[1].RequiredTotemCategoryID)
+                packet.FailedArg2 = spellInfo->Totems[1].RequiredTotemCategoryID;
             break;
         case SPELL_FAILED_EQUIPPED_ITEM_CLASS:
         case SPELL_FAILED_EQUIPPED_ITEM_CLASS_MAINHAND:
@@ -3831,7 +3826,7 @@ inline void FillSpellCastFailedArgs(T& packet, ObjectGuid castId, SpellInfo cons
         case SPELL_FAILED_TOO_MANY_OF_ITEM:
         {
             uint32 item = 0;
-            for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(caster->GetMap()->GetDifficultyID()))
+            for (SpellEffectInfo const* effect : spellInfo->GetEffects())
                 if (effect->ItemType)
                     item = effect->ItemType;
             ItemTemplate const* proto = sObjectMgr->GetItemTemplate(item);
@@ -3867,11 +3862,11 @@ inline void FillSpellCastFailedArgs(T& packet, ObjectGuid castId, SpellInfo cons
             uint32 missingItem = 0;
             for (uint32 i = 0; i < MAX_SPELL_REAGENTS; i++)
             {
-                if (spellInfo->Reagent[i] <= 0)
+                if (spellInfo->Reagents[i].Reagent <= 0)
                     continue;
 
-                uint32 itemid    = spellInfo->Reagent[i];
-                uint32 itemcount = spellInfo->ReagentCount[i];
+                uint32 itemid    = spellInfo->Reagents[i].Reagent;
+                uint32 itemcount = spellInfo->Reagents[i].ReagentCount;
 
                 if (!caster->HasItemCount(itemid, itemcount))
                 {
@@ -4078,13 +4073,13 @@ void Spell::SendSpellGo()
         castFlags |= CAST_FLAG_RUNE_LIST;                    // rune cooldowns list
     }
 
-    if (HasEffect(SPELL_EFFECT_ACTIVATE_RUNE))
+    if (m_spellInfo->HasEffect(SPELL_EFFECT_ACTIVATE_RUNE))
         castFlags |= CAST_FLAG_RUNE_LIST;                    // rune cooldowns list
 
     if (m_targets.HasTraj())
         castFlags |= CAST_FLAG_ADJUST_MISSILE;
 
-    if (!m_spellInfo->StartRecoveryTime)
+    if (!m_spellInfo->Cooldowns.StartRecoveryTime)
         castFlags |= CAST_FLAG_NO_GCD;
 
     WorldPackets::Spells::SpellGo packet;
@@ -4259,7 +4254,7 @@ void Spell::SendSpellExecuteLog()
     spellExecuteLog.Caster = m_caster->GetGUID();
     spellExecuteLog.SpellID = m_spellInfo->Id;
 
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (!effect)
             continue;
@@ -4663,11 +4658,11 @@ void Spell::TakeReagents()
 
     for (uint32 x = 0; x < MAX_SPELL_REAGENTS; ++x)
     {
-        if (m_spellInfo->Reagent[x] <= 0)
+        if (m_spellInfo->Reagents[x].Reagent <= 0)
             continue;
 
-        uint32 itemid = m_spellInfo->Reagent[x];
-        uint32 itemcount = m_spellInfo->ReagentCount[x];
+        uint32 itemid = m_spellInfo->Reagents[x].Reagent;
+        uint32 itemcount = m_spellInfo->Reagents[x].ReagentCount;
 
         // if CastItem is also spell reagent
         if (castItemTemplate && castItemTemplate->GetId() == itemid)
@@ -4755,7 +4750,7 @@ void Spell::HandleEffects(Unit* pUnitTarget, Item* pItemTarget, GameObject* pGOT
     gameObjTarget = pGOTarget;
     destTarget = &m_destTargets[i]._position;
 
-    effectInfo = GetEffect(i);
+    effectInfo = m_spellInfo->GetEffect(i);
     if (!effectInfo)
     {
         TC_LOG_ERROR("spells", "Spell: %u HandleEffects at EffectIndex: %u missing effect", m_spellInfo->Id, i);
@@ -4902,7 +4897,7 @@ SpellCastResult Spell::CheckCast(bool strict)
     if (m_caster->GetTypeId() == TYPEID_PLAYER && m_caster->ToPlayer()->isMoving() && (!m_caster->IsCharmed() || !m_caster->GetCharmerGUID().IsCreature()) && !m_caster->HasAuraTypeWithAffectMask(SPELL_AURA_CAST_WHILE_WALKING, m_spellInfo))
     {
         // skip stuck spell to allow use it in falling case and apply spell limitations at movement
-        SpellEffectInfo const* effect = GetEffect(EFFECT_0);
+        SpellEffectInfo const* effect = m_spellInfo->GetEffect(EFFECT_0);
         if ((!m_caster->HasUnitMovementFlag(MOVEMENTFLAG_FALLING_FAR) || (effect && effect->Effect != SPELL_EFFECT_STUCK)) &&
             (IsAutoRepeat() || (m_spellInfo->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_SEATED) != 0))
             return SPELL_FAILED_MOVING;
@@ -4999,7 +4994,7 @@ SpellCastResult Spell::CheckCast(bool strict)
     }
 
     // check pet presence
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (effect && effect->TargetA.GetTarget() == TARGET_UNIT_PET)
         {
@@ -5092,7 +5087,7 @@ SpellCastResult Spell::CheckCast(bool strict)
     if (castResult != SPELL_CAST_OK)
         return castResult;
 
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (!effect)
             continue;
@@ -5132,7 +5127,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (!pet)
                     return SPELL_FAILED_NO_PET;
 
-                SpellInfo const* learn_spellproto = sSpellMgr->GetSpellInfo(effect->TriggerSpell);
+                SpellInfo const* learn_spellproto = sSpellMgr->GetSpellInfo(effect->TriggerSpell, pet);
 
                 if (!learn_spellproto)
                     return SPELL_FAILED_NOT_KNOWN;
@@ -5163,7 +5158,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                     if (!pet || pet->GetOwner() != m_caster)
                         return SPELL_FAILED_BAD_TARGETS;
 
-                    SpellInfo const* learn_spellproto = sSpellMgr->GetSpellInfo(effect->TriggerSpell);
+                    SpellInfo const* learn_spellproto = sSpellMgr->GetSpellInfo(effect->TriggerSpell, pet);
 
                     if (!learn_spellproto)
                         return SPELL_FAILED_NOT_KNOWN;
@@ -5580,7 +5575,7 @@ SpellCastResult Spell::CheckCast(bool strict)
         }
     }
 
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (!effect)
             continue;
@@ -5639,7 +5634,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             }
             case SPELL_AURA_MOUNTED:
             {
-                if (m_caster->IsInWater() && m_spellInfo->HasAura(m_caster->GetMap()->GetDifficultyID(), SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED))
+                if (m_caster->IsInWater() && m_spellInfo->HasAura(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED))
                     return SPELL_FAILED_ONLY_ABOVEWATER;
 
                 // Ignore map check if spell have AreaId. AreaId already checked and this prevent special mount spells
@@ -5780,7 +5775,7 @@ SpellCastResult Spell::CheckCasterAuras() const
     // We use bitmasks so the loop is done only once and not on every aura check below.
     if (m_spellInfo->HasAttribute(SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY))
     {
-        for (SpellEffectInfo const* effect : GetEffects())
+        for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         {
             if (!effect)
                 continue;
@@ -5868,7 +5863,7 @@ SpellCastResult Spell::CheckCasterAuras() const
 
                 //Make a second check for spell failed so the right SPELL_FAILED message is returned.
                 //That is needed when your casting is prevented by multiple states and you are only immune to some of them.
-                for (SpellEffectInfo const* effect : GetEffects())
+                for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
                 {
                     if (!effect)
                         continue;
@@ -5954,7 +5949,7 @@ bool Spell::CanAutoCast(Unit* target)
     ObjectGuid targetguid = target->GetGUID();
 
     // check if target already has the same or a more powerful aura
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (!effect)
             continue;
@@ -6178,7 +6173,7 @@ SpellCastResult Spell::CheckItems()
         {
             // such items should only fail if there is no suitable effect at all - see Rejuvenation Potions for example
             SpellCastResult failReason = SPELL_CAST_OK;
-            for (SpellEffectInfo const* effect : GetEffects())
+            for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
             {
                 // skip check, pet not required like checks, and for TARGET_UNIT_PET m_targets.GetUnitTarget() is not the real target but the caster
                 if (!effect || effect->TargetA.GetTarget() == TARGET_UNIT_PET)
@@ -6257,11 +6252,11 @@ SpellCastResult Spell::CheckItems()
         {
             for (uint32 i = 0; i < MAX_SPELL_REAGENTS; i++)
             {
-                if (m_spellInfo->Reagent[i] <= 0)
+                if (m_spellInfo->Reagents[i].Reagent <= 0)
                     continue;
 
-                uint32 itemid    = m_spellInfo->Reagent[i];
-                uint32 itemcount = m_spellInfo->ReagentCount[i];
+                uint32 itemid    = m_spellInfo->Reagents[i].Reagent;
+                uint32 itemcount = m_spellInfo->Reagents[i].ReagentCount;
 
                 // if CastItem is also spell reagent
                 if (m_CastItem && m_CastItem->GetEntry() == itemid)
@@ -6289,9 +6284,9 @@ SpellCastResult Spell::CheckItems()
         uint32 totems = 2;
         for (uint8 i = 0; i < 2; ++i)
         {
-            if (m_spellInfo->Totem[i] != 0)
+            if (m_spellInfo->Totems[i].Totem != 0)
             {
-                if (player->HasItemCount(m_spellInfo->Totem[i]))
+                if (player->HasItemCount(m_spellInfo->Totems[i].Totem))
                 {
                     totems -= 1;
                     continue;
@@ -6308,9 +6303,9 @@ SpellCastResult Spell::CheckItems()
         uint32 totemCategory = 2;
         for (uint8 i = 0; i < 2; ++i)
         {
-            if (m_spellInfo->TotemCategory[i] != 0)
+            if (m_spellInfo->Totems[i].RequiredTotemCategoryID != 0)
             {
-                if (player->HasItemTotemCategory(m_spellInfo->TotemCategory[i]))
+                if (player->HasItemTotemCategory(m_spellInfo->Totems[i].RequiredTotemCategoryID))
                 {
                     totemCategory -= 1;
                     continue;
@@ -6325,7 +6320,7 @@ SpellCastResult Spell::CheckItems()
     }
 
     // special checks for spell effects
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (!effect)
             continue;
@@ -6354,7 +6349,7 @@ SpellCastResult Spell::CheckItems()
                                 return SPELL_FAILED_TOO_MANY_OF_ITEM;
                             else if (!(player->HasItemCount(effect->ItemType)))
                                 return SPELL_FAILED_TOO_MANY_OF_ITEM;
-                            else if (SpellEffectInfo const* efi = GetEffect(EFFECT_1))
+                            else if (SpellEffectInfo const* efi = m_spellInfo->GetEffect(EFFECT_1))
                                 player->CastSpell(m_caster, efi->CalcValue(), false);        // move this to anywhere
                             return SPELL_FAILED_DONT_REPORT;
                         }
@@ -6738,7 +6733,7 @@ bool Spell::UpdatePointers()
     WorldObject* transport = NULL;
 
     // update effect destinations (in case of moved transport dest target)
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (!effect)
             continue;
@@ -7047,7 +7042,7 @@ bool Spell::IsValidDeadOrAliveTarget(Unit const* target) const
 void Spell::HandleLaunchPhase()
 {
     // handle effects with SPELL_EFFECT_HANDLE_LAUNCH mode
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         // don't do anything for empty effect
         if (!effect || !effect->IsEffect())
@@ -7057,7 +7052,7 @@ void Spell::HandleLaunchPhase()
     }
 
     float multiplier[MAX_SPELL_EFFECTS];
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
         if (effect && (m_applyMultiplierMask & (1 << effect->EffectIndex)))
             multiplier[effect->EffectIndex] = effect->CalcDamageMultiplier(m_originalCaster, this);
 
@@ -7089,7 +7084,7 @@ void Spell::DoAllEffectOnLaunchTarget(TargetInfo& targetInfo, float* multiplier)
     if (!unit)
         return;
 
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (effect && (targetInfo.effectMask & (1<<effect->EffectIndex)))
         {
@@ -7144,7 +7139,7 @@ SpellCastResult Spell::CanOpenLock(uint32 effIndex, uint32 lockId, SkillType& sk
     if (!lockInfo)
         return SPELL_FAILED_BAD_TARGETS;
 
-    SpellEffectInfo const* effect = GetEffect(effIndex);
+    SpellEffectInfo const* effect = m_spellInfo->GetEffect(effIndex);
     if (!effect)
         return SPELL_FAILED_BAD_TARGETS; // no idea about correct error
 
@@ -7206,7 +7201,7 @@ void Spell::SetSpellValue(SpellValueMod mod, int32 value)
 {
     if (mod < SPELLVALUE_BASE_POINT_END)
     {
-        if (SpellEffectInfo const* effect = GetEffect(mod))
+        if (SpellEffectInfo const* effect = m_spellInfo->GetEffect(mod))
             m_spellValue->EffectBasePoints[mod] = effect->CalcBaseValue(value);
         return;
     }
@@ -7479,7 +7474,7 @@ bool Spell::CanExecuteTriggersOnHit(uint32 effMask, SpellInfo const* triggeredBy
 {
     bool only_on_caster = (triggeredByAura && (triggeredByAura->HasAttribute(SPELL_ATTR4_PROC_ONLY_ON_CASTER)));
     // If triggeredByAura has SPELL_ATTR4_PROC_ONLY_ON_CASTER then it can only proc on a cast spell with TARGET_UNIT_CASTER
-    for (SpellEffectInfo const* effect : GetEffects())
+    for (SpellEffectInfo const* effect : m_spellInfo->GetEffects())
     {
         if (effect && ((effMask & (1 << effect->EffectIndex)) && (!only_on_caster || (effect->TargetA.GetTarget() == TARGET_UNIT_CASTER))))
             return true;
@@ -7492,10 +7487,10 @@ void Spell::PrepareTriggersExecutedOnHit()
     /// @todo move this to scripts
     if (m_spellInfo->SpellFamilyName)
     {
-        SpellInfo const* excludeCasterSpellInfo = sSpellMgr->GetSpellInfo(m_spellInfo->ExcludeCasterAuraSpell);
+        SpellInfo const* excludeCasterSpellInfo = sSpellMgr->GetSpellInfo(m_spellInfo->ExcludeCasterAuraSpell, m_caster);
         if (excludeCasterSpellInfo && !excludeCasterSpellInfo->IsPositive())
             m_preCastSpell = m_spellInfo->ExcludeCasterAuraSpell;
-        SpellInfo const* excludeTargetSpellInfo = sSpellMgr->GetSpellInfo(m_spellInfo->ExcludeTargetAuraSpell);
+        SpellInfo const* excludeTargetSpellInfo = sSpellMgr->GetSpellInfo(m_spellInfo->ExcludeTargetAuraSpell, m_caster);
         if (excludeTargetSpellInfo && !excludeTargetSpellInfo->IsPositive())
             m_preCastSpell = m_spellInfo->ExcludeTargetAuraSpell;
     }
@@ -7522,10 +7517,9 @@ void Spell::PrepareTriggersExecutedOnHit()
             continue;
         SpellInfo const* auraSpellInfo = (*i)->GetSpellInfo();
         uint32 auraSpellIdx = (*i)->GetEffIndex();
-        // todo 6.x
-        if (SpellEffectInfo const* auraEffect = auraSpellInfo->GetEffect(m_caster->GetMap()->GetDifficultyID(), auraSpellIdx))
+        if (SpellEffectInfo const* auraEffect = auraSpellInfo->GetEffect(auraSpellIdx))
         {
-            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(auraEffect->TriggerSpell))
+            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(auraEffect->TriggerSpell, m_caster))
             {
                 // calculate the chance using spell base amount, because aura amount is not updated on combo-points change
                 // this possibly needs fixing
@@ -7561,7 +7555,7 @@ bool Spell::HasGlobalCooldown() const
 
 void Spell::TriggerGlobalCooldown()
 {
-    int32 gcd = m_spellInfo->StartRecoveryTime;
+    int32 gcd = m_spellInfo->Cooldowns.StartRecoveryTime;
     if (!gcd || !m_spellInfo->StartRecoveryCategory)
         return;
 
@@ -7576,7 +7570,7 @@ void Spell::TriggerGlobalCooldown()
     // Global cooldown can't leave range 1..1.5 secs
     // There are some spells (mostly not cast directly by player) that have < 1 sec and > 1.5 sec global cooldowns
     // but as tests show are not affected by any spell mods.
-    if (m_spellInfo->StartRecoveryTime >= MIN_GCD && m_spellInfo->StartRecoveryTime <= MAX_GCD)
+    if (m_spellInfo->Cooldowns.StartRecoveryTime >= MIN_GCD && m_spellInfo->Cooldowns.StartRecoveryTime <= MAX_GCD)
     {
         // gcd modifier auras are applied only to own spells and only players have such mods
         if (Player* modOwner = m_caster->GetSpellModOwner())
@@ -7606,7 +7600,7 @@ void Spell::TriggerGlobalCooldown()
 
 void Spell::CancelGlobalCooldown()
 {
-    if (!m_spellInfo->StartRecoveryTime)
+    if (!m_spellInfo->Cooldowns.StartRecoveryTime)
         return;
 
     // Cancel global cooldown when interrupting current cast
@@ -7618,16 +7612,6 @@ void Spell::CancelGlobalCooldown()
         return;
 
     m_caster->GetSpellHistory()->CancelGlobalCooldown(m_spellInfo);
-}
-
-bool Spell::HasEffect(SpellEffectName effect) const
-{
-    for (SpellEffectInfo const* eff : GetEffects())
-    {
-        if (eff && eff->IsEffect(effect))
-            return true;
-    }
-    return false;
 }
 
 namespace Trinity

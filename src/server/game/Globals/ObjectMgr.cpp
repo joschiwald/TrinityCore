@@ -589,7 +589,7 @@ void ObjectMgr::LoadCreatureTemplateAddons()
                 continue;
             }
 
-            if (AdditionalSpellInfo->HasAura(DIFFICULTY_NONE, SPELL_AURA_CONTROL_VEHICLE))
+            if (AdditionalSpellInfo->HasAura(SPELL_AURA_CONTROL_VEHICLE))
                 TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) has SPELL_AURA_CONTROL_VEHICLE aura %u defined in `auras` field in `creature_template_addon`.", entry, spellId);
 
             if (std::find(creatureAddon.auras.begin(), creatureAddon.auras.end(), spellId) != creatureAddon.auras.end())
@@ -1142,7 +1142,7 @@ void ObjectMgr::LoadCreatureAddons()
                 continue;
             }
 
-            if (AdditionalSpellInfo->HasAura(DIFFICULTY_NONE, SPELL_AURA_CONTROL_VEHICLE))
+            if (AdditionalSpellInfo->HasAura(SPELL_AURA_CONTROL_VEHICLE))
                 TC_LOG_ERROR("sql.sql", "Creature (GUID: " UI64FMTD ") has SPELL_AURA_CONTROL_VEHICLE aura %u defined in `auras` field in `creature_addon`.", guid, spellId);
 
             if (std::find(creatureAddon.auras.begin(), creatureAddon.auras.end(), spellId) != creatureAddon.auras.end())
@@ -5247,7 +5247,7 @@ void ObjectMgr::LoadEventScripts()
     // Load all possible script entries from spells
     for (uint32 i = 1; i < sSpellMgr->GetSpellInfoStoreSize(); ++i)
         if (SpellInfo const* spell = sSpellMgr->GetSpellInfo(i))
-            for (SpellEffectInfo const* effect : spell->GetEffectsForDifficulty(DIFFICULTY_NONE))
+            for (SpellEffectInfo const* effect : spell->GetEffects())
                 if (effect && effect->Effect == SPELL_EFFECT_SEND_EVENT)
                     if (effect->MiscValue)
                         evt_scripts.insert(effect->MiscValue);

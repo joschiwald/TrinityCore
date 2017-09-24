@@ -639,7 +639,7 @@ void Spell::EffectTriggerSpell(SpellEffIndex /*effIndex*/)
             case 29284:
             {
                 // Brittle Armor
-                SpellInfo const* spell = sSpellMgr->GetSpellInfo(24575);
+                SpellInfo const* spell = sSpellMgr->GetSpellInfo(24575, m_caster);
                 if (!spell)
                     return;
 
@@ -651,7 +651,7 @@ void Spell::EffectTriggerSpell(SpellEffIndex /*effIndex*/)
             case 29286:
             {
                 // Mercurial Shield
-                SpellInfo const* spell = sSpellMgr->GetSpellInfo(26464);
+                SpellInfo const* spell = sSpellMgr->GetSpellInfo(26464, m_caster);
                 if (!spell)
                     return;
 
@@ -684,7 +684,7 @@ void Spell::EffectTriggerSpell(SpellEffIndex /*effIndex*/)
     }
 
     // normal case
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id, m_caster);
     if (!spellInfo)
     {
         TC_LOG_ERROR("spells.effecttriggerspell", "Spell::EffectTriggerSpell spell %u tried to trigger unknown spell %u", m_spellInfo->Id, triggered_spell_id);
@@ -694,13 +694,13 @@ void Spell::EffectTriggerSpell(SpellEffIndex /*effIndex*/)
     SpellCastTargets targets;
     if (effectHandleMode == SPELL_EFFECT_HANDLE_LAUNCH_TARGET)
     {
-        if (!spellInfo->NeedsToBeTriggeredByCaster(m_spellInfo, m_caster->GetMap()->GetDifficultyID()))
+        if (!spellInfo->NeedsToBeTriggeredByCaster(m_spellInfo))
             return;
         targets.SetUnitTarget(unitTarget);
     }
     else //if (effectHandleMode == SPELL_EFFECT_HANDLE_LAUNCH)
     {
-        if (spellInfo->NeedsToBeTriggeredByCaster(m_spellInfo, m_caster->GetMap()->GetDifficultyID()) && (effectInfo->GetProvidedTargetMask() & TARGET_FLAG_UNIT_MASK))
+        if (spellInfo->NeedsToBeTriggeredByCaster(m_spellInfo) && (effectInfo->GetProvidedTargetMask() & TARGET_FLAG_UNIT_MASK))
             return;
 
         if (spellInfo->GetExplicitTargetMask() & TARGET_FLAG_DEST_LOCATION)
@@ -734,7 +734,7 @@ void Spell::EffectTriggerMissileSpell(SpellEffIndex /*effIndex*/)
     uint32 triggered_spell_id = effectInfo->TriggerSpell;
 
     // normal case
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id, m_caster);
     if (!spellInfo)
     {
         TC_LOG_ERROR("spells.effecttrigermissilespell", "Spell::EffectTriggerMissileSpell spell %u tried to trigger unknown spell %u.", m_spellInfo->Id, triggered_spell_id);
@@ -744,13 +744,13 @@ void Spell::EffectTriggerMissileSpell(SpellEffIndex /*effIndex*/)
     SpellCastTargets targets;
     if (effectHandleMode == SPELL_EFFECT_HANDLE_HIT_TARGET)
     {
-        if (!spellInfo->NeedsToBeTriggeredByCaster(m_spellInfo, m_caster->GetMap()->GetDifficultyID()))
+        if (!spellInfo->NeedsToBeTriggeredByCaster(m_spellInfo))
             return;
         targets.SetUnitTarget(unitTarget);
     }
     else //if (effectHandleMode == SPELL_EFFECT_HANDLE_HIT)
     {
-        if (spellInfo->NeedsToBeTriggeredByCaster(m_spellInfo, m_caster->GetMap()->GetDifficultyID()) && (effectInfo->GetProvidedTargetMask() & TARGET_FLAG_UNIT_MASK))
+        if (spellInfo->NeedsToBeTriggeredByCaster(m_spellInfo) && (effectInfo->GetProvidedTargetMask() & TARGET_FLAG_UNIT_MASK))
             return;
 
         if (spellInfo->GetExplicitTargetMask() & TARGET_FLAG_DEST_LOCATION)
@@ -784,7 +784,7 @@ void Spell::EffectForceCast(SpellEffIndex /*effIndex*/)
     uint32 triggered_spell_id = effectInfo->TriggerSpell;
 
     // normal case
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id, unitTarget);
 
     if (!spellInfo)
     {
@@ -836,7 +836,7 @@ void Spell::EffectTriggerRitualOfSummoning(SpellEffIndex /*effIndex*/)
         return;
 
     uint32 triggered_spell_id = effectInfo->TriggerSpell;
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id, m_caster);
 
     if (!spellInfo)
     {
@@ -1614,7 +1614,7 @@ void Spell::EffectEnergize(SpellEffIndex /*effIndex*/)
             sSpellMgr->GetSetOfSpellsInSpellGroup(SPELL_GROUP_ELIXIR_BATTLE, avalibleElixirs);
         for (std::set<uint32>::iterator itr = avalibleElixirs.begin(); itr != avalibleElixirs.end();)
         {
-            SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(*itr);
+            SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(*itr, m_caster);
             if (spellInfo->SpellLevel < m_spellInfo->SpellLevel || spellInfo->SpellLevel > unitTarget->getLevel())
                 avalibleElixirs.erase(itr++);
             else if (sSpellMgr->IsSpellMemberOfSpellGroup(*itr, SPELL_GROUP_ELIXIR_SHATTRATH))

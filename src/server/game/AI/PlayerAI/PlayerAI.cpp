@@ -498,7 +498,7 @@ PlayerAI::TargetedSpell PlayerAI::VerifySpellCast(uint32 spellId, Unit* target)
     if (!knownRank)
         return {};
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(knownRank);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(knownRank, me);
     if (!spellInfo)
         return {};
 

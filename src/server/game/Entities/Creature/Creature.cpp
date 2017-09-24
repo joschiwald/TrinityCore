@@ -2804,7 +2804,7 @@ void Creature::FocusTarget(Spell const* focusSpell, WorldObject const* target)
         return;
 
     // don't use spell focus for vehicle spells
-    if (focusSpell->GetSpellInfo()->HasAura(DIFFICULTY_NONE, SPELL_AURA_CONTROL_VEHICLE))
+    if (focusSpell->GetSpellInfo()->HasAura(SPELL_AURA_CONTROL_VEHICLE))
         return;
 
     if ((!target || target == this) && !focusSpell->GetCastTime()) // instant cast, untargeted (or self-targeted) spell doesn't need any facing updates

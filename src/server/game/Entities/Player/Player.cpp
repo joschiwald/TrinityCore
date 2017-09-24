@@ -7655,7 +7655,7 @@ void Player::ApplyItemEquipSpell(Item* item, bool apply, bool formChange /*= fal
         if (!spellproto)
             continue;
 
-        if (spellproto->HasAura(GetMap()->GetDifficultyID(), SPELL_AURA_MOD_XP_PCT)
+        if (spellproto->HasAura(SPELL_AURA_MOD_XP_PCT)
             && !GetSession()->GetCollectionMgr()->CanApplyHeirloomXpBonus(item->GetEntry(), getLevel())
             && sDB2Manager.GetHeirloomByItemId(item->GetEntry()))
             continue;
@@ -15290,7 +15290,7 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
             if (quest->RewardDisplaySpell[i] > 0)
             {
                 SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(quest->RewardDisplaySpell[i]);
-                if (questGiver->isType(TYPEMASK_UNIT) && !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_LEARN_SPELL) && !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_CREATE_ITEM))
+                if (questGiver->isType(TYPEMASK_UNIT) && !spellInfo->HasEffect(SPELL_EFFECT_LEARN_SPELL) && !spellInfo->HasEffect(SPELL_EFFECT_CREATE_ITEM))
                 {
                     if (Unit* unit = questGiver->ToUnit())
                         unit->CastSpell(this, quest->RewardDisplaySpell[i], true);
@@ -23945,7 +23945,7 @@ void Player::LearnSkillRewardedSpells(uint32 skillId, uint32 skillValue)
         if (!ability || ability->SkillLine != skillId)
             continue;
 
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability->SpellID);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(ability->SpellID, this);
         if (!spellInfo)
             continue;
 

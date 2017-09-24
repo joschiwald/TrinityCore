@@ -62,7 +62,7 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellInfo const* spellproto)
     if (spellproto->IsPositive())
         return DIMINISHING_NONE;
 
-    if (spellproto->HasAura(DIFFICULTY_NONE, SPELL_AURA_MOD_TAUNT))
+    if (spellproto->HasAura(SPELL_AURA_MOD_TAUNT))
         return DIMINISHING_TAUNT;
 
     switch (spellproto->Id)
@@ -3712,7 +3712,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     // Tree of Life (Passive)
     ApplySpellFix({ 5420 }, [](SpellInfo* spellInfo)
     {
-        spellInfo->Stances = UI64LIT(1) << (FORM_TREE_OF_LIFE - 1);
+        spellInfo->Shapeshift.ShapeshiftMask = UI64LIT(1) << (FORM_TREE_OF_LIFE - 1);
     });
 
     // Feral Charge (Cat Form)
@@ -3784,7 +3784,7 @@ void SpellMgr::LoadSpellInfoCorrections()
         if (!spellInfo)
             continue;
 
-        for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
+        for (SpellEffectInfo const* effect : spellInfo->GetEffects())
         {
             if (!effect)
                 continue;

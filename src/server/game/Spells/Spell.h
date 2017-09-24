@@ -294,7 +294,7 @@ class TC_GAME_API SpellCastTargets
 
 struct SpellValue
 {
-    explicit  SpellValue(Difficulty diff, SpellInfo const* proto);
+    explicit  SpellValue(SpellInfo const* proto);
     int32     EffectBasePoints[MAX_SPELL_EFFECTS];
     uint32    MaxAffectedTargets;
     float     RadiusMod;
@@ -665,17 +665,6 @@ class TC_GAME_API Spell
 
         void SetSpellValue(SpellValueMod mod, int32 value);
 
-        std::vector<SpellEffectInfo const*> const& GetEffects() const { return _effects; }
-        SpellEffectInfo const* GetEffect(uint32 index) const
-        {
-            if (index >= _effects.size())
-                return nullptr;
-
-            return _effects[index];
-        }
-
-        bool HasEffect(SpellEffectName effect) const;
-
         Spell** m_selfContainer;                            // pointer to our spell container (if applicable)
 
         SpellInfo const* GetTriggeredByAuraSpell() const { return m_triggeredByAuraSpell; }
@@ -884,8 +873,6 @@ class TC_GAME_API Spell
 
         Spell(Spell const& right) = delete;
         Spell& operator=(Spell const& right) = delete;
-
-        std::vector<SpellEffectInfo const*> _effects;
 };
 
 namespace Trinity
