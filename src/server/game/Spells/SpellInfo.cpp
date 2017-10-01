@@ -397,7 +397,6 @@ SpellEffectInfo::SpellEffectInfo(SpellEffectScalingEntry const* spellEffectScali
     TriggerSpell                = effect->EffectTriggerSpell;
     SpellClassMask              = effect->EffectSpellClassMask;
     BonusCoefficientFromAP      = effect->BonusCoefficientFromAP;
-    ImplicitTargetConditions    = nullptr;
 
     Scaling.Coefficient         = spellEffectScaling ? spellEffectScaling->Coefficient : 0.0f;
     Scaling.Variance            = spellEffectScaling ? spellEffectScaling->Variance : 0.0f;
@@ -986,9 +985,10 @@ SpellEffectInfo::StaticData SpellEffectInfo::_data[TOTAL_SPELL_EFFECTS] =
     {EFFECT_IMPLICIT_TARGET_EXPLICIT, TARGET_OBJECT_TYPE_UNIT}, // 255 SPELL_EFFECT_LEARN_TRANSMOG_SET
 };
 
-SpellInfo::SpellInfo(SpellInfoLoadHelper&& data, std::unordered_map<uint32, SpellEffectScalingEntry const*> const& effectScaling)
+SpellInfo::SpellInfo(uint32 difficulty, SpellInfoLoadHelper&& data, std::unordered_map<uint32, SpellEffectScalingEntry const*> const& effectScaling)
 {
     Id = data.Entry->ID;
+    DifficultyId = Difficulty(difficulty);
     SpellName = data.Entry->Name;
 
     // SpellEffectEntry
@@ -1528,7 +1528,7 @@ bool SpellInfo::IsAffectedBySpellMod(SpellModifier const* mod) const
     if (!IsAffectedBySpellMods())
         return false;
 
-    SpellInfo const* affectSpell = sSpellMgr->GetSpellInfo(mod->spellId);
+    SpellInfo const* affectSpell = sSpellMgr->GetSpellInfo(mod->spellId, DIFFICULTY_NONE);
     // False if affect_spell == NULL or spellFamily not equal
     if (!affectSpell || affectSpell->SpellFamilyName != SpellFamilyName)
         return false;
@@ -2325,7 +2325,7 @@ void SpellInfo::_LoadSpellSpecific()
                 // Arcane brillance and Arcane intelect (normal check fails because of flags difference)
                 if (SpellFamilyFlags[0] & 0x400)
                     return SPELL_SPECIFIC_MAGE_ARCANE_BRILLANCE;
-                SpellEffectInfo const* effect = GetEffect(DIFFICULTY_NONE, EFFECT_0);
+                SpellEffectInfo const* effect = GetEffect(EFFECT_0);
                 if (effect && (SpellFamilyFlags[0] & 0x1000000) && effect->ApplyAuraName == SPELL_AURA_MOD_CONFUSE)
                     return SPELL_SPECIFIC_MAGE_POLYMORPH;
 
@@ -3145,7 +3145,7 @@ bool SpellInfo::_IsPositiveEffect(uint32 effIndex, bool deep) const
                 case SPELL_AURA_PERIODIC_TRIGGER_SPELL:
                     if (!deep)
                     {
-                        if (SpellInfo const* spellTriggeredProto = sSpellMgr->GetSpellInfo(effect->TriggerSpell))
+                        if (SpellInfo const* spellTriggeredProto = sSpellMgr->GetSpellInfo(effect->TriggerSpell, DifficultyId))
                         {
                             // negative targets of main spell return early
                             for (SpellEffectInfo const* eff : spellTriggeredProto->GetEffects())
@@ -3267,9 +3267,9 @@ bool SpellInfo::_IsPositiveEffect(uint32 effIndex, bool deep) const
         // negative spell if triggered spell is negative
         if (!deep && !effect->ApplyAuraName && effect->TriggerSpell)
         {
-            if (SpellInfo const* spellTriggeredProto = sSpellMgr->GetSpellInfo(effect->TriggerSpell))
-            if (!spellTriggeredProto->_IsPositiveSpell())
-                return false;
+            if (SpellInfo const* spellTriggeredProto = sSpellMgr->GetSpellInfo(effect->TriggerSpell, DifficultyId))
+                if (!spellTriggeredProto->_IsPositiveSpell())
+                    return false;
         }
     }
 
@@ -3311,27 +3311,11 @@ bool SpellInfo::_IsPositiveTarget(uint32 targetA, uint32 targetB)
 
 void SpellInfo::_UnloadImplicitTargetConditionLists()
 {
-    // find the same instances of ConditionList and delete them.
-    for (auto itr = _effects.begin(); itr != _effects.end(); ++itr)
+    // clear ConditionList, delete is managed by smart pointers
+    for (SpellEffectInfo const* effect : _effects)
     {
-        for (uint32 i = 0; i < itr->second.size(); ++i)
-        {
-            if (SpellEffectInfo const* effect = itr->second[i])
-            {
-                ConditionContainer* cur = effect->ImplicitTargetConditions;
-                if (!cur)
-                    continue;
-                for (uint8 j = i; j < itr->second.size(); ++j)
-                {
-                    if (SpellEffectInfo const* eff = itr->second[j])
-                    {
-                        if (eff->ImplicitTargetConditions == cur)
-                            const_cast<SpellEffectInfo*>(eff)->ImplicitTargetConditions = NULL;
-                    }
-                }
-                delete cur;
-            }
-        }
+        if (effect)
+            const_cast<SpellEffectInfo*>(effect)->ImplicitTargetConditions.reset();
     }
 }
 

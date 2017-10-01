@@ -39,7 +39,7 @@ bool _SpellScript::_ValidateSpellInfo(uint32 const* begin, uint32 const* end)
     bool allValid = true;
     while (begin != end)
     {
-        if (!sSpellMgr->GetSpellInfo(*begin))
+        if (!sSpellMgr->HasSpellInfo(*begin))
         {
             TC_LOG_ERROR("scripts.spells", "_SpellScript::ValidateSpellInfo: Spell %u does not exist.", *begin);
             allValid = false;
@@ -692,7 +692,7 @@ SpellValue const* SpellScript::GetSpellValue() const
 
 SpellEffectInfo const* SpellScript::GetEffectInfo(SpellEffIndex effIndex) const
 {
-    return m_spell->GetEffect(effIndex);
+    return GetSpellInfo()->GetEffect(effIndex);
 }
 
 bool AuraScript::_Validate(SpellInfo const* entry)

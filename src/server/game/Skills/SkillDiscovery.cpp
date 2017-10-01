@@ -85,7 +85,7 @@ void LoadSkillDiscoveryTable()
         if (reqSkillOrSpell > 0)                            // spell case
         {
             uint32 absReqSkillOrSpell = uint32(reqSkillOrSpell);
-            SpellInfo const* reqSpellInfo = sSpellMgr->GetSpellInfo(absReqSkillOrSpell);
+            SpellInfo const* reqSpellInfo = sSpellMgr->GetSpellInfo(absReqSkillOrSpell, DIFFICULTY_NONE);
             if (!reqSpellInfo)
             {
                 if (reportedReqSpells.find(absReqSkillOrSpell) == reportedReqSpells.end())
@@ -142,7 +142,7 @@ void LoadSkillDiscoveryTable()
     // report about empty data for explicit discovery spells
     for (uint32 spell_id = 1; spell_id < sSpellMgr->GetSpellInfoStoreSize(); ++spell_id)
     {
-        SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(spell_id);
+        SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(spell_id, DIFFICULTY_NONE);
         if (!spellEntry)
             continue;
 

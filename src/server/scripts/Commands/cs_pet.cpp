@@ -149,7 +149,7 @@ public:
 
         uint32 spellId = handler->extractSpellIdFromLink((char*)args);
 
-        if (!spellId || !sSpellMgr->GetSpellInfo(spellId))
+        if (!spellId || !sSpellMgr->HasSpellInfo(spellId))
             return false;
 
         // Check if pet already has it
@@ -161,7 +161,7 @@ public:
         }
 
         // Check if spell is valid
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
         if (!spellInfo || !SpellMgr::IsSpellValid(spellInfo))
         {
             handler->PSendSysMessage(LANG_COMMAND_SPELL_BROKEN, spellId);

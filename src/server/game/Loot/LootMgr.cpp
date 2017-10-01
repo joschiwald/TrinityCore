@@ -1094,7 +1094,7 @@ void LoadLootTemplates_Spell()
     // remove real entries and check existence loot
     for (uint32 spell_id = 1; spell_id < sSpellMgr->GetSpellInfoStoreSize(); ++spell_id)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell_id);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell_id, DIFFICULTY_NONE);
         if (!spellInfo)
             continue;
 

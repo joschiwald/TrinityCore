@@ -1247,8 +1247,15 @@ void ConditionMgr::LoadConditions(bool isReload)
                     continue;   // do not add to m_AllocatedMemory to avoid double deleting
                 }
                 case CONDITION_SOURCE_TYPE_SPELL_IMPLICIT_TARGET:
+                {
                     valid = addToSpellImplicitTargetConditions(cond);
+                    if (valid)
+                    {
+                        ++count;
+                        continue;   // do not add to m_AllocatedMemory to avoid double deleting
+                    }
                     break;
+                }
                 case CONDITION_SOURCE_TYPE_VEHICLE_SPELL:
                 {
                     VehicleSpellConditionStore[cond->SourceGroup][cond->SourceEntry].push_back(cond);
@@ -1363,7 +1370,7 @@ bool ConditionMgr::addToSpellImplicitTargetConditions(Condition* cond) const
     std::list<uint32> sharedMasks;
     for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
     {
-        SpellEffectInfo const* effect = spellInfo->GetEffect(DIFFICULTY_NONE, i);
+        SpellEffectInfo const* effect = spellInfo->GetEffect(i);
         if (!effect)
             continue;
 
@@ -1383,10 +1390,10 @@ bool ConditionMgr::addToSpellImplicitTargetConditions(Condition* cond) const
 
         // build new shared mask with found effect
         uint32 sharedMask = 1 << i;
-        ConditionContainer* cmp = effect->ImplicitTargetConditions;
+        std::shared_ptr<ConditionContainer> cmp = effect->ImplicitTargetConditions;
         for (uint8 effIndex = i + 1; effIndex < MAX_SPELL_EFFECTS; ++effIndex)
         {
-            SpellEffectInfo const* inner = spellInfo->GetEffect(DIFFICULTY_NONE, effIndex);
+            SpellEffectInfo const* inner = spellInfo->GetEffect(effIndex);
             if (!inner)
                 continue;
 
@@ -1404,18 +1411,18 @@ bool ConditionMgr::addToSpellImplicitTargetConditions(Condition* cond) const
         {
             uint8 firstEffIndex = 0;
             for (; firstEffIndex < MAX_SPELL_EFFECTS; ++firstEffIndex)
-                if ((1<<firstEffIndex) & *itr)
+                if ((1 << firstEffIndex) & *itr)
                     break;
 
             if (firstEffIndex >= MAX_SPELL_EFFECTS)
                 return false;
 
-            SpellEffectInfo const* effect = spellInfo->GetEffect(DIFFICULTY_NONE, firstEffIndex);
+            SpellEffectInfo const* effect = spellInfo->GetEffect(firstEffIndex);
             if (!effect)
                 continue;
 
             // get shared data
-            ConditionContainer* sharedList = effect->ImplicitTargetConditions;
+            std::shared_ptr<ConditionContainer> sharedList = effect->ImplicitTargetConditions;
 
             // there's already data entry for that sharedMask
             if (sharedList)
@@ -1432,27 +1439,24 @@ bool ConditionMgr::addToSpellImplicitTargetConditions(Condition* cond) const
             else
             {
                 // add new list, create new shared mask
-                sharedList = new ConditionContainer();
-                bool assigned = false;
+                sharedList = std::shared_ptr<ConditionContainer>(new ConditionContainer(), [](ConditionContainer* container)
+                {
+                    for (Condition* c : *container)
+                        delete c;
+                    delete container;
+                });
+
                 for (uint8 i = firstEffIndex; i < MAX_SPELL_EFFECTS; ++i)
                 {
-                    SpellEffectInfo const* eff = spellInfo->GetEffect(DIFFICULTY_NONE, i);
+                    SpellEffectInfo const* eff = spellInfo->GetEffect(i);
                     if (!eff)
                         continue;
 
                     if ((1 << i) & commonMask)
-                    {
                         const_cast<SpellEffectInfo*>(eff)->ImplicitTargetConditions = sharedList;
-                        assigned = true;
-                    }
-                }
-
-                if (!assigned)
-                {
-                    delete sharedList;
-                    break;
                 }
             }
+
             sharedList->push_back(cond);
             break;
         }
@@ -1713,7 +1717,7 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond) const
         }
         case CONDITION_SOURCE_TYPE_SPELL_IMPLICIT_TARGET:
         {
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(cond->SourceEntry);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(cond->SourceEntry, DIFFICULTY_NONE);
             if (!spellInfo)
             {
                 TC_LOG_ERROR("sql.sql", "%s SourceEntry in `condition` table does not exist in `spell.dbc`, ignoring.", cond->ToString().c_str());
@@ -1733,7 +1737,7 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond) const
                 if (!((1 << i) & cond->SourceGroup))
                     continue;
 
-                SpellEffectInfo const* effect = spellInfo->GetEffect(DIFFICULTY_NONE, i);
+                SpellEffectInfo const* effect = spellInfo->GetEffect(i);
                 if (!effect)
                     continue;
 
@@ -1780,8 +1784,7 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond) const
         case CONDITION_SOURCE_TYPE_SPELL:
         case CONDITION_SOURCE_TYPE_SPELL_PROC:
         {
-            SpellInfo const* spellProto = sSpellMgr->GetSpellInfo(cond->SourceEntry);
-            if (!spellProto)
+            if (!sSpellMgr->HasSpellInfo(cond->SourceEntry))
             {
                 TC_LOG_ERROR("sql.sql", "%s SourceEntry in `condition` table does not exist in `spell.dbc`, ignoring.", cond->ToString().c_str());
                 return false;
@@ -1802,7 +1805,7 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond) const
                 return false;
             }
 
-            if (!sSpellMgr->GetSpellInfo(cond->SourceEntry))
+            if (!sSpellMgr->HasSpellInfo(cond->SourceEntry))
             {
                 TC_LOG_ERROR("sql.sql", "%s SourceEntry in `condition` table does not exist in `spell.dbc`, ignoring.", cond->ToString().c_str());
                 return false;
@@ -1815,7 +1818,7 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond) const
                 return false;
             }
 
-            if (!sSpellMgr->GetSpellInfo(cond->SourceEntry))
+            if (!sSpellMgr->HasSpellInfo(cond->SourceEntry))
             {
                 TC_LOG_ERROR("sql.sql", "%s SourceEntry in `condition` table does not exist in `spell.dbc`, ignoring.", cond->ToString().c_str());
                 return false;
@@ -1883,7 +1886,7 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond) const
     {
         case CONDITION_AURA:
         {
-            if (!sSpellMgr->GetSpellInfo(cond->ConditionValue1))
+            if (!sSpellMgr->HasSpellInfo(cond->ConditionValue1))
             {
                 TC_LOG_ERROR("sql.sql", "%s has non existing spell (Id: %d), skipped.", cond->ToString(true).c_str(), cond->ConditionValue1);
                 return false;
@@ -2052,7 +2055,7 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond) const
         }
         case CONDITION_SPELL:
         {
-            if (!sSpellMgr->GetSpellInfo(cond->ConditionValue1))
+            if (!sSpellMgr->HasSpellInfo(cond->ConditionValue1))
             {
                 TC_LOG_ERROR("sql.sql", "%s has non existing spell (Id: %d), skipped", cond->ToString(true).c_str(), cond->ConditionValue1);
                 return false;

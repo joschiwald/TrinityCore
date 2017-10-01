@@ -31,10 +31,10 @@ class Spell;
 class SpellInfo;
 class WorldObject;
 class AuraEffect;
+struct Condition;
 struct SpellChainNode;
 struct SpellModifier;
 struct SpellTargetPosition;
-struct Condition;
 
 enum SpellCastTargetFlags : uint32
 {
@@ -258,7 +258,8 @@ public:
     uint32    TriggerSpell;
     flag128   SpellClassMask;
     float     BonusCoefficientFromAP;
-    std::vector<Condition*>* ImplicitTargetConditions;
+    std::shared_ptr<std::vector<Condition*>> ImplicitTargetConditions;
+
     // SpellEffectScalingEntry
     struct ScalingInfo
     {
@@ -323,6 +324,7 @@ class TC_GAME_API SpellInfo
 {
 public:
     uint32 Id;
+    Difficulty DifficultyId;
     LocalizedString const* SpellName;
 
     // SpellMiscEntry
@@ -491,7 +493,7 @@ public:
     uint32 ExplicitTargetMask;
     SpellChainNode const* ChainEntry;
 
-    SpellInfo(SpellInfoLoadHelper&& data, std::unordered_map<uint32, SpellEffectScalingEntry const*> const& effectScaling);
+    SpellInfo(uint32 difficulty, SpellInfoLoadHelper&& data, std::unordered_map<uint32, SpellEffectScalingEntry const*> const& effectScaling);
     ~SpellInfo();
 
     uint32 GetCategory() const;

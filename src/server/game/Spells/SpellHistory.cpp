@@ -44,7 +44,7 @@ struct SpellHistory::PersistenceHelper<Player>
     static bool ReadCooldown(Field* fields, uint32* spellId, CooldownEntry* cooldownEntry)
     {
         *spellId = fields[0].GetUInt32();
-        if (!sSpellMgr->GetSpellInfo(*spellId))
+        if (!sSpellMgr->HasSpellInfo(*spellId))
             return false;
 
         cooldownEntry->SpellId = *spellId;
@@ -96,7 +96,7 @@ struct SpellHistory::PersistenceHelper<Pet>
     static bool ReadCooldown(Field* fields, uint32* spellId, CooldownEntry* cooldownEntry)
     {
         *spellId = fields[0].GetUInt32();
-        if (!sSpellMgr->GetSpellInfo(*spellId))
+        if (!sSpellMgr->HasSpellInfo(*spellId))
             return false;
 
         cooldownEntry->SpellId = *spellId;

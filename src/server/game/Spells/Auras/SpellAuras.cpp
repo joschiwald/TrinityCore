@@ -19,7 +19,6 @@
 #include "Common.h"
 #include "CellImpl.h"
 #include "Config.h"
-#include "DB2Stores.h"
 #include "DynamicObject.h"
 #include "GridNotifiersImpl.h"
 #include "Item.h"
@@ -351,7 +350,7 @@ m_isRemoved(false), m_isSingleTarget(false), m_isUsingCharges(false), m_dropEven
 m_procCooldown(std::chrono::steady_clock::time_point::min()),
 m_lastProcAttemptTime(std::chrono::steady_clock::now() - Seconds(10)), m_lastProcSuccessTime(std::chrono::steady_clock::now() - Seconds(120))
 {
-    std::vector<SpellPowerEntry const*> powers = sDB2Manager.GetSpellPowers(GetId(), caster ? caster->GetMap()->GetDifficultyID() : DIFFICULTY_NONE);
+    SpellPowerEntryVector const& powers = m_spellInfo->PowerCosts;
     for (SpellPowerEntry const* power : powers)
         if (power->ManaCostPerSecond != 0 || power->ManaCostPercentagePerSecond > 0.0f)
             m_periodicCosts.push_back(power);

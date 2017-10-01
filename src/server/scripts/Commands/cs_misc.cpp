@@ -333,7 +333,7 @@ public:
         // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
         uint32 spellId = handler->extractSpellIdFromLink((char*)args);
 
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, target))
         {
             ObjectGuid castId = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, target->GetMapId(), spellId, target->GetMap()->GenerateLowGuid<HighGuid::Cast>());
             Aura::TryRefreshStackOrCreate(spellInfo, castId, MAX_EFFECT_MASK, target, target);
@@ -800,11 +800,11 @@ public:
         else
         {
             // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
-            uint32 spellIid = handler->extractSpellIdFromLink((char*)args);
-            if (!spellIid)
+            uint32 spellId = handler->extractSpellIdFromLink((char*)args);
+            if (!spellId)
                 return false;
 
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellIid);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, target);
             if (!spellInfo)
             {
                 handler->PSendSysMessage(LANG_UNKNOWN_SPELL, owner == handler->GetSession()->GetPlayer() ? handler->GetTrinityString(LANG_YOU) : nameLink.c_str());
@@ -812,9 +812,9 @@ public:
                 return false;
             }
 
-            target->GetSpellHistory()->ResetCooldown(spellIid, true);
+            target->GetSpellHistory()->ResetCooldown(spellId, true);
             target->GetSpellHistory()->ResetCharges(spellInfo->ChargeCategoryId);
-            handler->PSendSysMessage(LANG_REMOVE_COOLDOWN, spellIid, owner == handler->GetSession()->GetPlayer() ? handler->GetTrinityString(LANG_YOU) : nameLink.c_str());
+            handler->PSendSysMessage(LANG_REMOVE_COOLDOWN, spellId, owner == handler->GetSession()->GetPlayer() ? handler->GetTrinityString(LANG_YOU) : nameLink.c_str());
         }
         return true;
     }
@@ -1026,12 +1026,12 @@ public:
 
         if (player->IsInFlight() || player->IsInCombat())
         {
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SPELL_UNSTUCK_ID);
-            if (!spellInfo)
-                return false;
-
             if (Player* caster = handler->GetSession()->GetPlayer())
             {
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SPELL_UNSTUCK_ID, caster);
+                if (!spellInfo)
+                    return false;
+
                 ObjectGuid castId = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, player->GetMapId(), SPELL_UNSTUCK_ID, player->GetMap()->GenerateLowGuid<HighGuid::Cast>());
                 Spell::SendCastResult(caster, spellInfo, SPELL_UNSTUCK_VISUAL, castId, SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW);
             }
@@ -2444,7 +2444,7 @@ public:
 
         // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
         uint32 spellid = handler->extractSpellIdFromLink((char*)args);
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellid);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellid, handler->GetSession()->GetPlayer());
         if (!spellInfo)
             return false;
 

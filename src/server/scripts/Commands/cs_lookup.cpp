@@ -833,7 +833,7 @@ public:
         // Search in Spell.dbc
         for (uint32 id = 0; id < sSpellMgr->GetSpellInfoStoreSize(); id++)
         {
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(id);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(id, DIFFICULTY_NONE);
             if (spellInfo)
             {
                 int locale = handler->GetSessionDbcLocale();
@@ -871,7 +871,7 @@ public:
                     SpellEffectInfo const* effect = spellInfo->GetEffect(EFFECT_0);
                     bool learn = effect ? (effect->Effect == SPELL_EFFECT_LEARN_SPELL) : false;
 
-                    SpellInfo const* learnSpellInfo = effect ? sSpellMgr->GetSpellInfo(effect->TriggerSpell) : NULL;
+                    SpellInfo const* learnSpellInfo = effect ? sSpellMgr->GetSpellInfo(effect->TriggerSpell, spellInfo->DifficultyId) : nullptr;
 
                     bool talent = spellInfo->HasAttribute(SPELL_ATTR0_CU_IS_TALENT);
                     bool passive = spellInfo->IsPassive();
@@ -929,7 +929,7 @@ public:
 
         uint32 id = atoi((char*)args);
 
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(id))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(id, DIFFICULTY_NONE))
         {
             int locale = handler->GetSessionDbcLocale();
             std::string name = spellInfo->SpellName->Str[locale];
@@ -944,7 +944,7 @@ public:
             SpellEffectInfo const* effect = spellInfo->GetEffect(EFFECT_0);
             bool learn = effect? (effect->Effect == SPELL_EFFECT_LEARN_SPELL) : false;
 
-            SpellInfo const* learnSpellInfo = effect ? sSpellMgr->GetSpellInfo(effect->TriggerSpell) : NULL;
+            SpellInfo const* learnSpellInfo = effect ? sSpellMgr->GetSpellInfo(effect->TriggerSpell, spellInfo->DifficultyId) : nullptr;
 
             bool talent = spellInfo->HasAttribute(SPELL_ATTR0_CU_IS_TALENT);
             bool passive = spellInfo->IsPassive();

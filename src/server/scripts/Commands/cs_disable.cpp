@@ -98,7 +98,7 @@ public:
         {
             case DISABLE_TYPE_SPELL:
             {
-                if (!sSpellMgr->GetSpellInfo(entry))
+                if (!sSpellMgr->HasSpellInfo(entry))
                 {
                     handler->PSendSysMessage(LANG_COMMAND_NOSPELLFOUND);
                     handler->SetSentErrorMessage(true);

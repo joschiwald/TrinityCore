@@ -25,6 +25,7 @@
 #include "Duration.h"
 #include "IteratorPair.h"
 #include "SharedDefines.h"
+#include "SpellInfoHolder.h"
 #include "Util.h"
 
 #include <map>
@@ -571,56 +572,7 @@ TC_GAME_API int32 GetDiminishingReturnsLimitDuration(SpellInfo const* spellproto
 
 TC_GAME_API extern PetFamilySpellsStore                         sPetFamilySpellsStore;
 
-struct SpellInfoLoadHelper
-{
-    SpellEntry const* Entry = nullptr;
-
-    SpellAuraOptionsEntry const* AuraOptions = nullptr;
-    SpellAuraRestrictionsEntry const* AuraRestrictions = nullptr;
-    SpellCastingRequirementsEntry const* CastingRequirements = nullptr;
-    SpellCategoriesEntry const* Categories = nullptr;
-    SpellClassOptionsEntry const* ClassOptions = nullptr;
-    SpellCooldownsEntry const* Cooldowns = nullptr;
-    std::vector<SpellEffectEntry const*> Effects;
-    SpellEquippedItemsEntry const* EquippedItems = nullptr;
-    SpellInterruptsEntry const* Interrupts = nullptr;
-    SpellLevelsEntry const* Levels = nullptr;
-    SpellMiscEntry const* Misc = nullptr;
-    std::vector<SpellPowerEntry const*> Powers;
-    SpellReagentsEntry const* Reagents = nullptr;
-    SpellScalingEntry const* Scaling = nullptr;
-    SpellShapeshiftEntry const* Shapeshift = nullptr;
-    SpellTargetRestrictionsEntry const* TargetRestrictions = nullptr;
-    SpellTotemsEntry const* Totems = nullptr;
-    std::vector<SpellXSpellVisualEntry const*> Visuals;
-};
-
-struct SpellInfoDifficultyLoadHelper
-{
-    typedef std::unordered_map<uint32 /*difficultyID*/, SpellInfoLoadHelper> StorageType;
-
-    static void AutoCollect(StorageType& data);
-};
-
-struct SpellInfoDifficultyData
-{
-    SpellInfoDifficultyData() { }
-
-    void Load(SpellInfoDifficultyLoadHelper::StorageType&& data, std::function<SpellInfo*(SpellInfoLoadHelper&&)> loader);
-
-    SpellInfo const* Get(uint32 difficulty) const;
-
-    template <typename Fn>
-    void ForEach(Fn worker);
-
-    typedef std::unordered_map<uint32 /*difficultyID*/, SpellInfo*> StorageType;
-
-private:
-    StorageType _data;
-    bool _hasDifficultyData = false;
-};
-
-typedef std::vector<SpellInfoDifficultyData> SpellInfoContainer;
+typedef std::vector<SpellInfoHolder> SpellInfoContainer;
 
 class TC_GAME_API SpellMgr
 {
@@ -701,6 +653,7 @@ class TC_GAME_API SpellMgr
         SpellAreaForQuestAreaMapBounds GetSpellAreaForQuestAreaMapBounds(uint32 area_id, uint32 quest_id) const;
 
         // SpellInfo object management
+        bool HasSpellInfo(uint32 spellId) const;
         SpellInfo const* GetSpellInfo(uint32 spellId, WorldObject const* obj) const;
         SpellInfo const* GetSpellInfo(uint32 spellId, Difficulty difficulty) const;
         // Use this only with 100% valid spellIds
@@ -716,7 +669,7 @@ class TC_GAME_API SpellMgr
             ASSERT(spellInfo, "Spell %u not found.", spellId);
             return spellInfo;
         }
-        //uint32 GetSpellInfoStoreSize() const { return uint32(mSpellInfoMap.size()); }
+        uint32 GetSpellInfoStoreSize() const { return uint32(mSpellInfoStore.size()); }
 
         void LoadPetFamilySpellsStore();
 
@@ -780,13 +733,6 @@ class TC_GAME_API SpellMgr
         PetDefaultSpellsMap        mPetDefaultSpellsMap;           // only spells not listed in related mPetLevelupSpellMap entry
         SpellInfoContainer         mSpellInfoStore;
 };
-
-template<typename Fn>
-void SpellInfoDifficultyData::ForEach(Fn worker)
-{
-    for (StorageType::value_type const& pair : _data)
-        worker(pair);
-}
 
 #define sSpellMgr SpellMgr::instance()
 

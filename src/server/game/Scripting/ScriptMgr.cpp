@@ -1204,6 +1204,7 @@ void ScriptMgr::FillSpellSummary()
 {
     UnitAI::FillAISpellInfo();
 
+    /*
     SpellSummary = new TSpellSummary[sSpellMgr->GetSpellInfoStoreSize()];
 
     SpellInfo const* pTempSpell;
@@ -1288,6 +1289,7 @@ void ScriptMgr::FillSpellSummary()
                 SpellSummary[i].Effects |= 1 << (SELECT_EFFECT_AURA-1);
         }
     }
+    */
 }
 
 template<typename T, typename F, typename O>

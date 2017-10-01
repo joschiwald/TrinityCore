@@ -98,7 +98,7 @@ void WorldSession::HandleUseItemOpcode(WorldPackets::Spells::UseItem& packet)
     {
         for (uint32 i = 0; i < proto->Effects.size(); ++i)
         {
-            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(proto->Effects[i]->SpellID))
+            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(proto->Effects[i]->SpellID, user))
             {
                 if (!spellInfo->CanBeUsedInCombat())
                 {
@@ -254,7 +254,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPackets::Spells::CastSpell& cast)
     if (mover != _player && mover->GetTypeId() == TYPEID_PLAYER)
         return;
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(cast.Cast.SpellID);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(cast.Cast.SpellID, _player);
     if (!spellInfo)
     {
         TC_LOG_ERROR("network", "WORLD: unknown spell id %u", cast.Cast.SpellID);
@@ -329,7 +329,7 @@ void WorldSession::HandleCancelCastOpcode(WorldPackets::Spells::CancelCast& pack
 
 void WorldSession::HandleCancelAuraOpcode(WorldPackets::Spells::CancelAura& cancelAura)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(cancelAura.SpellID);
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(cancelAura.SpellID, _player);
     if (!spellInfo)
         return;
 
@@ -376,18 +376,17 @@ void WorldSession::HandleCancelAuraOpcode(WorldPackets::Spells::CancelAura& canc
 
 void WorldSession::HandlePetCancelAuraOpcode(WorldPackets::Spells::PetCancelAura& packet)
 {
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(packet.SpellID);
-    if (!spellInfo)
-    {
-        TC_LOG_ERROR("network", "WORLD: unknown PET spell id %u", packet.SpellID);
-        return;
-    }
-
     Creature* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, packet.PetGUID);
-
     if (!pet)
     {
         TC_LOG_ERROR("network", "HandlePetCancelAura: Attempt to cancel an aura for non-existant %s by player '%s'", packet.PetGUID.ToString().c_str(), GetPlayer()->GetName().c_str());
+        return;
+    }
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(packet.SpellID, pet);
+    if (!spellInfo)
+    {
+        TC_LOG_ERROR("network", "WORLD: unknown PET spell id %u", packet.SpellID);
         return;
     }
 
@@ -468,7 +467,7 @@ void WorldSession::HandleSelfResOpcode(WorldPackets::Spells::SelfRes& /*packet*/
 
     if (_player->GetUInt32Value(PLAYER_SELF_RES_SPELL))
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_player->GetUInt32Value(PLAYER_SELF_RES_SPELL));
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_player->GetUInt32Value(PLAYER_SELF_RES_SPELL), _player);
         if (spellInfo)
             _player->CastSpell(_player, spellInfo, false, nullptr);
 

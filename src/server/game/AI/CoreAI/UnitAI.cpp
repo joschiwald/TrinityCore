@@ -185,7 +185,7 @@ void UnitAI::DoCastAOE(uint32 spellId, bool triggered)
 
 void UnitAI::FillAISpellInfo()
 {
-    AISpellInfo = new AISpellInfoType[sSpellMgr->GetSpellInfoStoreSize()];
+    /*AISpellInfo = new AISpellInfoType[sSpellMgr->GetSpellInfoStoreSize()];
 
     AISpellInfoType* AIInfo = AISpellInfo;
     const SpellInfo* spellInfo;
@@ -234,7 +234,7 @@ void UnitAI::FillAISpellInfo()
         }
         AIInfo->realCooldown = spellInfo->RecoveryTime + spellInfo->StartRecoveryTime;
         AIInfo->maxRange = spellInfo->GetMaxRange(false) * 3 / 4;
-    }
+    }*/
 }
 
 ThreatManager& UnitAI::GetThreatManager()

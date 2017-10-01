@@ -24,6 +24,7 @@
 #include "DB2Stores.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
+#include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectMgr.h"
 #include "Player.h"
@@ -996,6 +997,13 @@ SpellAreaForAreaMapBounds SpellMgr::GetSpellAreaForAreaMapBounds(uint32 area_id)
 SpellAreaForQuestAreaMapBounds SpellMgr::GetSpellAreaForQuestAreaMapBounds(uint32 area_id, uint32 quest_id) const
 {
     return mSpellAreaForQuestAreaMap.equal_range(std::pair<uint32, uint32>(area_id, quest_id));
+}
+
+bool SpellMgr::HasSpellInfo(uint32 spellId) const
+{
+    if (spellId < mSpellInfoStore.size())
+        return !mSpellInfoStore[spellId].IsEmpty();
+    return false;
 }
 
 SpellInfo const* SpellMgr::GetSpellInfo(uint32 spellId, WorldObject const* obj) const
@@ -2683,9 +2691,9 @@ void SpellMgr::LoadSpellInfoStore()
     for (auto& v : loadData)
     {
         SpellInfoDifficultyLoadHelper::AutoCollect(v.second);
-        mSpellInfoStore[v.first].Load(std::move(v.second), [&spellEffectScallingByEffectId](SpellInfoLoadHelper&& helper)
+        mSpellInfoStore[v.first].Load(std::move(v.second), [&spellEffectScallingByEffectId](uint32 difficulty, SpellInfoLoadHelper&& helper)
         {
-            return new SpellInfo(std::move(helper), spellEffectScallingByEffectId);
+            return new SpellInfo(difficulty, std::move(helper), spellEffectScallingByEffectId);
         });
     }
 
@@ -2694,9 +2702,9 @@ void SpellMgr::LoadSpellInfoStore()
 
 void SpellMgr::UnloadSpellInfoStore()
 {
-    for (SpellInfoDifficultyData& spellInfos : mSpellInfoStore)
+    for (SpellInfoHolder& spellInfos : mSpellInfoStore)
     {
-        spellInfos.ForEach([](SpellInfoDifficultyData::StorageType::value_type const& pair)
+        spellInfos.ForEach([](SpellInfoHolder::StorageType::value_type const& pair)
         {
             delete pair.second;
         });
@@ -2707,9 +2715,9 @@ void SpellMgr::UnloadSpellInfoStore()
 
 void SpellMgr::UnloadSpellInfoImplicitTargetConditionLists()
 {
-    for (SpellInfoDifficultyData& spellInfos : mSpellInfoStore)
+    for (SpellInfoHolder& spellInfos : mSpellInfoStore)
     {
-        spellInfos.ForEach([](SpellInfoDifficultyData::StorageType::value_type const& pair)
+        spellInfos.ForEach([](SpellInfoHolder::StorageType::value_type const& pair)
         {
             pair.second->_UnloadImplicitTargetConditionLists();
         });
@@ -3823,14 +3831,16 @@ void SpellMgr::LoadSpellInfoSpellSpecificAndAuraState()
 {
     uint32 oldMSTime = getMSTime();
 
-    for (SpellInfo* spellInfo : mSpellInfoMap)
+    for (SpellInfoHolder& data : mSpellInfoStore)
     {
-        if (!spellInfo)
-            continue;
+        data.ForEach([](SpellInfoHolder::StorageType::value_type const& pair)
+        {
+            SpellInfo* spellInfo = pair.second;
 
-        // AuraState depends on SpellSpecific
-        spellInfo->_LoadSpellSpecific();
-        spellInfo->_LoadAuraState();
+            // AuraState depends on SpellSpecific
+            spellInfo->_LoadSpellSpecific();
+            spellInfo->_LoadAuraState();
+        });
     }
 
     TC_LOG_INFO("server.loading", ">> Loaded SpellInfo SpellSpecific and AuraState in %u ms", GetMSTimeDiffToNow(oldMSTime));
@@ -3867,113 +3877,4 @@ void SpellMgr::LoadPetFamilySpellsStore()
             }
         }
     }*/
-}
-
-void SpellInfoDifficultyData::Load(SpellInfoDifficultyLoadHelper::StorageType&& data, std::function<SpellInfo*(SpellInfoLoadHelper&&)> loader)
-{
-    for (auto&& pair : data)
-    {
-        if (pair.first > DIFFICULTY_NONE)
-            _hasDifficultyData = true;
-        _data[pair.first] = loader(std::move(pair.second));
-    }
-}
-
-SpellInfo const* SpellInfoDifficultyData::Get(uint32 difficulty) const
-{
-    if (_data.empty())
-        return nullptr;
-
-    if (_hasDifficultyData)
-    {
-        DifficultyEntry const* difficultyEntry = sDifficultyStore.LookupEntry(difficulty);
-        while (difficultyEntry)
-        {
-            auto itr = _data.find(difficultyEntry->ID);
-            if (itr != _data.end())
-                return itr->second;
-
-            difficultyEntry = sDifficultyStore.LookupEntry(difficultyEntry->FallbackDifficultyID);
-        }
-    }
-
-    auto itr = _data.find(DIFFICULTY_NONE);
-    if (itr != _data.end())
-        return itr->second;
-
-    return nullptr;
-}
-
-void SpellInfoDifficultyLoadHelper::AutoCollect(SpellInfoDifficultyLoadHelper::StorageType& data)
-{
-    std::vector<DifficultyEntry const*> difficultyEntries;
-    for (DifficultyEntry const* difficultyEntry : sDifficultyStore)
-        difficultyEntries.push_back(difficultyEntry);
-    std::sort(difficultyEntries.begin(), difficultyEntries.end(), [](DifficultyEntry const* first, DifficultyEntry const* second)
-    {
-        return first->OrderIndex < second->OrderIndex;
-    });
-
-    auto overrideFn = [](SpellInfoLoadHelper& helper, SpellInfoLoadHelper const& overrideHelper)
-    {
-#define OverrideEntry(Entry) \
-        if (!helper.##Entry) \
-            helper.##Entry = overrideHelper.##Entry
-
-        OverrideEntry(Entry);
-
-        OverrideEntry(AuraOptions);
-        OverrideEntry(AuraRestrictions);
-        OverrideEntry(CastingRequirements);
-        OverrideEntry(Categories);
-        OverrideEntry(ClassOptions);
-        OverrideEntry(Cooldowns);
-
-        if (overrideHelper.Effects.size() > helper.Effects.size())
-            helper.Effects.resize(overrideHelper.Effects.size());
-        for (uint8 effIndex = EFFECT_0; effIndex < overrideHelper.Effects.size(); ++effIndex)
-            OverrideEntry(Effects[effIndex]);
-
-        OverrideEntry(EquippedItems);
-        OverrideEntry(Interrupts);
-        OverrideEntry(Levels);
-        OverrideEntry(Misc);
-
-        if (overrideHelper.Powers.size() > helper.Powers.size())
-            helper.Powers.resize(overrideHelper.Powers.size());
-        for (uint8 powerIndex = 0; powerIndex < overrideHelper.Powers.size(); ++powerIndex)
-            OverrideEntry(Powers[powerIndex]);
-
-        OverrideEntry(Reagents);
-        OverrideEntry(Scaling);
-        OverrideEntry(Shapeshift);
-        OverrideEntry(TargetRestrictions);
-        OverrideEntry(Totems);
-
-        if (helper.Visuals.empty())
-            helper.Visuals = overrideHelper.Visuals;
-
-#undef OverrideEntry(Entry)
-    };
-
-    for (DifficultyEntry const* difficultyEntry : difficultyEntries)
-    {
-        auto itr = data.find(difficultyEntry->ID);
-        if (itr != data.end())
-        {
-            DifficultyEntry const* fallbackDifficultyEntry = sDifficultyStore.LookupEntry(difficultyEntry->FallbackDifficultyID);
-            while (fallbackDifficultyEntry)
-            {
-                auto fallbackItr = data.find(fallbackDifficultyEntry->ID);
-                if (fallbackItr != data.end())
-                    overrideFn(itr->second, fallbackItr->second);
-
-                fallbackDifficultyEntry = sDifficultyStore.LookupEntry(fallbackDifficultyEntry->FallbackDifficultyID);
-            }
-
-            auto defaultItr = data.find(DIFFICULTY_NONE);
-            if (defaultItr != data.end())
-                overrideFn(itr->second, defaultItr->second);
-        }
-    }
 }
